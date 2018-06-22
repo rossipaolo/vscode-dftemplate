@@ -1,0 +1,237 @@
+{
+	"header": {
+		"prefix": "header",
+		"body": [
+			"-- Quest: $1",
+			"-- StartsBy: $2",
+			"-- Questee: $3",
+			"-- Questor: $4",
+			"-- Repute: $5",
+			"-- QuestId: $6",
+			"Messages: ",
+			"Quest: ${TM_FILENAME/(.*)\\..+$/$1/}",
+			"$0"
+		],
+		"description": "Insert Header"
+	},
+	"QuestorOffer": {
+		"prefix": "QuestorOffer",
+		"body": [
+			"QuestorOffer:  [1000]",
+			"<ce> $0"
+		],
+		"description": "Insert Questor Offer"
+	},
+	"RefuseQuest": {
+		"prefix": "RefuseQuest",
+		"body": [
+			"RefuseQuest:  [1001]",
+			"<ce> $0"
+		],
+		"description": "Insert RefusQuest"
+	},
+	"AcceptQuest": {
+		"prefix": "AcceptQuest",
+		"body": [
+			"AcceptQuest:  [1002]",
+			"<ce> $0"
+		],
+		"description": "Insert Accept Quest"
+	},
+	"QuestFail": {
+		"prefix": "QuestFail",
+		"body": [
+			"QuestFail:  [1003]",
+			"<ce> $0"
+		],
+		"description": "Insert Quest Fail"
+	},
+	"QuestComplete": {
+		"prefix": "QuestComplete",
+		"body": [
+			"QuestComplete:  [1004]",
+			"<ce> $0"
+		],
+		"description": "Insert Quest Complete"
+	},
+	"RumorsDuringQuest": {
+		"prefix": "RumorsDuringQuest",
+		"body": [
+			"RumorsDuringQuest:  [1005]",
+			"<ce> $0"
+		],
+		"description": "Insert Rumors During Quest"
+	},
+	"RumorsPostfailure": {
+		"prefix": "RumorsPostfailure",
+		"body": [
+			"RumorsPostfailure:  [1006]",
+			"<ce> $0"
+		],
+		"description": "Insert Rumors Post failure"
+	},
+	"QuestorPostsuccess": {
+		"prefix": "QuestorPostsuccess",
+		"body": [
+			"QuestorPostsuccess:  [1008]",
+			"<ce> $0"
+		],
+		"description": "Insert Questor Post success"
+	},
+	"QuestorPostfailure": {
+		"prefix": "QuestorPostfailure",
+		"body": [
+			"QuestorPostfailure:  [1009]",
+			"<ce> $0"
+		],
+		"description": "Insert Questor Post failure"
+	},
+	"QuestLogEntry": {
+		"prefix": "QuestLogEntry",
+		"body": [
+			"QuestLogEntry:  [1010]",
+			"<ce> $0"
+		],
+		"description": "Insert Quest Log Entry"
+	},
+	"Message": {
+		"prefix": "Message",
+		"body": [
+			"Message:  $1",
+			"$0"
+		],
+		"description": "Insert message"
+	},
+	"Item": {
+		"prefix": "Item",
+		"body": [
+			"Item  ${1:_symbol_}  ${2:itemName}",
+			"$0"
+		],
+		"description": "Describe an item."
+	},
+	"VerboseItem": {
+		"prefix": "Item",
+		"body": [
+			"Item  ${1:_symbol_}  item  class ${2:nn}  subclass ${3:mm}",
+			"$0"
+		],
+		"description": "Describe an item."
+	},
+	"Gold": {
+		"prefix": "Item",
+		"body": [
+			"Item  ${1:_symbol_}  gold  range  ${2:nn}  to  ${3:mm}",
+			"$0"
+		],
+		"description": "Creates a random amount of gold reward proportional to the player's current level."
+	},
+	"Artifact": {
+		"prefix": "Item",
+		"body": [
+			"Item  ${1:_symbol_}  artifact  ${2:artifactName}",
+			"$0"
+		],
+		"description": "Describes an artifact item appearing in a quest."
+	},
+	"Person": {
+		"prefix": "Person",
+		"body": [
+			"Person  ${1:_symbol_}  ${2|named,factionType,group,faction|}  ${3:value}",
+			"$0"
+		],
+		"description": "Describe an NPC with an argument."
+	},
+	"GenderedPerson": {
+		"prefix": "Person",
+		"body": [
+			"Person  ${1:_symbol_}  ${2|named,factionType,group,faction|}  ${3:value}  ${4|male,female|}",
+			"$0"
+		],
+		"description": "Describe an NPC with an argument and a specific gender."
+	},
+	"PersonAtHome": {
+		"prefix": "Person",
+		"body": [
+			"Person  ${1:_symbol_}  named  ${2:value}  athome",
+			"$0"
+		],
+		"description": "Describe an NPC located at home."
+	},
+	"Place": {
+		"prefix": "Place",
+		"body": [
+			"Place  ${1:_symbol_}  ${2|permanent,local,remote|}  ${3:place}",
+			"$0"
+		],
+		"description": "Describe one place a PC might visit in the quest."
+	},
+	"Clock": {
+		"prefix": "Clock",
+		"body": [
+			"Clock  ${1:_symbol_}  ${2:dd}.${3:hh}:${4:mm}",
+			"$0"
+		],
+		"description": "Creates a clock that runs down in dd days, hh hours, and mm minutes."
+	},
+	"ClockRange": {
+		"prefix": "Clock",
+		"body": [
+			"Clock  ${1:_symbol_}  ${2:dd}.${3:hh}:${4:mm} ${5:dd}.${6:hh}:${7:mm}",
+			"$0"
+		],
+		"description": "Creates a clock that runs down between dd.hh:mm and aa.bb:cc."
+	},
+	"Foe": {
+		"prefix": "Foe",
+		"body": [
+			"Foe  ${1:_symbol_}  is  ${2:anEnemy}",
+			"$0"
+		],
+		"description": "Creates a single foe of type anEnemy."
+	},
+	"MultiFoe": {
+		"prefix": "Foe",
+		"body": [
+			"Foe  ${1:_symbol_}  is  ${2:nn}  ${3:anEnemy}",
+			"$0"
+		],
+		"description": "Creates nn foes of type anEnemy."
+	},
+	"Task": {
+		"prefix": "task",
+		"body": [
+			"-- ${2:description}",
+			"${1:_symbol_} task:",
+			"\t$0"
+		],
+		"description": "Insert a new task which is performed once."
+	},
+	"Coroutine": {
+		"prefix": "until",
+		"body": [
+			"-- ${2:description}",
+			"until ${1:_symbol_} performed:",
+			"\t$0"
+		],
+		"description": "Insert a new task performed over and over again until another task is finished."
+	},
+	"Macro": {
+		"prefix": "macro",
+		"body": [
+			"-- ${3:description}",
+			"macro ${1:Name} ${2:args}",
+			"$0",
+			"end macro"
+		],
+		"description": "Insert an area of commands eligible for special substitutions."
+	},
+	"EnemyWave": {
+		"prefix": "wave",
+		"body": [
+			"${1|create,send|} ${2:aFoe} every ${3:m} minutes ${4:n} times with ${5:k}% success",
+			"\t$0"
+		],
+		"description": "Creates mobs of enemies to harry the player; 'send' spawns only when the player is above ground."
+	}
+}
