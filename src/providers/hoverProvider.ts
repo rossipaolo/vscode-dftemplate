@@ -40,7 +40,7 @@ export class TemplateHoverProvider implements HoverProvider {
             if (word) {
                 // If is a symbol, show description according to prefix.
                 if (Parser.isSymbol(word)) {
-                    let definition = Parser.findDefinition(document, word);
+                    let definition = Parser.findSymbolDefinition(document, word);
                     if (definition) {
                         let item = new TemplateDocumentationItem();
                         item.category = 'symbol';
@@ -52,24 +52,22 @@ export class TemplateHoverProvider implements HoverProvider {
 
                 // Seek message from number
                 if (!isNaN(Number(word))) {                
-                    
-                    // Default message
-                    let line = Parser.findLine(document, new RegExp('\\[\\s*' + word + '\\s*\\]', 'g'));
-                    if (line) {
-                        return resolve(instance.provideHover(document, new Position(line.lineNumber, 0)));         
-                    }
-
-                    // Additional message
-                    line = Parser.findLine(document, new RegExp('^\\bMessage:\\s+' + word + '\\b', 'g'));
-                    if (line) {
-                        let item = new TemplateDocumentationItem();
-                        item.category = 'message';
-                        item.signature = line.text;
-                        let comment = Parser.parseComment(document.lineAt(line.lineNumber - 1).text);
-                        if (comment.isComment) {
-                            item.summary = comment.text;
+                    let messageDefinition = Parser.findMessageDefinition(document, word);
+                    if (messageDefinition) {
+                        let line = messageDefinition.line;
+                        if (messageDefinition.isDefault) {
+                            return resolve(instance.provideHover(document, new Position(line.lineNumber, 0)));
                         }
-                        return resolve(TemplateHoverProvider.makeHover(item));
+                        else {
+                            let item = new TemplateDocumentationItem();
+                            item.category = 'message';
+                            item.signature = line.text;
+                            let comment = Parser.parseComment(document.lineAt(line.lineNumber - 1).text);
+                            if (comment.isComment) {
+                                item.summary = comment.text;
+                            }
+                            return resolve(TemplateHoverProvider.makeHover(item));
+                        }
                     }
                 }
 

@@ -14,10 +14,22 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
     public provideDefinition(document: TextDocument, position: Position): Thenable<Location> {
         return new Promise(function (resolve, reject) {
             let word = Parser.getWord(document, position);
-            if (word && Parser.isSymbol(word)) {
-                let definition = Parser.findDefinition(document, word);
-                if (definition) {
-                    return resolve(definition.location);
+            if (word) {
+
+                // Symbol
+                if (Parser.isSymbol(word)) {
+                    let symbolDefinition = Parser.findSymbolDefinition(document, word);
+                    if (symbolDefinition) {
+                        return resolve(symbolDefinition.location);
+                    }
+                }
+
+                // Message
+                if (!isNaN(Number(word))) {
+                    let messageDefinition = Parser.findMessageDefinition(document, word);
+                    if (messageDefinition) {
+                        return resolve(new Location(document.uri, new Position(messageDefinition.line.lineNumber, 0)));
+                    }
                 }
             }
 
