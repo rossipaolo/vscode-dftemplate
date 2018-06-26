@@ -34,7 +34,7 @@ export class Parser {
     /**
      * Find the definition of a symbol and return its location. Undefined if not found.
      */
-    public static findDefinition(document: TextDocument, word: string): { location: Location, type: string } | undefined {
+    public static findSymbolDefinition(document: TextDocument, word: string): { location: Location, type: string } | undefined {
         word = this.getBaseSymbol(word);
         let text = document.getText();
         if (text) {
@@ -48,6 +48,23 @@ export class Parser {
                     };
                 }
             }
+        }
+    }
+
+    /**
+     * Find the definition of a message and return its location. Undefined if not found.
+     */
+    public static findMessageDefinition(document: TextDocument, word: string): { line: TextLine, isDefault: boolean } | undefined {
+        // Default message
+        let line = Parser.findLine(document, new RegExp('\\[\\s*' + word + '\\s*\\]', 'g'));
+        if (line) {
+            return { line: line, isDefault: true };
+        }
+
+        // Additional message
+        line = Parser.findLine(document, new RegExp('^\\bMessage:\\s+' + word + '\\b', 'g'));
+        if (line) {
+            return { line: line, isDefault: false };
         }
     }
 
