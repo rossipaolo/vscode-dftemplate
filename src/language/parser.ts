@@ -25,7 +25,7 @@ export class Parser {
      * Get a word from the given position of a document.
      */
     public static getWord(document: TextDocument, position: Position): string | undefined {
-        let range = document.getWordRangeAtPosition(position, /(={1,2}|%)?(\w|\d)+/g);
+        let range = document.getWordRangeAtPosition(position);
         if (range && !range.isEmpty) {
             return document.getText(range);
         }
