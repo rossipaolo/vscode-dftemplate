@@ -50,6 +50,29 @@ export class TemplateHoverProvider implements HoverProvider {
                     }
                 }
 
+                // Seek message from number
+                if (!isNaN(Number(word))) {                
+                    
+                    // Default message
+                    let line = Parser.findLine(document, new RegExp('\\[\\s*' + word + '\\s*\\]', 'g'));
+                    if (line) {
+                        return resolve(instance.provideHover(document, new Position(line.lineNumber, 0)));         
+                    }
+
+                    // Additional message
+                    line = Parser.findLine(document, new RegExp('^\\bMessage:\\s+' + word + '\\b', 'g'));
+                    if (line) {
+                        let item = new TemplateDocumentationItem();
+                        item.category = 'message';
+                        item.signature = line.text;
+                        let comment = Parser.parseComment(document.lineAt(line.lineNumber - 1).text);
+                        if (comment.isComment) {
+                            item.summary = comment.text;
+                        }
+                        return resolve(TemplateHoverProvider.makeHover(item));
+                    }
+                }
+
                 // Seek word in documentation file
                 if (instance.documentation.has(word)) {
                     let item = instance.documentation.get(word);
@@ -75,8 +98,10 @@ export class TemplateHoverProvider implements HoverProvider {
             hovertext.push(signature.appendMarkdown(['```dftemplate', signatureText, '```', ''].join(EOL)));
         }
 
-        let summary = new MarkdownString();
-        hovertext.push(summary.appendMarkdown(item.summary || 'unknown'));
+        if (item.summary) {
+            let summary = new MarkdownString();
+            hovertext.push(summary.appendMarkdown(item.summary));
+        }
 
         if (item.parameters) {
             item.parameters.forEach(parameter => {

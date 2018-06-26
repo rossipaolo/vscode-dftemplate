@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { TextDocument, Position, Location, Range } from 'vscode';
+import { TextDocument, Position, Location, Range, TextLine } from 'vscode';
 
 export const enum Types {
     Item = 'Item',
@@ -47,6 +47,18 @@ export class Parser {
                         type: this.types[i]
                     };
                 }
+            }
+        }
+    }
+
+    /**
+     * Find the first line that matches the regular expression.
+     */
+    public static findLine(document: TextDocument, regex: RegExp): TextLine | undefined {
+        for (let i = 0; i < document.lineCount; i++) {
+            let line = document.lineAt(i);
+            if (regex.test(line.text)) {
+                return line;
             }
         }
     }
@@ -122,5 +134,26 @@ export class Parser {
      */
     public static isTask(line: string): boolean {
         return new RegExp(/(task|until\s+(\w|_|=)+\s+performed):\s*$/).test(line);
+    }
+
+    public static parseComment(line: string): { isComment: boolean, text: string } {
+        if (/^\s*-+/.test(line)) {
+            return { isComment: true, text: this.skipWhile(line, (char) => char === ' ' || char === '-') };
+        }
+
+        return { isComment: false, text: '' };
+    }
+
+    /**
+     * Remove chars until condition becomes false.
+     */
+    private static skipWhile(text: string, condition: (char: string) => boolean): string {
+        for (let i = 0; i < text.length; i++) {
+            if (!condition(text[i])) {
+                return text.substring(i);
+            }
+        }
+
+        return '';
     }
 }
