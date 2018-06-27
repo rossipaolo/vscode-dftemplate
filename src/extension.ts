@@ -14,6 +14,7 @@ import { TemplateDefinitionProvider } from './providers/definitionProvider';
 import { TemplateReferenceProvider } from './providers/referenceProvider';
 import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
+import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 
 const TEMPLATE_LANGUAGE = 'dftemplate';
 const TEMPLATE_MODE: DocumentFilter[] = [
@@ -31,6 +32,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
+    context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));  
 }
 
 export function deactivate() {
