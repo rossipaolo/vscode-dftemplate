@@ -12,6 +12,7 @@ import { Formatter, FormatterResults } from '../language/formatter';
 export class TemplateDocumentRangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
 
     private static formatters: { (line: TextLine): FormatterResults | undefined }[] = [
+        Formatter.formatKeyword,
         Formatter.formatComment,
         Formatter.formatCenteredMessage,
         Formatter.formatSymbolDefinition
