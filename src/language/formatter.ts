@@ -13,7 +13,52 @@ export interface FormatterResults {
 
 export class Formatter {
 
-    private static unaltered: FormatterResults = { needsEdit: false };
+    private static readonly unaltered: FormatterResults = { needsEdit: false };
+    private static readonly keywordsFormat: { match: RegExp, wanted: RegExp, text: string }[] = [
+        {
+            match: /^\s*Messages\s*:\s*([0-9]+)\s*$/,
+            wanted: /^Messages:\s[0-9]+$/,
+            text: "Messages: $"
+        },
+        {
+            match: /^\s*Quest\s*:\s*([A-Z0-9]+)\s*$/,
+            wanted: /^Quest:\s[A-Z0-9]+$/,
+            text: "Quest: $"
+        },
+        {
+            match: /^\s*(QRC|QBN)\s*:\s*$/,
+            wanted: /^(QRC|QBN):$/,
+            text: "$:"
+        },
+        {
+            match: /^\s*Message:\s*([0-9]+)\s*$/,
+            wanted: /^Message:\s{2}[0-9]+$/,
+            text: "Message:  $"
+        },
+        {
+            match: /^\s*([a-zA-Z]+)\s*:\s*\[\s*([0-9]+)\s*\]\s*$/,
+            wanted: /^[a-zA-Z]+:\s{2}\[[0-9]+\]$/,
+            text: "$:  [$]"
+        }
+    ];
+
+    public static formatKeyword(line: TextLine): FormatterResults | undefined {
+        let text = line.text;
+        let length = text.length;
+        for (let i = 0; i < Formatter.keywordsFormat.length; i++) {
+            let format = Formatter.keywordsFormat[i];
+            let result = new RegExp(format.match, 'g').exec(text);
+            if (result) {
+                if (!new RegExp(format.wanted, 'g').test(text)) {
+                    let j = 1;
+                    text = format.text.replace(/\$/g, () => result ? result[j++] : '');
+                    return Formatter.makeResults(line, length > text.length ? length : text.length, text);
+                }
+
+                return Formatter.unaltered;
+            }
+        }
+    }
 
     public static formatComment(line: TextLine): FormatterResults | undefined {
         let text = line.text;
