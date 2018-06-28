@@ -5,6 +5,7 @@
 'use strict';
 
 import { Range, TextEdit, TextLine } from 'vscode';
+import { Options } from '../extension';
 
 export interface FormatterResults {
     needsEdit: boolean;
@@ -75,10 +76,10 @@ export class Formatter {
         }
     }
 
+    /**
+     * Format messages with a <ce> tag. Message text is aligned left or centered according to options.
+     */
     public static formatCenteredMessage(line: TextLine): FormatterResults | undefined {
-
-        const center = 39; // position of text center from line start
-
         let text = line.text;
         let result = /^(\s*)(<ce>)(\s*)([^\s])/g.exec(text);
         if (result) {
@@ -96,10 +97,20 @@ export class Formatter {
 
             // Set inner indent for text
             let rawTextIndex = identifier.length + space.length;
-            let rawText = text.substring(rawTextIndex);
-            let offset = center - (rawTextIndex + rawText.length / 2);
-            if (offset !== 0) {
-                text = identifier + ' '.repeat(space.length + offset) + rawText;
+            if (Options.centeredMessages) {
+
+                const center = 39;  // position of text center from line start
+
+                let rawText = text.substring(rawTextIndex);
+                let offset = center - (rawTextIndex + rawText.length / 2);
+                if (offset !== 0) {
+                    text = identifier + ' '.repeat(space.length + offset) + rawText;
+                    needsEdit = true;
+                }
+            }
+            else if (space.length !== 1) {
+                let rawText = text.substring(rawTextIndex);
+                text = identifier + ' ' + rawText;
                 needsEdit = true;
             }
 
