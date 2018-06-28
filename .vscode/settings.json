@@ -7,5 +7,20 @@
         "out": true // set this to false to include "out" folder in search results
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off"
+    "typescript.tsc.autoDetect": "off",
+    // Schemas for extension tables
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "tables/attributes.json"
+            ],
+            "url": "./schemas/attributes.json"
+        },
+        {
+            "fileMatch": [
+                "tables/documentation.json"
+            ],
+            "url": "./schemas/documentation.json"
+        }
+    ]
 }
