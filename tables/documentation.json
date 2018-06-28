@@ -360,6 +360,24 @@
     "%wth": {
         "summary": "Worth"
     },
+    "%pg": {
+        "summary": "[DU] He/She (player)"
+    },
+    "%pg1": {
+        "summary": "[DU] His/Her (player)"
+    },
+    "%pg2": {
+        "summary": "[DU] Him/Her (player)"
+    },
+    "%pg2self": {
+        "summary": "[DU] Himself/Herself (player)"
+    },
+    "%pg3": {
+        "summary": "[DU] His/Hers (player)"
+    },
+    "%hrn": {
+        "summary": "[DU] Home region (of person)"
+    },
     "QuestorOffer": {
         "category": "message",
         "signature": "QuestorOffer:  [1000]",
