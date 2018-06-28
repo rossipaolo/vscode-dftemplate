@@ -22,9 +22,16 @@ const TEMPLATE_MODE: DocumentFilter[] = [
     { language: TEMPLATE_LANGUAGE, scheme: 'untitled' }
 ];
 
+export class Options {
+    public static centeredMessages:boolean;
+}
+
 export function activate(context: ExtensionContext) {
 
     vscode.languages.setLanguageConfiguration(TEMPLATE_LANGUAGE, { wordPattern: /(={1,2}|%)?(\w|\d)+/g });
+
+    let config = vscode.workspace.getConfiguration('dftemplate');
+    Options.centeredMessages = config.get<boolean>('format.centeredMessages') || Options.centeredMessages;
 
     context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(context)));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(context)));

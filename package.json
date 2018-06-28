@@ -59,7 +59,17 @@
                 "language": "dftemplate",
                 "path": "./snippets/dftemplate.json"
             }
-        ]
+        ],
+        "configuration": {
+            "title": "DFTemplate configuration",
+            "properties": {
+                "dftemplate.format.centeredMessages": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Messages with <ce> tag are horizontally centered."
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
