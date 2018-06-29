@@ -10,6 +10,12 @@ import { Options } from '../extension';
 export interface FormatterResults {
     needsEdit: boolean;
     textEdit?: TextEdit;
+    formatNextLineRequest?: FormatLineRequest;
+}
+
+export interface FormatLineRequest {
+    requestLine: (line: TextLine) => boolean;
+    formatLine: (line: TextLine) => FormatterResults | undefined;
 }
 
 export class Formatter {
@@ -142,7 +148,58 @@ export class Formatter {
         }
     }
 
+    /**
+     * Format definition of a task and request following lines until the first empty line.
+     */
+    public static formatTask(line: TextLine): FormatterResults | undefined {
+        let text = line.text;
+        let length = text.length;
+        let result = /^(\s*)((_{1,3}|={1,2})[a-zA-Z]+(.[0-9]+)?_)(\s+)task:(\s*)$/g.exec(text);
+        if (result) {
+            let needsEdit = false;
+            if (needsEdit = result[5].length > 1) {
+                text = result[2] + ' ' + 'task:';
+            }
+            else if (needsEdit = (result[1].length > 0 || result[6].length > 0)) {
+                text = text.trim();
+            }
+
+            return Formatter.makeTaskResults(needsEdit, line, text, length);
+        }
+    }
+
+    /**
+     * Format lines following a task definition.
+     */
+    private static formatTaskScope(line: TextLine): FormatterResults | undefined {
+        let text = line.text;
+        let length = text.length;
+        let result = /^(\s*)[^\s]/g.exec(text);
+        if (result) {
+            let needsEdit = false;
+            if (result[1].length !== 4) {
+                text = '    ' + text.trim();
+                needsEdit = true;
+            }
+
+            return Formatter.makeTaskResults(needsEdit, line, text, length);
+        }
+    }
+
     private static makeResults(line: TextLine, length: number, text: string): FormatterResults {
         return { needsEdit: true, textEdit: new TextEdit(new Range(line.range.start.line, 0, line.range.end.line, length), text) };
+    }
+
+    private static makeTaskResults(needsEdit: boolean, line: TextLine, text: string, length: number) {
+        let results = needsEdit ? Formatter.makeResults(line, length, text) : { needsEdit: false };
+        results.formatNextLineRequest = {
+            requestLine: (line) => {
+                return !/^\s*$/g.test(line.text);
+            },
+            formatLine: (line) => {
+                return Formatter.formatTaskScope(line);
+            }
+        };
+        return results;
     }
 }

@@ -15,7 +15,8 @@ export class TemplateDocumentRangeFormattingEditProvider implements vscode.Docum
         Formatter.formatKeyword,
         Formatter.formatComment,
         Formatter.formatCenteredMessage,
-        Formatter.formatSymbolDefinition
+        Formatter.formatSymbolDefinition,
+        Formatter.formatTask
     ];
 
     public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> {
@@ -30,6 +31,8 @@ export class TemplateDocumentRangeFormattingEditProvider implements vscode.Docum
                             textEdits.push(results.textEdit);
                         }
 
+                        // Matching formatter can immediately request the following line.
+                        i = TemplateDocumentRangeFormattingEditProvider.tryFormatNextLine(document, i, range.end.line, results, textEdits);
                         break;
                     }
                 }
@@ -37,5 +40,26 @@ export class TemplateDocumentRangeFormattingEditProvider implements vscode.Docum
 
             return textEdits.length > 0 ? resolve(textEdits) : reject();
         });
+    }
+
+    /**
+     * Give lines to a formatter until it stops matching.
+     */
+    private static tryFormatNextLine(document: TextDocument, line: number, endLine: number, results: FormatterResults, textEdits: TextEdit[]): number {    
+        if (line < endLine) {
+            let nextLine = document.lineAt(line + 1);
+            if (results.formatNextLineRequest && results.formatNextLineRequest.requestLine(nextLine)) {
+                let nextResults = results.formatNextLineRequest.formatLine(nextLine);
+                if (nextResults) {
+                    if (nextResults.needsEdit && nextResults.textEdit) {
+                        textEdits.push(nextResults.textEdit);
+                    }
+
+                    return TemplateDocumentRangeFormattingEditProvider.tryFormatNextLine(document, ++line, endLine, nextResults, textEdits);
+                }
+            }
+        }
+
+        return line;
     }
 }
