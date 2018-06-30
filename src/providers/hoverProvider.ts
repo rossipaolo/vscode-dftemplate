@@ -78,6 +78,25 @@ export class TemplateHoverProvider implements HoverProvider {
                         return resolve(TemplateHoverProvider.makeHover(item));
                     }
                 }
+
+                // Seek quest
+                if (Parser.isQuest(document.lineAt(position.line).text)) {
+                    return Parser.findLineInAllfiles(Parser.makeQuestDefinitionPattern(word)).then(result => {
+                        let line = Parser.findLine(result.document, Parser.displayNamePattern);
+                        if (line) {
+                            let displayName = Parser.displayNamePattern.exec(line.text);
+                            if (displayName) {
+                                let item = new TemplateDocumentationItem();
+                                item.category = 'quest';
+                                item.signature = result.line.text;
+                                item.summary = displayName[1];
+                                return resolve(TemplateHoverProvider.makeHover(item));
+                            }
+                        }
+
+                        return reject();
+                    }, () => { return reject(); });
+                }
             }
 
             return reject();

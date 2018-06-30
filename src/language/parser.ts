@@ -4,6 +4,8 @@
 
 'use strict';
 
+import * as vscode from 'vscode';
+
 import { TextDocument, Position, Location, Range, TextLine } from 'vscode';
 
 export const enum Types {
@@ -20,6 +22,10 @@ export const enum Types {
 export class Parser {
 
     private static types: string[] = ['Item', 'Person', 'Place', 'Clock', 'Foe'];
+
+    public static get questDefinitionPattern(): RegExp { return /^(\s*Quest:\s+)([a-zA-Z0-9]+)/g; }
+    public static get questReferencePattern(): RegExp { return /^(\s*start\s+quest\s+)([a-zA-Z0-9]+)/g; }
+    public static get displayNamePattern(): RegExp { return /^DisplayName:\s(.*)$/g; }
 
     /**
      * Get a word from the given position of a document.
@@ -78,6 +84,49 @@ export class Parser {
                 return line;
             }
         }
+    }
+
+    /**
+     * Find the first line that matches the regular expression in any document.
+     */
+    public static findLineInAllfiles(regex: RegExp): Thenable<{ document: TextDocument, line: TextLine }> {
+        return new Promise((resolve, reject) => {
+            return vscode.workspace.findFiles('*.{txt,dftemplate}').then((uri) => {
+                for (let i = 0; i < uri.length; i++) {
+                    vscode.workspace.openTextDocument(uri[i]).then((document) => {
+                        let line = Parser.findLine(document, regex);
+                        if (line) {
+                            return resolve({ document: document, line: line });
+                        }
+                    });
+                }
+
+                return reject();
+            });
+        });
+    }
+
+    public static findLinesInAllfiles(regex: RegExp, firstPerFile?: boolean): Thenable<{ document: TextDocument, line: TextLine }[]> {
+        return new Promise((resolve) => {
+            return vscode.workspace.findFiles('*.{txt,dftemplate}').then((uri) => {
+                let results: { document: TextDocument, line: TextLine }[] = [];
+                for (let i = 0; i < uri.length; i++) {
+                    vscode.workspace.openTextDocument(uri[i]).then((document) => {
+                        for (let i = 0; i < document.lineCount; i++) {
+                            let line = document.lineAt(i);
+                            if (regex.test(line.text)) {
+                                results.push({ document: document, line: line });
+                                if (firstPerFile) {
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                }
+
+                return resolve(results);
+            });
+        });
     }
 
     /**
@@ -153,12 +202,24 @@ export class Parser {
         return new RegExp(/(task|until\s+(\w|_|=)+\s+performed):\s*$/).test(line);
     }
 
+    public static isQuest(line: string, allowDefinition?:boolean){
+        return (allowDefinition ? /(Quest:|start\s+quest)\s/g : /start\s+quest\s/g).test(line);
+    }
+
     public static parseComment(line: string): { isComment: boolean, text: string } {
         if (/^\s*-+/.test(line)) {
             return { isComment: true, text: this.skipWhile(line, (char) => char === ' ' || char === '-') };
         }
 
         return { isComment: false, text: '' };
+    }
+
+    public static makeQuestDefinitionPattern(questName: string) {
+        return new RegExp('^\\s*Quest:\\s+' + questName, 'g');
+    }
+
+    public static makeQuestReferencePattern(questName: string) {
+        return new RegExp('^\\s*start\\s+quest\\s+' + questName, 'g');
     }
 
     /**
