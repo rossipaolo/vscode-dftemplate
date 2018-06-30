@@ -92,6 +92,12 @@
                 </dict>
                 <dict>
                     <key>match</key>
+                    <string>DisplayName:</string>
+                    <key>name</key>
+                    <string>markup.heading.dftemplate</string>
+                </dict>
+                <dict>
+                    <key>match</key>
                     <string>(^|\s)(Messages:|QRC:|QBN:)\s</string>
                     <key>name</key>
                     <string>markup.heading.dftemplate</string>
@@ -209,7 +215,24 @@
                     <string>\bend\s+macro\b</string>
                     <key>name</key>
                     <string>keyword.control.macro.dftemplate</string>
-                </dict>	
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>\b(start\squest)\s([^\s]+)\b</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.control.start-quest.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.class.quest.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>		
                 <dict>
                     <key>match</key>
                     <string>\bend\squest\b</string>

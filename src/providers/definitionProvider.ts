@@ -31,6 +31,15 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
                         return resolve(new Location(document.uri, new Position(messageDefinition.line.lineNumber, 0)));
                     }
                 }
+
+                // Quest
+                if (Parser.isQuest(document.lineAt(position.line).text)) {
+                    return Parser.findLineInAllfiles(Parser.makeQuestDefinitionPattern(word)).then(result => {
+                        return resolve(new Location(result.document.uri, new Position(result.line.lineNumber, 0)));
+                    }, () => { return reject(); });
+                }
+
+                console.log('not found');
             }
 
             return reject();
