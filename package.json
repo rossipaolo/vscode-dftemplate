@@ -67,6 +67,14 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Messages with <ce> tag are horizontally centered."
+                },
+                "dftemplate.modules": {
+                    "type": "array",
+                    "default": [
+                        "${extensionPath}/modules/Daggerfall.json",
+                        "${extensionPath}/modules/DaggerfallUnity.json"
+                    ],
+                    "description": "Modules for Intellisense."
                 }
             }
         }

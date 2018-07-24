@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import { ExtensionContext, TextDocument, Position, CompletionItem } from 'vscode';
 import { loadTable } from '../extension';
 import { Parser } from '../language/parser';
+import { Modules } from '../language/modules';
 
 class AttributeItem{
     public attribute:string = '';
@@ -67,6 +68,23 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
                     return items.length > 0 ? resolve(items) : reject();
                 }, () => { return reject(); });
+            }
+
+            // actions
+            let items: CompletionItem[] = [];
+            for (const result of Modules.getInstance().findActions(line.text.substring(line.text.length - 1))) {
+                for (const overload of result.action.overloads) {
+                    let signature = Modules.prettySignature(overload);
+                    let kind = result.actionKind === Modules.ActionKind.Action ? vscode.CompletionItemKind.Method : vscode.CompletionItemKind.Event;
+                    let item = new vscode.CompletionItem(signature, kind);
+                    item.insertText = new vscode.SnippetString(overload);
+                    item.detail = result.moduleName + ' -> ' + signature;
+                    item.documentation = result.action.summary;
+                    items.push(item);
+                }
+            }
+            if (items.length > 0) {
+                return resolve(items);
             }
 
             return reject();

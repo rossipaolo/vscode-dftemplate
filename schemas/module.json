@@ -1,0 +1,53 @@
+{
+    "title": "DFTemplate Module",
+    "description": "Module for DF Template.",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "displayName": {
+            "type": "string",
+            "description": "A displayable name for this module."
+        },
+        "conditions": {
+            "type": "array",
+            "description": "Quest conditions provided by this module.",
+            "items": {
+                "$ref": "#/definitions/action"
+            }
+        },
+        "actions": {
+            "type": "array",
+            "description": "Quest actions provided by this module.",
+            "items": {
+                "$ref": "#/definitions/action"
+            }
+        }
+    },
+    "definitions": {
+        "action": {
+            "type": "object",
+            "properties": {
+                "summary": {
+                    "type": "string",
+                    "description": "A short description for this action."
+                },
+                "overloads": {
+                    "type": "array",
+                    "description": "All signatures for this action; accepts snippet syntax.",
+                    "items": {
+                        "type": "string",
+                        "minItems": 1
+                    }
+                }
+            },
+            "required": [
+                "summary",
+                "overloads"
+            ]
+        }
+    },
+    "required": [
+        "displayName"
+    ],
+    "default": {}
+}

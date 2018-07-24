@@ -108,6 +108,35 @@
                     <key>name</key>
                     <string>keyword.control.message.dftemplate</string>
                 </dict>
+                <dict>
+                    <key>match</key>
+                    <string>\((keyword|message|definition|symbol)\)</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>\((condition|action)\)\s(\w+)\s-></string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>support.type.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>
             </array>
         </dict>
         <key>symbols</key>

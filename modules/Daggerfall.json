@@ -1,0 +1,373 @@
+{
+    "displayName": "Daggerfall",
+    "conditions": [
+        {
+            "summary": "Clicked item.",
+            "overloads": [
+                "clicked item ${1:_item_}",
+                "clicked item ${1:_item_} say ${2:message}"
+            ]
+        },
+        {
+            "summary": "Handles player clicking on NPC.",
+            "overloads": [
+                "clicked npc ${1:_person_}",
+                "clicked npc ${1:_person_} say ${2:message}",
+                "clicked ${1:_person_} and at least ${2:dd} gold otherwise do ${3:task}"
+            ]
+        },
+        {
+            "summary": "Raise or lower task state based on time of day.",
+            "overloads": [
+                "daily from ${1:hh}:${2:mm} to ${3:hh}:${4:mm}"
+            ]
+        },
+        {
+            "summary": "Dropped item at place.",
+            "overloads": [
+                "dropped ${1:_item_} at ${2:_place_}",
+                "dropped ${1:_item_} at ${2:_place_} saying ${3:messageID}"
+            ]
+        },
+        {
+            "summary": "Starts a task when player has a particular item resource in their inventory.",
+            "overloads": [
+                "have ${1:_item_} set ${2:task}"
+            ]
+        },
+        {
+            "summary": "Triggers when a Foe has been injured. Will not fire if Foe dies immediately.",
+            "overloads": [
+                "injured ${1:_foe_}",
+                "injured ${1:_foe_} saying ${2:messageID}"
+            ]
+        },
+        {
+            "summary": "Killed foe; kills required must be at least 1.",
+            "overloads": [
+                "killed ${1:_foe_}",
+                "killed ${1:dd} ${2:_foe_}",
+                "killed ${1:dd} ${2:_foe_} saying ${3:messageID}"
+            ]
+        },
+        {
+            "summary": "Triggers when player has reached specified level or higher.",
+            "overloads": [
+                "level ${1:dd} completed"
+            ]
+        },
+        {
+            "summary": "Checks if player character is at a specific place; set and do are equivalent.",
+            "overloads": [
+                "pc at ${1:_place_} ${2|set,do|} ${3:task}",
+                "pc at ${1:_place_} ${2|set,do|} ${3:task} saying ${4:messageID}"
+            ]
+        },
+        {
+            "summary": "Executes a task when reputation with NPC exceeds value.",
+            "overloads": [
+                "repute with ${1:_person_} exceeds ${2:dd} do ${3:task}"
+            ]
+        },
+        {
+            "summary": "Condition triggers when player clicks on NPC while holding a quest Item in their inventory.",
+            "overloads": [
+                "toting ${1:_item_} and ${2:_person_} clicked",
+                "toting ${1:_item_} and ${2:_person_} clicked saying ${3:message}"
+            ]
+        },
+        {
+            "summary": "Condition that fires when player equips an Item or clicks Use on item in inventory window.",
+            "overloads": [
+                "${1:_item_} used do ${2:task}",
+                "${1:_item_} used saying ${2:messageID} do ${2:task}"
+            ]
+        },
+        {
+            "summary": "Triggers when player clicks on an individual NPC that is not currently assigned to another quest.",
+            "overloads": [
+                "when ${1:_person_} is available"
+            ]
+        },
+        {
+            "summary": "Triggers when player reputation with a special named NPC equals or exceeds a minimum value.",
+            "overloads": [
+                "when repute with ${1:_person_} is at least ${2:dd}"
+            ]
+        },
+        {
+            "summary": "When/when not task performed condition chain.",
+            "overloads": [
+                "when ${1:task}",
+                "when not ${1:task}"
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "summary": "Make talk options available.",
+            "overloads": [
+                "add dialog for ${1|location,person,item|} ${2:_symbol_}",
+                "add dialog for location ${1:_place_} ${2|person,item|} ${3:_symbol_}",
+                "add dialog for person ${1:_person_} item ${2:_item_}",
+                "add dialog for location ${1:_place_} person ${1:_person_} item ${2:_item_}"
+            ]
+        },
+        {
+            "summary": "Adds an NPC portrait to HUD which indicates player is escorting this NPC.",
+            "overloads": [
+                "add ${1:_person_} face",
+                "add ${1:_person_} face saying ${2:messageID}"
+            ]
+        },
+        {
+            "summary": "Changes reputation with an NPC by specified amount.",
+            "overloads": [
+                "change repute with ${1:_person_} by ${2|+,-|}${3:amount}"
+            ]
+        },
+        {
+            "summary": "Unsets one or more tasks so they can be triggered again.",
+            "overloads": [
+                "clear ${1:task}"
+            ]
+        },
+        {
+            "summary": "Spawn a Foe resource into the world.",
+            "overloads": [
+                "create foe ${1:_foe_} every ${2:dd} minutes indefinitely with ${3:dd}% success",
+                "create foe ${1:_foe_} every ${2:dd} minutes ${3:nn} times with ${4:dd}% success"
+            ]
+        },
+        {
+            "summary": "Spawn a Foe resource into the world; limits the spawning of foe to the times when the player is above ground.",
+            "overloads": [
+                "send ${1:_foe_} every ${2:dd} minutes with ${4:dd}% success",
+                "send ${1:_foe_} every ${2:dd} minutes ${3:dd} times with ${4:dd}% success"
+            ]
+        },
+        {
+            "summary": "Places a Person to a random building in their home town within current region.",
+            "overloads": [
+                "create npc ${1:_person_}"
+            ]
+        },
+        {
+            "summary": "Reserve a quest site before linking resources; these are tipically, but not necessarily, an npc.",
+            "overloads": [
+                "create npc at ${1:_place_}"
+            ]
+        },
+        {
+            "summary": "Cure specific disease on player.",
+            "overloads": [
+                "cure ${1:disease}"
+            ]
+        },
+        {
+            "summary": "Dialog link.",
+            "overloads": [
+                "dialog link for ${1|item,person,location|} ${2:_symbol_}",
+                "dialog link for ${1|person,location|} ${2:_symbol_} item ${3:_item_}",
+                "dialog link for location ${2:_symbol_} person ${3:_person_}",
+                "dialog link for location ${2:_symbol_} person ${3:_person_} item ${4:_item_}"
+            ]
+        },
+        {
+            "summary": "Drop escorting face from HUD.",
+            "overloads": [
+                "drop ${1:_person_} face"
+            ]
+        },
+        {
+            "summary": "End quest",
+            "overloads": [
+                "end quest",
+                "end quest saying ${1:messageID}"
+            ]
+        },
+        {
+            "summary": "Give a quest Item to player.",
+            "overloads": [
+                "get item ${1:_item_}"
+            ]
+        },
+        {
+            "summary": "Give an item to a resource.",
+            "overloads": [
+                "give item ${1:_item_} to ${2:_symbol_}"
+            ]
+        },
+        {
+            "summary": "Give a quest item to player and displays QuestComplete success message or a custom message. Can be used to give quest reward or just place item directly into player's inventory.",
+            "overloads": [
+                "give pc nothing",
+                "give pc ${1:_item_}",
+                "give pc ${1:_item_} silently",
+                "give pc ${1:_item_} notify ${2:messageID}"
+            ]
+        },
+        {
+            "summary": "Hide NPC from world temporarily.",
+            "overloads": [
+                "hide npc ${1:_person_}"
+            ]
+        },
+        {
+            "summary": "Adds Qrc text message to player journal. A quest can have up to 10 journal entries; if message has already been added at stepID index, old message gets replaced.",
+            "overloads": [
+                "log ${1:messageID} ${2:dd}",
+                "log ${1:messageID} step ${2:dd}"
+            ]
+        },
+        {
+            "summary": "Inflicts a disease on player.",
+            "overloads": [
+                "make pc ill with ${1:disease}"
+            ]
+        },
+        {
+            "summary": "Converts a quest item into a permanent item.",
+            "overloads": [
+                "make ${1:_item_} permanent"
+            ]
+        },
+        {
+            "summary": "Triggers a random task.",
+            "overloads": [
+                "pick one of ${1:task}"
+            ]
+        },
+        {
+            "summary": "Moves foe into world at a reserved site.",
+            "overloads": [
+                "place foe ${1:_foe_} at ${2:_place}",
+                "place foe ${1:_foe_} at ${2:_place} marker ${3:dd}"
+            ]
+        },
+        {
+            "summary": "Moves item into world at a reserved site.",
+            "overloads": [
+                "place item ${1:_item_} at ${2:_place}",
+                "place item ${1:_item_} at ${2:_place} marker ${3:dd}"
+            ]
+        },
+        {
+            "summary": "Moves npc into world at a reserved site.",
+            "overloads": [
+                "place npc ${1:_person_} at ${2:_place}"
+            ]
+        },
+        {
+            "summary": "Plays sound every x minutes y times.",
+            "overloads": [
+                "play sound ${1:sound} ${2:mm} ${3:dd}",
+                "play sound ${1:sound} every ${2:mm} minutes ${3:dd}"
+            ]
+        },
+        {
+            "summary": "Plays a video",
+            "overloads": [
+                "play video ${1:dd}"
+            ]
+        },
+        {
+            "summary": "Prompt which displays a yes/no dialog that executes a different task based on user input.",
+            "overloads": [
+                "prompt ${1:message} yes ${2:task} no ${3:task}"
+            ]
+        },
+        {
+            "summary": "Removes Qrc text message from player journal.",
+            "overloads": [
+                "remove log step ${1:dd}"
+            ]
+        },
+        {
+            "summary": "Restore NPC previously hidden from world.",
+            "overloads": [
+                "restore npc ${1:_person_}"
+            ]
+        },
+        {
+            "summary": "Makes a foe non-hostile until player strikes them again.",
+            "overloads": [
+                "restrain foe ${1:_foe_}"
+            ]
+        },
+        {
+            "summary": "Reveals location on travelmap.",
+            "overloads": [
+                "reveal ${1:_place_}"
+            ]
+        },
+        {
+            "summary": "Makes talk options available.",
+            "overloads": [
+                "rumor mill ${1:messageID}"
+            ]
+        },
+        {
+            "summary": "Displays a prompt which user can click to dismiss.",
+            "overloads": [
+                "say ${1:message}"
+            ]
+        },
+        {
+            "summary": "Starts another quest from name or index (repeated two times).",
+            "overloads": [
+                "start quest ${1:questName}",
+                "start quest ${1:questIndex} ${2:questIndex}"
+            ]
+        },
+        {
+            "summary": "Starts a clock resource timer",
+            "overloads": [
+                "start timer ${1:_clock_}"
+            ]
+        },
+        {
+            "summary": "Stops a clock resource timer",
+            "overloads": [
+                "stop timer ${1:_clock_}"
+            ]
+        },
+        {
+            "summary": "Starts a task by setting it active.",
+            "overloads": [
+                "start task ${1:task}"
+            ]
+        },
+        {
+            "summary": "Starts a task by setting it active.",
+            "overloads": [
+                "setvar ${1:task}"
+            ]
+        },
+        {
+            "summary": "Remove a quest Item from player.",
+            "overloads": [
+                "take ${1:_item_} from pc",
+                "take ${1:_item_} from pc saying ${1:messageID}"
+            ]
+        },
+        {
+            "summary": "Teleport player to a dungeon for dungeon traps, or as part of main quest.",
+            "overloads": [
+                "teleport pc to ${1:_place_}"
+            ]
+        },
+        {
+            "summary": "Teleport player to a dungeon for dungeon traps, or as part of main quest.",
+            "overloads": [
+                "transfer pc inside ${1:_place_} marker ${2:dd}"
+            ]
+        },
+        {
+            "summary": "Permanently disable a task.",
+            "overloads": [
+                "unset ${1:task}"
+            ]
+        }
+    ]
+}
