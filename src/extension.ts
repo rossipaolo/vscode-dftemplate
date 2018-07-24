@@ -15,6 +15,7 @@ import { TemplateReferenceProvider } from './providers/referenceProvider';
 import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
+import { Modules } from './language/modules';
 
 const TEMPLATE_LANGUAGE = 'dftemplate';
 const TEMPLATE_MODE: DocumentFilter[] = [
@@ -23,7 +24,8 @@ const TEMPLATE_MODE: DocumentFilter[] = [
 ];
 
 export class Options {
-    public static centeredMessages:boolean;
+    public static centeredMessages: boolean;
+    public static modules: string[];
 }
 
 export function activate(context: ExtensionContext) {
@@ -32,6 +34,9 @@ export function activate(context: ExtensionContext) {
 
     let config = vscode.workspace.getConfiguration('dftemplate');
     Options.centeredMessages = config.get<boolean>('format.centeredMessages') || Options.centeredMessages;
+    Options.modules = config.get<string[]>('modules') || [];
+
+    Modules.getInstance().load(context);
 
     context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(context)));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(context)));
@@ -43,6 +48,7 @@ export function activate(context: ExtensionContext) {
 }
 
 export function deactivate() {
+    Modules.release();
 }
 
 export function loadTable(context: ExtensionContext, location: string): Thenable<any> {
@@ -54,4 +60,13 @@ export function loadTable(context: ExtensionContext, location: string): Thenable
 
         console.error('Failed to parse ' + location);
     }, () => console.error('Failed to load ' + location));
+}
+
+export function parseFromJson(fullPath: string): Thenable<any> {
+    return vscode.workspace.openTextDocument(fullPath).then((document) => {
+        let obj = JSON.parse(document.getText());
+        if (obj) {
+            return obj;
+        }
+    });
 }

@@ -21,6 +21,12 @@
                 "tables/documentation.json"
             ],
             "url": "./schemas/documentation.json"
+        },
+        {
+            "fileMatch": [
+                "modules/*.json"
+            ],
+            "url": "./schemas/module.json"
         }
     ]
 }

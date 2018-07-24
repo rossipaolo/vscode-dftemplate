@@ -8,6 +8,7 @@ import { ExtensionContext, HoverProvider, Hover, TextDocument, Position, Markdow
 import { EOL } from 'os';
 import { loadTable } from '../extension';
 import { Parser, Types } from '../language/parser';
+import { Modules } from '../language/modules';
 
 class TemplateDocumentationParameter {
     public name = '';
@@ -96,6 +97,25 @@ export class TemplateHoverProvider implements HoverProvider {
 
                         return reject();
                     }, () => { return reject(); });
+                }
+
+                // Actions
+                let result = Modules.getInstance().findAction(word, document.lineAt(position.line).text);
+                if (result) {
+                    let item = new TemplateDocumentationItem();
+                    item.category = result.actionKind;
+                    let signature = result.moduleName + ' -> ' + result.action.overloads[result.overload];
+                    if (result.action.overloads.length > 1) {
+                        signature += '\n\nother overload(s):';
+                        for (let i = 0; i < result.action.overloads.length; i++) {
+                            if (i !== result.overload) {
+                                signature += '\n' + result.action.overloads[i];
+                            }
+                        }
+                    }
+                    item.signature = Modules.prettySignature(signature);
+                    item.summary = result.action.summary;
+                    return resolve(TemplateHoverProvider.makeHover(item));
                 }
             }
 
