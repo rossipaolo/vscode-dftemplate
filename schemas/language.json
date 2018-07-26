@@ -1,0 +1,87 @@
+{
+    "title": "DFTemplate Documentation",
+    "description": "Documentation table for DF Template.",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "symbols": {
+            "type": "object",
+            "description": "Language symbols that provides a value for the quest state.",
+            "additionalProperties": {
+                "type": "string",
+                "description": "A language symbol."
+            }
+        },
+        "keywords": {
+            "type": "object",
+            "description": "Keywords.",
+            "additionalProperties": {
+                "$ref": "#/definitions/item"
+            }
+        },
+        "messages": {
+            "type": "object",
+            "description": "Default quest messages.",
+            "additionalProperties": {
+                "$ref": "#/definitions/item"
+            }
+        },
+        "definitions": {
+            "type": "object",
+            "description": "Quest symbol definition signatures.",
+            "additionalProperties": {
+                "$ref": "#/definitions/item"
+            }
+        }
+    },
+    "required": [
+        "symbols",
+        "keywords",
+        "messages",
+        "definitions"
+    ],
+    "definitions": {
+        "item": {
+            "type": "object",
+            "description": "An element",
+            "properties": {
+                "category": {
+                    "type": "string",
+                    "description": "The category of the element."
+                },
+                "signature": {
+                    "type": "string",
+                    "description": "Signature of the element."
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "A short description of the element."
+                },
+                "parameters": {
+                    "type": "array",
+                    "description": "Parameters for a symbol definition.",
+                    "items": {
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "The name of the parameter."
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "A short description of the parameter."
+                            }
+                        },
+                        "required": [
+                            "name",
+                            "description"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "summary"
+            ]
+        }
+    },
+    "default": {}
+}

@@ -18,9 +18,9 @@
         },
         {
             "fileMatch": [
-                "tables/documentation.json"
+                "tables/language.json"
             ],
-            "url": "./schemas/documentation.json"
+            "url": "./schemas/language.json"
         },
         {
             "fileMatch": [

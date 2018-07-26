@@ -4,11 +4,11 @@
 
 'use strict';
 
-import { ExtensionContext, HoverProvider, Hover, TextDocument, Position, MarkdownString } from 'vscode';
+import { HoverProvider, Hover, TextDocument, Position, MarkdownString } from 'vscode';
 import { EOL } from 'os';
-import { loadTable } from '../extension';
 import { Parser, Types } from '../language/parser';
 import { Modules } from '../language/modules';
+import { Language } from '../language/language';
 
 class TemplateDocumentationParameter {
     public name = '';
@@ -23,16 +23,6 @@ class TemplateDocumentationItem {
 }
 
 export class TemplateHoverProvider implements HoverProvider {
-
-    private documentation = new Map<string, TemplateDocumentationItem>();
-
-    constructor(context: ExtensionContext) {
-        loadTable(context, 'tables/documentation.json').then((obj) => {
-            for (let k of Object.keys(obj)) {
-                this.documentation.set(k, obj[k]);
-            }
-        });
-    }
 
     public provideHover(document: TextDocument, position: Position): Thenable<Hover> {     
         let instance:TemplateHoverProvider = this;
@@ -72,12 +62,11 @@ export class TemplateHoverProvider implements HoverProvider {
                     }
                 }
 
-                // Seek word in documentation file
-                if (instance.documentation.has(word)) {
-                    let item = instance.documentation.get(word);
-                    if (item) {
-                        return resolve(TemplateHoverProvider.makeHover(item));
-                    }
+                // Seek word in documentation files
+                let languageItem = Language.getInstance().seekByName(word);
+                if (languageItem) {
+                    languageItem.signature = Language.prettySignature(languageItem.signature);
+                    return resolve(TemplateHoverProvider.makeHover(languageItem));
                 }
 
                 // Seek quest
@@ -141,10 +130,11 @@ export class TemplateHoverProvider implements HoverProvider {
         }
 
         if (item.parameters) {
+            let parameters: string[] = [];
             item.parameters.forEach(parameter => {
-                let attributeText = new MarkdownString();
-                hovertext.push(attributeText.appendMarkdown('*@param* `' + parameter.name + '` - ' + parameter.description));
+                parameters.push('*@param* `' + parameter.name + '` - ' + parameter.description);
             });
+            hovertext.push(new MarkdownString(parameters.join('\n\n')));
         }
 
         return new Hover(hovertext);
