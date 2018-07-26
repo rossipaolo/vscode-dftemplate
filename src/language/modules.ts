@@ -8,24 +8,7 @@ import * as vscode from 'vscode';
 
 import { ExtensionContext } from 'vscode';
 import { Options, parseFromJson } from '../extension';
-
-// Standard variables for signatures in modules.
-// Might be used for diagnostic in the future.
-// SYMBOL_ANY = '_symbol_';
-// SYMBOL_PERSON = '_person_';
-// SYMBOL_ITEM = '_item_';
-// SYMBOL_FOE = '_foe_';
-// SYMBOL_CLOCK = '_clock_';
-// NUMBER_GENERIC = 'dd';
-// NUMBER_HOUR = 'hh';
-// NUMBER_MINUTES = 'mm';
-// STRING = 'ww';
-// MESSAGE_ANY = 'message';
-// MESSAGE_ID = 'messageID';
-// MESSAGE_NAME = 'messageName';
-// TASK = 'task';
-// QUEST_INDEX = 'questID';
-// QUEST_NAME = 'questName';
+import { TablesManager } from './base/tablesManager';
 
 interface Action {
     summary: string;
@@ -49,7 +32,7 @@ export interface Module {
 /**
  * Manage imported modules for intellisense.
  */
-export class Modules {
+export class Modules extends TablesManager {
 
     private modules: Module[] = [];
 
@@ -113,13 +96,6 @@ export class Modules {
         Modules.instance = null;
     }
 
-    /**
-     * Convert a snippet string to a pretty signature definition.
-     */
-    public static prettySignature(signature: string): string {
-        return signature.replace(/\${\d(:|\|)?/g, '').replace(/\|?}/g, '');
-    }
-
     private static loadModules(paths: string[], context: ExtensionContext): Thenable<Module[]> {
         var modules = [];
         for (const path of paths) {
@@ -145,11 +121,5 @@ export class Modules {
                 yield action;
             }
         }
-    }
-
-    private static makeRegexFromSignature(signature: string): RegExp {
-        signature = signature.replace(/\${\d\|/g, '(').replace(/\|}/g, ')').replace(/,/g, '|'); // ${d|a,b|} -> (a|b)
-        signature = signature.replace(/\${\d:[a-zA-Z0-9_]+?}/g, '[a-zA-Z0-9_]+');               // ${d:a}    -> [a-zA-Z0-9_]+
-        return new RegExp('^\\s*' + signature + '\\s*$');
     }
 }

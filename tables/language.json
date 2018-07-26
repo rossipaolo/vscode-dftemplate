@@ -1,0 +1,279 @@
+{
+    "symbols": {
+        "%1am": "1st + Magnitude",
+        "%1bm": "1st base Magnitude",
+        "%1com": "Greeting",
+        "%2am": "2nd + Magnitude",
+        "%2bm": "2nd Base Magnitude",
+        "%a": "Cost of something.",
+        "%ach": "Chance per",
+        "%adr": "Duration per",
+        "%agi": "amount of Agility",
+        "%arm": "Armour",
+        "%ba": "Book Author",
+        "%bch": "Base chance",
+        "%bdr": "Base Duration",
+        "%bt": "Book title",
+        "%cbl": "Cash balance in current region",
+        "%clc": "Per level (Chance)",
+        "%cld": "Per level (Duration)",
+        "%clm": "Per level (Magnitude)",
+        "%cn": "Current City",
+        "%cpn": "Current shop name",
+        "%cri": "Accused crime",
+        "%crn": "Current Region",
+        "%dae": "A daedra",
+        "%dam": "Damage modifyer",
+        "%dat": "Date",
+        "%di": "Direction",
+        "%dng": "Dungeon",
+        "%dts": "Daedra",
+        "%ef": "Local shop name",
+        "%enc": "Encumberence",
+        "%end": "Amount of Endurance",
+        "%fcn": "Another city",
+        "%fl1": "Lord of %fx1",
+        "%fl2": "Lord of %fx2",
+        "%fn": "Random first(?) name (Female?)",
+        "%fn2": "Same as %mn2 (?)",
+        "%fx1": "A faction in news",
+        "%fx2": "Another faction in news",
+        "%g": "He/She etc...",
+        "%g1": "He/She ???",
+        "%g2": "Him/Her etc...",
+        "%g2self": "Himself/Herself etc...",
+        "%g3": "His/Hers/Theirs etc...",
+        "%gii": "Amount of gold in hand",
+        "%god": "Some god (listed in TEXT.RSC)",
+        "%gtp": "Amount of fine",
+        "%hea": "HP Modifier",
+        "%hmd": "Healing rate modifer",
+        "%hnr": "Honorific",
+        "%hnt": "Direction of location.",
+        "%hol": "Holiday",
+        "%hs": "Holding Soul type",
+        "%int": "Amount of Intelligence",
+        "%it": "Item",
+        "%jok": "A joke",
+        "%key": "A location (?)",
+        "%key2": "Another location",
+        "%kg": "Weight of items",
+        "%kno": "A knightly guild name",
+        "%lev": "Rank in guild that you are in.",
+        "%ln": "Random lastname",
+        "%loc": "Location marked on map",
+        "%lt1": "Title of %fl1",
+        "%ltn": "In the eyes of the law you are.......",
+        "%luc": "Luck",
+        "%mad": "Resistance",
+        "%mat": "Material",
+        "%mit": "Item",
+        "%mn": "Random First(?) name (Male?)",
+        "%mn2": "Same as %mn (?)",
+        "%mod": "Modification",
+        "%mpw": "Magic powers",
+        "%n": "A random female first name",
+        "%nam": "A random full name",
+        "%nrn": "Noble of the current region",
+        "%ol1": "Old lord of %fx1",
+        "%olf": "What happened to %ol1",
+        "%oth": "An oath (listed in TEXT.RSC)",
+        "%pcf": "Character's first name",
+        "%pcn": "Character's full name",
+        "%pct": "Character's class",
+        "%pdg": "Days in jail",
+        "%pen": "Prison sentence",
+        "%per": "Amount of Personality",
+        "%plq": "Place of something in log.",
+        "%pnq": "Person of something in log",
+        "%pqn": "Potential Quest Giver",
+        "%pqp": "Potential Quest Giver's Location",
+        "%ptm": "An enemy of the current region (?)",
+        "%qdt": "Quest date of log entry",
+        "%qdat": "Quest date of log entry  2 ",
+        "%qot": "The log comment",
+        "%qua": "Condition",
+        "%r1": "Commoners rep",
+        "%r2": "Merchants rep",
+        "%r3": "Scholers rep",
+        "%r4": "Nobilitys rep",
+        "%r5": "Underworld rep",
+        "%ra": "Player's race",
+        "%reg": "Region",
+        "%rn": "Regent's Name",
+        "%rt": "Regent's Title",
+        "%spc": "Current Spell Points",
+        "%ski": "Skill",
+        "%spd": "Speed",
+        "%str": "Amount of strength",
+        "%t": "Regent's Title",
+        "%thd": "Combat odds",
+        "%tim": "Time",
+        "%vam": "PC's vampire clan",
+        "%vcn": "Vampire's Clan",
+        "%wdm": "Weapon damage",
+        "%wep": "Weapon",
+        "%wpn": "Poison",
+        "%wth": "Worth",
+        "%pg": "[DU] He/She (player)",
+        "%pg1": "[DU] His/Her (player)",
+        "%pg2": "[DU] Him/Her (player)",
+        "%pg2self": "[DU] Himself/Herself (player)",
+        "%pg3": "[DU] His/Hers (player)",
+        "%hrn": "[DU] Home region (of person)"
+    },
+    "keywords": {
+        "Messages": {
+            "signature": "Messages: ${1:dd}",
+            "summary": "Number of messages the compiler ought to expect. This need not be exact, just a limit."
+        },
+        "Quest": {
+            "signature": "Quest: ${1:pattern}",
+            "summary": "`pattern` is the desired quest file name pattern."
+        },
+        "DisplayName": {
+            "signature": "DisplayName: ${1:ww}",
+            "summary": "A readable name for this quest."
+        },
+        "QRC": {
+            "signature": "QRC:",
+            "summary": "**QRC Text Blocks**: this directive announces the text messages block. Every message is assigned a serial number starting from 1000 and increasing."
+        },
+        "QBN": {
+            "signature": "QBN:",
+            "summary": "**Quest Resources and Operations**: this directive announces two subsections. Definitions of entities used by the quest, and condition/responses that operate during the quest (tasks)."
+        }
+    },
+    "messages": {
+        "QuestorOffer": {
+            "signature": "QuestorOffer:  [1000]",
+            "summary": "What the questor says when the PC makes contact for the quest. This is a required message."
+        },
+        "RefuseQuest": {
+            "signature": "RefuseQuest:  [1001]",
+            "summary": "What the questor says when the PC refuses the quest offer. This is a required message"
+        },
+        "AcceptQuest": {
+            "signature": "AcceptQuest:  [1002]",
+            "summary": "What the questor says when the PC makes contact for the quest. This is expected for quests started in person."
+        },
+        "QuestFailed": {
+            "signature": "QuestFailed:  [1003]",
+            "summary": "What the questor says until the PC completes the quest. This is expected for quests started in person."
+        },
+        "QuestComplete": {
+            "signature": "QuestComplete:  [1004]",
+            "summary": "What the questor says when the PC completes the quest and returns. This is expected for quests started in person. Certain quest actions will post this message automatically."
+        },
+        "RumorsDuringQuest": {
+            "signature": "RumorsDuringQuest:  [1005]",
+            "summary": "Gives information that may come up during *Any News?* dialogs the PC has during the quest. "
+        },
+        "RumorsPostFailure": {
+            "signature": "RumorsPostFailure:  [1006]",
+            "summary": "Gives information that may come up during *Any News?* dialogs the PC has after failing the quest."
+        },
+        "RumorsPostSuccess": {
+            "signature": "RumorsPostFailure:  [1007]",
+            "summary": "Gives information that may come up during *Any News?* dialogs the PC has after completing the quest."
+        },
+        "QuestorPostSuccess": {
+            "signature": "QuestorPostSuccess:  [1008]",
+            "summary": "What the questor says to the PC in dialog after a successful quest."
+        },
+        "QuestorPostFailure": {
+            "signature": "QuestorPostFailure:  [1009]",
+            "summary": "What the questor says to the PC in dialog after a failed quest."
+        },
+        "QuestLogEntry": {
+            "signature": "QuestLogEntry:  [1010]",
+            "summary": "The message inserted into the PC's log when the quest is accepted. Probably not used automatically."
+        },
+        "QuestTimeLapse": {
+            "signature": "QuestTimeLapse:  [1045]",
+            "summary": "Displayed when the PC fails to meet a quest with a dead-line. Probably not used automatically."
+        },
+        "Message": {
+            "signature": "Message:  ${1:messageNumber}",
+            "summary": "An additional message block.",
+            "parameters": [
+                {
+                    "name": "messageNumber",
+                    "description": "An univocal number for this message."
+                }
+            ]
+        }
+    },
+    "definitions": {
+        "Item": {
+            "signature": "Item _symbol_ [artifact] itemName [range nn to mm]",
+            "summary": "An item associated with the quest. Use 'gold' as name to give proportional reward in a optional range.",
+            "parameters": [
+                {
+                    "name": "artifact",
+                    "description": "describes a known Tamriel artifact."
+                },
+                {
+                    "name": "itemName",
+                    "description": "gold or common item."
+                },
+                {
+                    "name": "range",
+                    "description": "range for the gold"
+                }
+            ]
+        },
+        "Person": {
+            "signature": "Person _symbol_ attribute1 attribute1Value [attribute2]",
+            "summary": "A Person encountered in the quest. This can be a permanent npc with a name, optionally spawned at home, or a random npcs from a given group. If gender is not specified, a random one is chosen.",
+            "parameters": [
+                {
+                    "name": "attribute1",
+                    "description": "named, factiontype, group or faction."
+                },
+                {
+                    "name": "attribute1Value",
+                    "description": "the value of attribute1: name of npc or name of group."
+                },
+                {
+                    "name": "attribute2",
+                    "description": "athome for permanent npcs; male, female or nothing for random npcs."
+                }
+            ]
+        },
+        "Place": {
+            "signature": "Place _symbol_ attribute aPlace",
+            "summary": "A Place encountered in the quest. This can be a permanent location in game world or a house in current or remote town. ",
+            "parameters": [
+                {
+                    "name": "attribute",
+                    "description": "permanent, local or remote."
+                }
+            ]
+        },
+        "Clock": {
+            "signature": "Clock _symbol_ [dd.hh:mm] [aa.bb:cc]",
+            "summary": "A Clock or timer used in the quest. Run downs in the given moment or in the given range. If both parameters are omitted, run time is random.",
+            "parameters": [
+                {
+                    "name": "dd.hh:mm",
+                    "description": "specific time or range floor."
+                },
+                {
+                    "name": "aa.bb:cc",
+                    "description": "range ceiling."
+                }
+            ]
+        },
+        "Foe": {
+            "signature": "Foe _symbol_ is [nn] anEnemy",
+            "summary": "One or multiple enemies encountered in the quest. if nn parameter is omitted, default value is 1.",
+            "parameters": [
+                {
+                    "name": "nn",
+                    "description": "number of spawned enemies."
+                }
+            ]
+        }
+    }
+}

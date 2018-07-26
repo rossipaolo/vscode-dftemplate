@@ -16,6 +16,7 @@ import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvid
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { Modules } from './language/modules';
+import { Language } from './language/language';
 
 const TEMPLATE_LANGUAGE = 'dftemplate';
 const TEMPLATE_MODE: DocumentFilter[] = [
@@ -36,18 +37,20 @@ export function activate(context: ExtensionContext) {
     Options.centeredMessages = config.get<boolean>('format.centeredMessages') || Options.centeredMessages;
     Options.modules = config.get<string[]>('modules') || [];
 
+    Language.getInstance().load(context);
     Modules.getInstance().load(context);
 
-    context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(context)));
+    context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(context)));
     context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider()));
     context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
-    context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));  
+    context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
 }
 
 export function deactivate() {
+    Language.release();
     Modules.release();
 }
 
