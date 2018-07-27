@@ -96,10 +96,11 @@ export class Parser {
     }
 
     /**
-     * Find a task from its symbol and return its location. Undefined if not found.
+     * Find a task from its symbol and return its location; support variables, 
+     * meaning tasks without any conditions or actions. Undefined if not found.
      */
     public static findTask(document: TextDocument, symbol: string) : TextLine | undefined {
-        return Parser.findLine(document, new RegExp('^\\s*' + symbol + '\\s+task:'));
+        return Parser.findLine(document, new RegExp('^\\s*(' + symbol + '\\s+task:|variable\\s+' + symbol + ')'));
     }
 
     /**
