@@ -36,8 +36,13 @@ export abstract class TablesManager {
      * Convert a snippet string to a regular expression that matches the signature.
      */
     protected static makeRegexFromSignature(signature: string): RegExp {
-        signature = signature.replace(/\${\d\|/g, '(').replace(/\|}/g, ')').replace(/,/g, '|'); // ${d|a,b|} -> (a|b)
-        signature = signature.replace(/\${\d:[a-zA-Z0-9_]+?}/g, '[a-zA-Z0-9_-]+');              // ${d:a}    -> [a-zA-Z0-9_-]+
+        // params: allows the last variable to be repeated
+        if (/\${\d:\.\.\.[a-zA-Z0-9_-]+}$/.test(signature)) {
+           signature = signature.substring(0, signature.lastIndexOf(' ')) + '(\\s+[a-zA-Z0-9_-]+)+';
+        }
+
+        signature = signature.replace(/\${\d\|/g, '(').replace(/\|}/g, ')').replace(/,/g, '|');     // ${d|a,b|} -> (a|b)
+        signature = signature.replace(/\${\d:[a-zA-Z0-9_-]+?}/g, '[a-zA-Z0-9_-]+');                 // ${d:a}    -> [a-zA-Z0-9_-]+    
         return new RegExp('^\\s*' + signature + '\\s*$');
     }
 
@@ -45,9 +50,10 @@ export abstract class TablesManager {
      * Detects issues and returns error messages.
      */
     protected static *doDiagnostics(document: TextDocument, signature: string, line: string): Iterable<string> {
-        const signatureItems = signature.replace(/\${\d:/g, '${d:').split(' ');
         const lineItems = line.trim().split(' ');
-        for (let i = 0; i < signatureItems.length && i < lineItems.length; i++) {
+        let signatureItems = signature.replace(/\${\d:/g, '${d:').split(' ');
+        signatureItems = TablesManager.doParams(signatureItems, lineItems);
+        for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
             const word = lineItems[i];
             switch (signatureItems[i]) {
                 case '${d:dd}':
@@ -129,6 +135,18 @@ export abstract class TablesManager {
                 //     break;
             }
         }
+    }
+
+    private static doParams(signatureItems: string[], lineItems: string[]): string[] {
+        if (signatureItems[signatureItems.length - 1].indexOf('${d:...') !== -1) {
+            const last = signatureItems[signatureItems.length - 1].replace('${d:...', '${d:');
+            signatureItems[signatureItems.length - 1] = last;
+            if (lineItems.length > signatureItems.length) {
+                signatureItems = signatureItems.concat(Array(lineItems.length - signatureItems.length).fill(last));
+            }
+        }
+
+        return signatureItems;
     }
 
     private static checkType(document: TextDocument, symbol: string, type: string): string | undefined {
