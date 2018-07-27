@@ -18,7 +18,7 @@ interface Action {
 
 export interface ActionResult {
     moduleName: string;
-    actionKind: string; 
+    actionKind: string;
     action: Action;
     overload: number;
 }
@@ -88,11 +88,26 @@ export class Modules extends TablesManager {
         }
     }
 
+    /**
+     * Detects issues and returns error messages.
+     */
+    public *doDiagnostics(document: vscode.TextDocument, line: string): Iterable<string> {
+        let match = /^\s*([a-zA-Z]+)\s/g.exec(line);
+        if (match) {
+            const result = this.findAction(match[1], line);
+            if (result) {
+                for (const error of Modules.doDiagnostics(document, result.action.overloads[result.overload], line)) {
+                    yield error;
+                }
+            }
+        }
+    }
+
     public static getInstance(): Modules {
         return Modules.instance ? Modules.instance : Modules.instance = new Modules();
     }
 
-    public static release(){
+    public static release() {
         Modules.instance = null;
     }
 

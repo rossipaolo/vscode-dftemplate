@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 
 import { ExtensionContext } from 'vscode';
-import { loadTable } from '../extension';
+import { loadTable, iterateAll } from '../extension';
 import { TablesManager } from "./base/tablesManager";
 
 interface Parameter {
@@ -91,11 +91,8 @@ export class Language extends TablesManager {
      * Retrieve all items whose start match the given string.
      */
     public *seekByPrefix(prefix: string): Iterable<LanguageItemResult> {
-        for (const keyword of this.findKeywords(prefix)) {
-            yield keyword;
-        }
-        for (const message of this.findMessages(prefix)) {
-            yield message;
+        for (const result of iterateAll(this.findKeywords(prefix), this.findMessages(prefix))) {
+            yield result;
         }
     }
 
@@ -145,6 +142,21 @@ export class Language extends TablesManager {
         if (this.table && this.table.messages) {
             for (const message of Language.filterItems(this.table.messages, prefix)) {
                 yield Language.itemToResult(message, Language.ItemKind.Message);
+            }
+        }
+    }
+
+    /**
+     * Detects issues and returns error messages.
+     */
+    public *doDiagnostics(document: vscode.TextDocument, line: string): Iterable<string> {
+        let match = /^\s*([a-zA-Z]+)/g.exec(line);
+        if (match) {
+            const result = this.findKeyword(match[1]);
+            if (result) {
+                for (const error of Language.doDiagnostics(document, result.signature, line)) {
+                    yield error;
+                }
             }
         }
     }

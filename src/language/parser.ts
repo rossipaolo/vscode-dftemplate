@@ -21,7 +21,8 @@ export const enum Types {
  */
 export class Parser {
 
-    private static types: string[] = ['Item', 'Person', 'Place', 'Clock', 'Foe'];
+    private static readonly types: string[] = ['Item', 'Person', 'Place', 'Clock', 'Foe'];
+    private static readonly typesMatch = '\\s*(' + Parser.types.join('|') + ')\\s+';
 
     public static get questDefinitionPattern(): RegExp { return /^(\s*Quest:\s+)([a-zA-Z0-9]+)/g; }
     public static get questReferencePattern(): RegExp { return /^(\s*start\s+quest\s+)([a-zA-Z0-9]+)/g; }
@@ -58,6 +59,19 @@ export class Parser {
     }
 
     /**
+     * Find the definition type of a symbol.
+     */
+    public static getSymbolType(document: TextDocument, baseSymbol: string): string | undefined {
+        const line = Parser.findLine(document, new RegExp(Parser.typesMatch + baseSymbol));
+        if (line) {
+            const result = /^\s*([a-zA-Z0-9_]+)\s+/.exec(line.text);
+            if (result && result.length > 0) {
+                return result[1];
+            }
+        }
+    }
+
+    /**
      * Find the definition of a message and return its location. Undefined if not found.
      */
     public static findMessageDefinition(document: TextDocument, word: string): { line: TextLine, isDefault: boolean } | undefined {
@@ -72,6 +86,20 @@ export class Parser {
         if (line) {
             return { line: line, isDefault: false };
         }
+    }
+
+    /**
+     * Find the definition of a default message from its name and return its location. Undefined if not found.
+     */
+    public static findDefaultMessageByName(document: TextDocument, name: string): TextLine | undefined {
+        return Parser.findLine(document, new RegExp('\\s*' + name + '\\s*:\\s*\\[\\s*\\d+\\s*\\]', 'g'));
+    }
+
+    /**
+     * Find a task from its symbol and return its location. Undefined if not found.
+     */
+    public static findTask(document: TextDocument, symbol: string) : TextLine | undefined {
+        return Parser.findLine(document, new RegExp('^\\s*' + symbol + '\\s+task:'));
     }
 
     /**

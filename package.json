@@ -68,6 +68,11 @@
                     "default": true,
                     "description": "Messages with <ce> tag are horizontally centered."
                 },
+                "dftemplate.diagnostics.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Find issues with quests."
+                },
                 "dftemplate.modules": {
                     "type": "array",
                     "default": [
