@@ -42,7 +42,7 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
 
                 // Seek message from number
-                if (!isNaN(Number(word))) {                
+                if (!isNaN(Number(word))) {           
                     let messageDefinition = Parser.findMessageDefinition(document, word);
                     if (messageDefinition) {
                         let line = messageDefinition.line;

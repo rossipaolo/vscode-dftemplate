@@ -26,6 +26,7 @@ const TEMPLATE_MODE: DocumentFilter[] = [
 
 export class Options {
     public static centeredMessages: boolean;
+    public static diagnostics: boolean;
     public static modules: string[];
 }
 
@@ -35,6 +36,7 @@ export function activate(context: ExtensionContext) {
 
     let config = vscode.workspace.getConfiguration('dftemplate');
     Options.centeredMessages = config.get<boolean>('format.centeredMessages') || Options.centeredMessages;
+    Options.diagnostics = config.get<boolean>('diagnostics.enabled') || Options.diagnostics;
     Options.modules = config.get<string[]>('modules') || [];
 
     Language.getInstance().load(context);
@@ -47,6 +49,10 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
+
+    if (Options.diagnostics) {
+        context.subscriptions.push(makeDiagnosticCollection(context));
+    }
 }
 
 export function deactivate() {
@@ -72,4 +78,49 @@ export function parseFromJson(fullPath: string): Thenable<any> {
             return obj;
         }
     });
+}
+
+export function* iterateAll<T>(...iterables: Iterable<T>[]): Iterable<T> {
+    for (const iterable of iterables) {
+        for (const item of iterable) {
+            yield item;
+        }
+    }
+}
+
+/**
+ * Makes a diagnostic collection and subscribes to events for diagnostic.
+ */
+function makeDiagnosticCollection(context: vscode.ExtensionContext): vscode.DiagnosticCollection {
+    const diagnosticCollection = vscode.languages.createDiagnosticCollection(TEMPLATE_LANGUAGE);
+
+    context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
+        if (document.languageId === TEMPLATE_LANGUAGE) {
+
+            const diagnostics: vscode.Diagnostic[] = [];
+
+            for (let index = 0; index < document.lineCount; index++) {
+                const line = document.lineAt(index);
+                for (const error of iterateAll(
+                    Language.getInstance().doDiagnostics(document, line.text),
+                    Modules.getInstance().doDiagnostics(document, line.text))) {
+                    const diagnostic = new vscode.Diagnostic(trimRange(line), error);
+                    diagnostic.source = TEMPLATE_LANGUAGE;
+                    diagnostics.push(diagnostic);
+                }
+            }
+
+            diagnosticCollection.set(document.uri, diagnostics);
+        }
+    }));
+
+    return diagnosticCollection;
+}
+
+/**
+ * Gets the range for a line without leading and trailing spaces.
+ */
+function trimRange(line: vscode.TextLine): vscode.Range {
+    const end = line.text.replace(/\s+$/, '').length;
+    return new vscode.Range(line.lineNumber, line.firstNonWhitespaceCharacterIndex, line.lineNumber, end);
 }

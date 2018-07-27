@@ -241,21 +241,21 @@
         {
             "summary": "Moves foe into world at a reserved site.",
             "overloads": [
-                "place foe ${1:_foe_} at ${2:_place}",
-                "place foe ${1:_foe_} at ${2:_place} marker ${3:dd}"
+                "place foe ${1:_foe_} at ${2:_place_}",
+                "place foe ${1:_foe_} at ${2:_place_} marker ${3:dd}"
             ]
         },
         {
             "summary": "Moves item into world at a reserved site.",
             "overloads": [
-                "place item ${1:_item_} at ${2:_place}",
-                "place item ${1:_item_} at ${2:_place} marker ${3:dd}"
+                "place item ${1:_item_} at ${2:_place_}",
+                "place item ${1:_item_} at ${2:_place_} marker ${3:dd}"
             ]
         },
         {
             "summary": "Moves npc into world at a reserved site.",
             "overloads": [
-                "place npc ${1:_person_} at ${2:_place}"
+                "place npc ${1:_person_} at ${2:_place_}"
             ]
         },
         {
