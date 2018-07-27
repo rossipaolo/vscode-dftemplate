@@ -129,7 +129,7 @@
         {
             "summary": "Unsets one or more tasks so they can be triggered again.",
             "overloads": [
-                "clear ${1:task}"
+                "clear ${1:...task}"
             ]
         },
         {
@@ -233,9 +233,9 @@
             ]
         },
         {
-            "summary": "Triggers a random task.",
+            "summary": "Randomly triggers one of the tasks for activation. The choice is evenly selected over the tasks, but the selection can be skewed by repeating the same task.",
             "overloads": [
-                "pick one of ${1:task}"
+                "pick one of ${1:...task}"
             ]
         },
         {
