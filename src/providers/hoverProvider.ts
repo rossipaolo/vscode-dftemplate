@@ -39,6 +39,15 @@ export class TemplateHoverProvider implements HoverProvider {
                         item.summary = TemplateHoverProvider.getSymbolDescription(word, definition.type);
                         return resolve(TemplateHoverProvider.makeHover(item));
                     }
+
+                    const taskLine = Parser.findTask(document, word);
+                    if (taskLine) {
+                        const item = new TemplateDocumentationItem();
+                        item.category = 'task';
+                        item.signature = taskLine.text.trim();
+                        item.summary = Parser.makeSummary(document, taskLine.lineNumber);
+                        return resolve(TemplateHoverProvider.makeHover(item));
+                    }
                 }
 
                 // Seek message from number
