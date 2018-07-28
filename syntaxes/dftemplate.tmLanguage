@@ -246,6 +246,25 @@
                     <string>keyword.control.macro.dftemplate</string>
                 </dict>
                 <dict>
+                    <key>begin</key>
+                    <string>(?&lt;=->)|(?&lt;=^)\s*(?=when( not)? [a-zA-Z0-9_.]+( (and|or)( not)? [a-zA-Z0-9_.]+)*\s*$)</string>
+                    <key>patterns</key>
+                    <array>
+                        <dict>
+                            <key>include</key>
+                            <string>#symbols</string>
+                        </dict>
+                        <dict>
+                            <key>match</key>
+                            <string>\s(and not|and|or not|or)\s</string>
+                            <key>name</key>
+                            <string>keyword.control.operator.conditional.dftemplate</string>
+                        </dict>	
+                    </array>
+                    <key>end</key>
+                    <string>$</string>
+                </dict>
+                <dict>
                     <key>match</key>
                     <string>\b(start\squest)\s([^\s]+)\b</string>
                     <key>captures</key>

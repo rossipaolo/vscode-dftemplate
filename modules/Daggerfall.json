@@ -94,13 +94,6 @@
             "overloads": [
                 "when repute with ${1:_person_} is at least ${2:dd}"
             ]
-        },
-        {
-            "summary": "When/when not task performed condition chain.",
-            "overloads": [
-                "when ${1:task}",
-                "when not ${1:task}"
-            ]
         }
     ],
     "actions": [
@@ -110,7 +103,7 @@
                 "add dialog for ${1|location,person,item|} ${2:_symbol_}",
                 "add dialog for location ${1:_place_} ${2|person,item|} ${3:_symbol_}",
                 "add dialog for person ${1:_person_} item ${2:_item_}",
-                "add dialog for location ${1:_place_} person ${1:_person_} item ${2:_item_}"
+                "add dialog for location ${1:_place_} person ${2:_person_} item ${3:_item_}"
             ]
         },
         {
