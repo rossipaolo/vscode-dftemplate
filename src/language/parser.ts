@@ -58,6 +58,32 @@ export class Parser {
         }
     }
 
+    public static *findAllSymbolsDefinedInQuest(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
+        for (const variable of Parser.findAllDefinitionsInQuest(document, /^\s*(?:Person|Place|Item|Foe)\s*([a-zA-Z0-9._]+)/)) {
+            yield variable;
+        }
+    }
+
+    public static *findAllTasksDefinedInQuest(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
+        for (const variable of Parser.findAllDefinitionsInQuest(document, /^\s*(?:([a-zA-Z0-9._]+)\s*task:|until\s*([a-zA-Z0-9._]+)\s*performed)/)) {
+            yield variable;
+        }
+    }
+
+    public static *findAllVariablesDefinedInQuest(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
+        for (const variable of Parser.findAllDefinitionsInQuest(document, /^\s*variable\s*([a-zA-Z0-9._]+)/)) {
+            yield variable;
+        }
+    }
+
+    public static *findAllDefinitionsInQuest(document: TextDocument, regex: RegExp): Iterable<{ line: TextLine, symbol: string }> {
+        for (let index = 0; index < document.lineCount; index++) {
+            const line = document.lineAt(index);
+            const matches = regex.exec(line.text);
+            if (matches) { yield { line: line, symbol: matches[1] }; }
+        }
+    }
+
     /**
      * Find the definition type of a symbol.
      */
@@ -99,8 +125,9 @@ export class Parser {
      * Find a task from its symbol and return its location; support variables, 
      * meaning tasks without any conditions or actions. Undefined if not found.
      */
-    public static findTask(document: TextDocument, symbol: string) : TextLine | undefined {
-        return Parser.findLine(document, new RegExp('^\\s*(' + symbol + '\\s+task:|variable\\s+' + symbol + ')'));
+    public static findTask(document: TextDocument, symbol: string): TextLine | undefined {
+        return Parser.findLine(document, new RegExp('^\\s*(' + symbol + '\\s+task:|' +
+            'until\\s*' + symbol + '\\s*performed|variable\\s+' + symbol + ')'));
     }
 
     /**
@@ -249,6 +276,14 @@ export class Parser {
 
     public static makeQuestReferencePattern(questName: string) {
         return new RegExp('^\\s*start\\s+quest\\s+' + questName, 'g');
+    }
+
+    /**
+     * Finds a comment above a definition and returns its content.
+     */
+    public static makeSummary(document: TextDocument, definitionLine: number): string {
+        const previousLine = document.lineAt(definitionLine - 1).text;
+        return /^\s*-+/.test(previousLine) ? previousLine.replace(/^\s*-+/, '').trim() : '';
     }
 
     /**
