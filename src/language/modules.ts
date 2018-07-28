@@ -9,10 +9,10 @@ import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { Options, parseFromJson } from '../extension';
 import { TablesManager } from './base/tablesManager';
+import { BooleanExpression } from './booleanExpression';
 
 interface Action {
     summary: string;
-    match: string;
     overloads: string[];
 }
 
@@ -66,6 +66,9 @@ export class Modules extends TablesManager {
                     return result;
                 }
             }
+        }
+        if (BooleanExpression.match(prefix, text)) {
+            return BooleanExpression.makeResult(text);
         }
     }
 

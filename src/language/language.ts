@@ -71,17 +71,17 @@ export class Language extends TablesManager {
             return { category: '', summary: symbol, signature: '', parameters: [] };
         }
 
-        let keyword = Language.getInstance().findKeyword(name);
+        let keyword = this.findKeyword(name);
         if (keyword) {
             return Language.itemToResult(keyword, Language.ItemKind.Keyword);
         }
 
-        let message = Language.getInstance().findMessage(name);
+        let message = this.findMessage(name);
         if (message) {
             return Language.itemToResult(message, Language.ItemKind.Message);
         }
 
-        let definition = Language.getInstance().findDefinition(name);
+        let definition = this.findDefinition(name);
         if (definition) {
             return Language.itemToResult(definition, Language.ItemKind.Definition);
         }
