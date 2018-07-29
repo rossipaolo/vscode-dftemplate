@@ -4,8 +4,8 @@
 
 'use strict';
 
+import * as parser from '../parser';
 import { TextDocument } from "vscode";
-import { Parser, Types } from '../parser';
 
 /**
  * Error messages shown in diagnostic hover.
@@ -69,63 +69,63 @@ export abstract class TablesManager {
                     break;
                 case '${d:message}':
                     if (!isNaN(Number(word))) {
-                        if (!Parser.findMessageDefinition(document, word)) {
+                        if (!parser.findMessageByIndex(document, word)) {
                             yield Error.undefinedMessage(word);
                         }
                     }
                     else {
-                        if (!Parser.findDefaultMessageByName(document, word)) {
+                        if (!parser.findMessageByName(document, word)) {
                             yield Error.undefinedMessage(word);
                         }
                     }
                     break;
                 case '${d:messageName}':
-                    if (!Parser.findDefaultMessageByName(document, word)) {
+                    if (!parser.findMessageByName(document, word)) {
                         yield Error.undefinedMessage(word);
                     }
                     break;
                 case '${d:messageID}':
-                    if (!Parser.findMessageDefinition(document, word)) {
+                    if (!parser.findMessageByIndex(document, word)) {
                         yield Error.undefinedMessage(word);
                     }
                     break;
                 case '${d:_symbol_}':
-                    if (!Parser.getSymbolType(document, word)) {
+                    if (!parser.findSymbolDefinition(document, word)) {
                         yield Error.undefinedSymbol(word);
                     }
                     break;
                 case '${d:_item_}':
-                    const itemError = TablesManager.checkType(document, word, Types.Item);
+                    const itemError = TablesManager.checkType(document, word, parser.Types.Item);
                     if (itemError) {
                         yield itemError;
                     }
                     break;
                 case '${d:_person_}':
-                    const personError = TablesManager.checkType(document, word, Types.Person);
+                    const personError = TablesManager.checkType(document, word, parser.Types.Person);
                     if (personError) {
                         yield personError;
                     }
                     break;
                 case '${d:_place_}':
-                    const placeError = TablesManager.checkType(document, word, Types.Place);
+                    const placeError = TablesManager.checkType(document, word, parser.Types.Place);
                     if (placeError) {
                         yield placeError;
                     }
                     break;
                 case '${d:_clock_}':
-                    const clockError = TablesManager.checkType(document, word, Types.Clock);
+                    const clockError = TablesManager.checkType(document, word, parser.Types.Clock);
                     if (clockError) {
                         yield clockError;
                     }
                     break;
                 case '${d:_foe_}':
-                    const foeError = TablesManager.checkType(document, word, Types.Foe);
+                    const foeError = TablesManager.checkType(document, word, parser.Types.Foe);
                     if (foeError) {
                         yield foeError;
                     }
                     break;
                 case '${d:task}':
-                    if (!Parser.findTask(document, word)) {
+                    if (!parser.findTaskDefinition(document, word)) {
                         yield Error.undefinedTask(word);
                     }
                     break;
@@ -147,14 +147,16 @@ export abstract class TablesManager {
         }
 
         return signatureItems;
+
+        
     }
 
     private static checkType(document: TextDocument, symbol: string, type: string): string | undefined {
-        const actualType = Parser.getSymbolType(document, symbol);
-        if (!actualType) {
+        const definition = parser.findSymbolDefinition(document, symbol);
+        if (!definition) {
             return Error.undefinedSymbol(symbol);
         }
-        else if (actualType !== type) {
+        else if (definition.type !== type) {
             return Error.incorrectSymbolType(symbol, type);
         }
     }

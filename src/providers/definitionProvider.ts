@@ -5,41 +5,44 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from '../language/parser';
 
 import { TextDocument, Position, Location } from 'vscode';
-import { Parser } from '../language/parser';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
     public provideDefinition(document: TextDocument, position: Position): Thenable<Location> {
         return new Promise(function (resolve, reject) {
-            let word = Parser.getWord(document, position);
+            const word = parser.getWord(document, position);
             if (word) {
 
                 // Symbol
-                if (Parser.isSymbol(word)) {
-                    let symbolDefinition = Parser.findSymbolDefinition(document, word);
+                if (parser.isSymbol(word)) {
+                    const symbolDefinition = parser.findSymbolDefinition(document, word);
                     if (symbolDefinition) {
                         return resolve(symbolDefinition.location);
+                    }
+
+                    const taskDefinition = parser.findTaskDefinition(document, word);
+                    if (taskDefinition) {
+                        return resolve(new Location(document.uri, new Position(taskDefinition.lineNumber, 0)));
                     }
                 }
 
                 // Message
                 if (!isNaN(Number(word))) {
-                    let messageDefinition = Parser.findMessageDefinition(document, word);
+                    let messageDefinition = parser.findMessageByIndex(document, word);
                     if (messageDefinition) {
                         return resolve(new Location(document.uri, new Position(messageDefinition.line.lineNumber, 0)));
                     }
                 }
 
                 // Quest
-                if (Parser.isQuest(document.lineAt(position.line).text)) {
-                    return Parser.findLineInAllfiles(Parser.makeQuestDefinitionPattern(word)).then(result => {
-                        return resolve(new Location(result.document.uri, new Position(result.line.lineNumber, 0)));
-                    }, () => { return reject(); });
+                if (parser.isQuestReference(document.lineAt(position.line).text)) {
+                    return parser.findQuestDefinition(word).then((quest) => {
+                        return resolve(quest.location);
+                    }, () => reject());
                 }
-
-                console.log('not found');
             }
 
             return reject();
