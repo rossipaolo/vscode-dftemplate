@@ -110,7 +110,7 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>\((keyword|message|definition|symbol|task)\)</string>
+                    <string>\((quest|keyword|message|definition|symbol|task)\)</string>
                     <key>captures</key>
                     <dict>
                         <key>1</key>

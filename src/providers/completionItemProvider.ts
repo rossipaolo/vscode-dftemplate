@@ -5,10 +5,10 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from '../language/parser';
 
 import { ExtensionContext, TextDocument, Position, CompletionItem } from 'vscode';
 import { loadTable } from '../extension';
-import { Parser } from '../language/parser';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
 
@@ -22,15 +22,15 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
     private static definitionQueries = (document: TextDocument) => [
         {
             kind: vscode.CompletionItemKind.Field,
-            result: Parser.findAllSymbolsDefinedInQuest(document)
+            result: parser.findAllSymbolDefinitions(document)
         },
         {
             kind: vscode.CompletionItemKind.Variable,
-            result: Parser.findAllVariablesDefinedInQuest(document)
+            result: parser.findAllVariables(document)
         },
         {
             kind: vscode.CompletionItemKind.Method,
-            result: Parser.findAllTasksDefinedInQuest(document)
+            result: parser.findAllTasks(document)
         }
     ]
 
@@ -50,7 +50,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             const prefix = TemplateCompletionItemProvider.getPrefix(line.text, position.character);
 
             // Find quests in the workspace
-            if (Parser.isQuest(document.lineAt(position.line).text)) {
+            if (parser.isQuestInvocation(document.lineAt(position.line).text)) {
                 return TemplateCompletionItemProvider.findQuestsCompletionItems().then((items) => {
                     return resolve(items);
                 }), () => reject();
@@ -95,30 +95,13 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         });
     }
 
-    private static findQuestsCompletionItems(): Promise<CompletionItem[]> {
-        return new Promise((resolve, reject) => {
-            return Parser.findLinesInAllfiles(Parser.questDefinitionPattern, true).then(results => {
-                let items: CompletionItem[] = [];
-                for (const result of results) {
-                    let idLIne = Parser.findLine(result.document, Parser.questDefinitionPattern);
-                    if (idLIne) {
-                        let id = Parser.questDefinitionPattern.exec(idLIne.text);
-                        if (id) {
-                            let item = new CompletionItem(id[2], vscode.CompletionItemKind.Class);
-                            let nameLine = Parser.findLine(result.document, Parser.displayNamePattern);
-                            if (nameLine) {
-                                let displayName = Parser.displayNamePattern.exec(nameLine.text);
-                                if (displayName) {
-                                    item.detail = displayName[1];
-                                }
-                            }
-                            items.push(item);
-                        }
-                    }
-                }
-
-                return items.length > 0 ? resolve(items) : reject();
-            }, () => { return reject(); });
+    private static findQuestsCompletionItems(): Thenable<CompletionItem[]> {
+        return parser.findAllQuests().then((quests) => {
+            return quests.map((quest): CompletionItem => {
+                const item = new CompletionItem(quest.pattern, vscode.CompletionItemKind.Class);
+                item.detail = quest.displayName;
+                return item;
+            });
         });
     }
 

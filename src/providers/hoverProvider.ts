@@ -4,9 +4,11 @@
 
 'use strict';
 
+import * as parser from '../language/parser';
+
+import { Types } from '../language/parser';
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString } from 'vscode';
 import { EOL } from 'os';
-import { Parser, Types } from '../language/parser';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
 
@@ -27,11 +29,11 @@ export class TemplateHoverProvider implements HoverProvider {
     public provideHover(document: TextDocument, position: Position): Thenable<Hover> {     
         let instance:TemplateHoverProvider = this;
         return new Promise(function (resolve, reject) {
-            let word = Parser.getWord(document, position);
+            let word = parser.getWord(document, position);
             if (word) {
                 // If is a symbol, show description according to prefix.
-                if (Parser.isSymbol(word)) {
-                    let definition = Parser.findSymbolDefinition(document, word);
+                if (parser.isSymbol(word)) {
+                    let definition = parser.findSymbolDefinition(document, word);
                     if (definition) {
                         let item = new TemplateDocumentationItem();
                         item.category = 'symbol';
@@ -40,19 +42,19 @@ export class TemplateHoverProvider implements HoverProvider {
                         return resolve(TemplateHoverProvider.makeHover(item));
                     }
 
-                    const taskLine = Parser.findTask(document, word);
+                    const taskLine = parser.findTaskDefinition(document, word);
                     if (taskLine) {
                         const item = new TemplateDocumentationItem();
                         item.category = 'task';
                         item.signature = taskLine.text.trim();
-                        item.summary = Parser.makeSummary(document, taskLine.lineNumber);
+                        item.summary = parser.makeSummary(document, taskLine.lineNumber);
                         return resolve(TemplateHoverProvider.makeHover(item));
                     }
                 }
 
                 // Seek message from number
                 if (!isNaN(Number(word))) {           
-                    let messageDefinition = Parser.findMessageDefinition(document, word);
+                    let messageDefinition = parser.findMessageByIndex(document, word);
                     if (messageDefinition) {
                         let line = messageDefinition.line;
                         if (messageDefinition.isDefault) {
@@ -62,9 +64,9 @@ export class TemplateHoverProvider implements HoverProvider {
                             let item = new TemplateDocumentationItem();
                             item.category = 'message';
                             item.signature = line.text;
-                            let comment = Parser.parseComment(document.lineAt(line.lineNumber - 1).text);
-                            if (comment.isComment) {
-                                item.summary = comment.text;
+                            const summary = parser.makeSummary(document, line.lineNumber);
+                            if (summary) {
+                                item.summary = summary;
                             }
                             return resolve(TemplateHoverProvider.makeHover(item));
                         }
@@ -79,22 +81,14 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
 
                 // Seek quest
-                if (Parser.isQuest(document.lineAt(position.line).text)) {
-                    return Parser.findLineInAllfiles(Parser.makeQuestDefinitionPattern(word)).then(result => {
-                        let line = Parser.findLine(result.document, Parser.displayNamePattern);
-                        if (line) {
-                            let displayName = Parser.displayNamePattern.exec(line.text);
-                            if (displayName) {
-                                let item = new TemplateDocumentationItem();
-                                item.category = 'quest';
-                                item.signature = result.line.text;
-                                item.summary = displayName[1];
-                                return resolve(TemplateHoverProvider.makeHover(item));
-                            }
-                        }
-
-                        return reject();
-                    }, () => { return reject(); });
+                if (parser.isQuestReference(document.lineAt(position.line).text)) {
+                    return parser.findQuestDefinition(word).then((quest) => {
+                        let item = new TemplateDocumentationItem();
+                        item.category = 'quest';
+                        item.signature = 'Quest: ' +  quest.pattern;
+                        item.summary = quest.displayName;
+                        return resolve(TemplateHoverProvider.makeHover(item));
+                    }, () => reject());
                 }
 
                 // Actions
@@ -187,7 +181,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     return 'the name of ' + this.formatSymbol(symbol, 0) + '.';
                 }
                 else if (type === Types.Clock) {
-                    return 'base definition of ' + this.formatSymbol(symbol, 0) + ' (use `=' + Parser.getSymbolName(symbol) + '_` to get the clock time).';
+                    return 'base definition of ' + this.formatSymbol(symbol, 0) + ' (use `=' + parser.getSymbolName(symbol) + '_` to get the clock time).';
                 }
             }
         }
