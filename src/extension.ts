@@ -12,6 +12,7 @@ import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
 import { TemplateDefinitionProvider } from './providers/definitionProvider';
 import { TemplateReferenceProvider } from './providers/referenceProvider';
+import { TemplateDocumentHighlightProvider } from './providers/documentHighlightProvider';
 import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
@@ -46,6 +47,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(context)));
     context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider()));
     context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider()));
+    context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
