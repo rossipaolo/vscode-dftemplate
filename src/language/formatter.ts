@@ -5,7 +5,7 @@
 'use strict';
 
 import { Range, TextEdit, TextLine } from 'vscode';
-import { Options } from '../extension';
+import { getOptions } from '../extension';
 
 export interface FormatterResults {
     needsEdit: boolean;
@@ -103,7 +103,7 @@ export class Formatter {
 
             // Set inner indent for text
             let rawTextIndex = identifier.length + space.length;
-            if (Options.centeredMessages) {
+            if (getOptions()['format']['centeredMessages']) {
 
                 const center = 39;  // position of text center from line start
 

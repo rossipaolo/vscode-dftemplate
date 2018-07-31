@@ -7,9 +7,9 @@
 import * as parser from '../parser';
 import { TextDocument, Range, Location, Position } from "vscode";
 
-const questDefinitionPattern = /^\s*Quest:\s+([a-zA-Z0-9]+)/;
-const questInvocationPattern = /^\s*start\s+quest\s+([a-zA-Z0-9]+)/;
-const questReferencePattern = /^\s*(Quest:|start\s+quest)\s+[a-zA-Z0-9]+/;
+const questDefinitionPattern = /^\s*Quest:\s+([a-zA-Z0-9_]+)/;
+const questInvocationPattern = /^\s*start\s+quest\s+([a-zA-Z0-9_]+)/;
+const questReferencePattern = /^\s*(Quest:|start\s+quest)\s+[a-zA-Z0-9_]+/;
 export const displayNamePattern = /^\s*DisplayName:\s(.*)$/;
 
 interface Quest {

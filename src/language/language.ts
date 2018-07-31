@@ -49,17 +49,19 @@ export class Language extends TablesManager {
     /**
      * Load language tables.
      */
-    public load(context: ExtensionContext) {
-        loadTable(context, 'tables/language.json').then((obj) => {
-            if (Language.instance) {
-                Language.instance.table = {
+    public load(context: ExtensionContext): Promise<void> {
+        var instance = this;
+        return new Promise((resolve) => {
+            loadTable(context, 'tables/language.json').then((obj) => {
+                instance.table = {
                     symbols: Language.objectToMap(obj.symbols),
                     keywords: Language.objectToMap(obj.keywords),
                     messages: Language.objectToMap(obj.messages),
                     definitions: Language.objectToMap(obj.definitions)
                 };
-            }
-        }, () => vscode.window.showErrorMessage('Failed to import language table.'));
+                return resolve();
+            }, () => vscode.window.showErrorMessage('Failed to import language table.'));
+        });
     }
 
     /**
@@ -149,8 +151,10 @@ export class Language extends TablesManager {
     /**
      * Detects issues and returns error messages.
      */
-    public *doDiagnostics(document: vscode.TextDocument, line: string): Iterable<string> {
-        let match = /^\s*([a-zA-Z]+)/g.exec(line);
+    public *doDiagnostics(document: vscode.TextDocument, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+        
+        // Signatures
+        let match = /^\s*([a-zA-Z]+)/g.exec(line.text);
         if (match) {
             const result = this.findKeyword(match[1]);
             if (result) {

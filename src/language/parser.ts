@@ -45,6 +45,18 @@ export function findLine(document: TextDocument, regex: RegExp): TextLine | unde
 }
 
 /**
+ * Find the first line that satisfy the filter predicate.
+ */
+export function firstLine(document: TextDocument, filter: (line: TextLine) => boolean): TextLine | undefined {
+    for (let index = 0; index < document.lineCount; index++) {
+        const line = document.lineAt(index);
+        if (filter(line)) {
+            return line;
+        }
+    }
+}
+
+/**
  * Finds all lines tht match a regular expression.
  * @param document A quest document.
  * @param regex A regular expression matched on all lines.

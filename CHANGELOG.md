@@ -11,6 +11,7 @@
 - Import modules for actions/conditions autocomplete and hover.
 - `%symbol` autocomplete.
 - Diagnostics for actions/conditions/keywords signature. Checks format and definition of symbols, messages, tasks etc.
+- Suggests actions on diagnostic messages.
 - Support for params: `...` repeat the last signature word to match full line.
 
 ### Improved

@@ -7,9 +7,9 @@
 import * as vscode from 'vscode';
 
 import { ExtensionContext } from 'vscode';
-import { Options, parseFromJson } from '../extension';
 import { TablesManager } from './base/tablesManager';
 import { BooleanExpression } from './booleanExpression';
+import { getOptions, parseFromJson } from '../extension';
 
 interface Action {
     summary: string;
@@ -47,9 +47,13 @@ export class Modules extends TablesManager {
      * Load all enabled modules.
      * @param context Current context of extension.
      */
-    public load(context: ExtensionContext) {
-        Modules.loadModules(Options.modules, context).then((modules) => {
-            this.modules = modules;
+    public load(context: ExtensionContext): Promise<void> {
+        var instance = this;
+        return new Promise((resolve) => {
+            Modules.loadModules(getOptions()['modules'], context).then((modules) => {
+                instance.modules = modules;
+                return resolve();
+            }, () => vscode.window.showErrorMessage('Failed to import modules.'));
         });
     }
 
@@ -92,17 +96,22 @@ export class Modules extends TablesManager {
     }
 
     /**
-     * Detects issues and returns error messages.
+     * Find action or condition invoked in a line of a task.
+     * @param text A line of a task.
      */
-    public *doDiagnostics(document: vscode.TextDocument, line: string): Iterable<string> {
-        let match = /^\s*([a-zA-Z]+)\s/g.exec(line);
+    public findInvokedAction(text: string): ActionResult | undefined {
+        const match = /^\s*([a-zA-Z]+)\s/.exec(text);
         if (match) {
-            const result = this.findAction(match[1], line);
-            if (result) {
-                for (const error of Modules.doDiagnostics(document, result.action.overloads[result.overload], line)) {
-                    yield error;
-                }
-            }
+            return this.findAction(match[1], text);
+        }
+    }
+
+    /**
+     * Detects issues with an invocation to action or condition.
+     */
+    public *doDiagnostics(document: vscode.TextDocument, line: vscode.TextLine, actionResult: ActionResult) {
+        for (const diagnostic of Modules.doDiagnostics(document, actionResult.action.overloads[actionResult.overload], line)) {
+            yield diagnostic;
         }
     }
 

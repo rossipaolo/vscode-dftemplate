@@ -18,6 +18,7 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 * Find all references to a symbol
 * Show all symbol and task definitions
 * Rename symbols
+* Diagnostics and action suggestions
 
 -----------------------------------------------------------------------------------------------------------
 
