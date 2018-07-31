@@ -4,6 +4,7 @@
 
 'use strict';
 
+import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { TextDocument } from "vscode";
 
@@ -36,104 +37,99 @@ export abstract class TablesManager {
      * Convert a snippet string to a regular expression that matches the signature.
      */
     protected static makeRegexFromSignature(signature: string): RegExp {
+        signature = signature.replace('+', '\\+');
+        
         // params: allows the last variable to be repeated
-        if (/\${\d:\.\.\.[a-zA-Z0-9_-]+}$/.test(signature)) {
+        if (/\$\{\d:\.\.\.[a-zA-Z0-9_-]+\}$/.test(signature)) {
            signature = signature.substring(0, signature.lastIndexOf(' ')) + '(\\s+[a-zA-Z0-9_-]+)+';
         }
 
-        signature = signature.replace(/\${\d\|/g, '(').replace(/\|}/g, ')').replace(/,/g, '|');     // ${d|a,b|} -> (a|b)
-        signature = signature.replace(/\${\d:[a-zA-Z0-9_-]+?}/g, '[a-zA-Z0-9_-]+');                 // ${d:a}    -> [a-zA-Z0-9_-]+    
+        
+        signature = signature.replace(/\$\{\d\|/g, '(').replace(/\|\}/g, ')').replace(/,/g, '|');     // ${d|a,b|} -> (a|b)
+        signature = signature.replace(/\$\{\d:[a-zA-Z0-9_-]+?\}/g, '[a-zA-Z0-9_-]+');                 // ${d:a}    -> [a-zA-Z0-9_-]+    
         return new RegExp('^\\s*' + signature + '\\s*$');
     }
 
     /**
      * Detects issues and returns error messages.
      */
-    protected static *doDiagnostics(document: TextDocument, signature: string, line: string): Iterable<string> {
-        const lineItems = line.trim().split(' ');
+    protected static *doDiagnostics(document: TextDocument, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+        const lineItems = line.text.trim().split(' ');
         let signatureItems = signature.replace(/\${\d:/g, '${d:').split(' ');
         signatureItems = TablesManager.doParams(signatureItems, lineItems);
         for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
             const word = lineItems[i];
-            switch (signatureItems[i]) {
-                case '${d:dd}':
-                    if (isNaN(Number(word))) {
-                        yield Error.notANumber(word);
-                    }
-                    break;
-                case '${d:hh}:${d:mm}':
-                    const time = word.split(':');
-                    if (Number(time[0]) > 23 || Number(time[1]) > 59) {
-                        yield Error.incorrectTime(word);
-                    }
-                    break;
-                case '${d:message}':
-                    if (!isNaN(Number(word))) {
-                        if (!parser.findMessageByIndex(document, word)) {
-                            yield Error.undefinedMessage(word);
-                        }
-                    }
-                    else {
-                        if (!parser.findMessageByName(document, word)) {
-                            yield Error.undefinedMessage(word);
-                        }
-                    }
-                    break;
-                case '${d:messageName}':
-                    if (!parser.findMessageByName(document, word)) {
-                        yield Error.undefinedMessage(word);
-                    }
-                    break;
-                case '${d:messageID}':
-                    if (!parser.findMessageByIndex(document, word)) {
-                        yield Error.undefinedMessage(word);
-                    }
-                    break;
-                case '${d:_symbol_}':
-                    if (!parser.findSymbolDefinition(document, word)) {
-                        yield Error.undefinedSymbol(word);
-                    }
-                    break;
-                case '${d:_item_}':
-                    const itemError = TablesManager.checkType(document, word, parser.Types.Item);
-                    if (itemError) {
-                        yield itemError;
-                    }
-                    break;
-                case '${d:_person_}':
-                    const personError = TablesManager.checkType(document, word, parser.Types.Person);
-                    if (personError) {
-                        yield personError;
-                    }
-                    break;
-                case '${d:_place_}':
-                    const placeError = TablesManager.checkType(document, word, parser.Types.Place);
-                    if (placeError) {
-                        yield placeError;
-                    }
-                    break;
-                case '${d:_clock_}':
-                    const clockError = TablesManager.checkType(document, word, parser.Types.Clock);
-                    if (clockError) {
-                        yield clockError;
-                    }
-                    break;
-                case '${d:_foe_}':
-                    const foeError = TablesManager.checkType(document, word, parser.Types.Foe);
-                    if (foeError) {
-                        yield foeError;
-                    }
-                    break;
-                case '${d:task}':
-                    if (!parser.findTaskDefinition(document, word)) {
-                        yield Error.undefinedTask(word);
-                    }
-                    break;
-                // case '${d:ww}:'
-                // case '${d:questID}':
-                // case '${d:questName}':
-                //     break;
+            const message = TablesManager.getErrorMessage(document, word, signatureItems[i]);
+            if (message) {
+                const wordPosition = TablesManager.findWordPosition(line.text, i);
+                const range = new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + word.length);
+                yield new vscode.Diagnostic(range, message);
             }
+        }
+    }
+
+    /**
+     * Gets an error message for a word in a line. Undefined if there are no issues.
+     */
+    private static getErrorMessage(document:TextDocument, word: string, signatureItem: string): string | undefined {
+        switch (signatureItem) {
+            case '${d:dd}':
+                if (isNaN(Number(word))) {
+                    return Error.notANumber(word);
+                }
+                break;
+            case '${d:hh}:${d:mm}':
+                const time = word.split(':');
+                if (Number(time[0]) > 23 || Number(time[1]) > 59) {
+                    return Error.incorrectTime(word);
+                }
+                break;
+            case '${d:message}':
+                if (!isNaN(Number(word))) {
+                    if (!parser.findMessageByIndex(document, word)) {
+                        return Error.undefinedMessage(word);
+                    }
+                }
+                else {
+                    if (!parser.findMessageByName(document, word)) {
+                        return Error.undefinedMessage(word);
+                    }
+                }
+                break;
+            case '${d:messageName}':
+                if (!parser.findMessageByName(document, word)) {
+                    return Error.undefinedMessage(word);
+                }
+                break;
+            case '${d:messageID}':
+                if (!parser.findMessageByIndex(document, word)) {
+                    return Error.undefinedMessage(word);
+                }
+                break;
+            case '${d:_symbol_}':
+                if (!parser.findSymbolDefinition(document, word)) {
+                    return Error.undefinedSymbol(word);
+                }
+                break;
+            case '${d:_item_}':
+                return TablesManager.checkType(document, word, parser.Types.Item);
+            case '${d:_person_}':
+                return TablesManager.checkType(document, word, parser.Types.Person);
+            case '${d:_place_}':
+                return TablesManager.checkType(document, word, parser.Types.Place);
+            case '${d:_clock_}':
+                return TablesManager.checkType(document, word, parser.Types.Clock);
+            case '${d:_foe_}':
+                return TablesManager.checkType(document, word, parser.Types.Foe);
+            case '${d:task}':
+                if (!parser.findTaskDefinition(document, word)) {
+                    return Error.undefinedTask(word);
+                }
+                break;
+            // case '${d:ww}:'
+            // case '${d:questID}':
+            // case '${d:questName}':
+            //     break;
         }
     }
 
@@ -147,8 +143,6 @@ export abstract class TablesManager {
         }
 
         return signatureItems;
-
-        
     }
 
     private static checkType(document: TextDocument, symbol: string, type: string): string | undefined {
@@ -159,5 +153,29 @@ export abstract class TablesManager {
         else if (definition.type !== type) {
             return Error.incorrectSymbolType(symbol, type);
         }
+    }
+    
+    /**
+     * Finds the char index of a word in a string.
+     */
+    private static findWordPosition(text: string, wordIndex: number): number {
+        let insideWord = false;
+        for (let i = 0; i < text.length; i++) {
+            if (text[i] !== ' ') {
+                if (!insideWord) {
+                    if (wordIndex-- === 0) {
+                        return i;
+                    }
+                    insideWord = true;
+                }
+            }
+            else {
+                if (insideWord) {
+                    insideWord = false;
+                }
+            }
+        }
+
+        return 0;
     }
 }

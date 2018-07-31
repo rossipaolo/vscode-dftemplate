@@ -80,6 +80,35 @@ export function isSymbolDefinition(line: string, base: string): boolean {
 }
 
 /**
+ * Gets the name of the symbol defined in the given line.
+ * @param line A quest line.
+ */
+export function getSymbolFromLine(line: TextLine): string | undefined {
+    const result = /^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/.exec(line.text);
+    if (result) {
+        return result[1];
+    }
+}
+
+/**
+ * Checks if symbol is is named as `_symbol_`.
+ * @param symbol A symbol name.
+ */
+export function symbolFollowsNamingConventions(symbol: string): boolean {
+    return symbol.startsWith('_') && symbol.endsWith('_');
+}
+
+/**
+ * Changes the name of a symbol to follow `_symbol_` convention.
+ * @param symbol A symbol name.
+ */
+export function forceSymbolNamingConventions(symbol: string): string {
+    if (!symbol.startsWith('_')) { symbol = '_' + symbol; }
+    if (!symbol.endsWith('_')) { symbol += '_'; }
+    return symbol;
+}
+
+/**
  * Find the definition of a symbol.
  * @param document A quest document.
  * @param symbol A symbol occurence.
@@ -129,4 +158,14 @@ export function* findSymbolReferences(document: TextDocument, symbolName: string
             }
         }
     }
+}
+
+export function isUnreferencedSymbol(document: TextDocument, line: TextLine): boolean {
+    const match = /^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/.exec(line.text);
+    if (match) {
+        const regex = new RegExp('(_{1,3}|={1,2})' + getSymbolName(match[1]) + '_');
+        return !parser.firstLine(document, l => regex.test(l.text) && l !== line) ? true : false;
+    }
+
+    return false;
 }

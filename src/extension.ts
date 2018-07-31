@@ -8,6 +8,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { DocumentFilter, ExtensionContext } from 'vscode';
+import { Modules } from './language/modules';
+import { Language } from './language/language';
+import { makeDiagnosticCollection } from './language/diagnostics';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
 import { TemplateDefinitionProvider } from './providers/definitionProvider';
@@ -16,32 +19,21 @@ import { TemplateDocumentHighlightProvider } from './providers/documentHighlight
 import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
-import { Modules } from './language/modules';
-import { Language } from './language/language';
+import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 
-const TEMPLATE_LANGUAGE = 'dftemplate';
-const TEMPLATE_MODE: DocumentFilter[] = [
+export const TEMPLATE_LANGUAGE = 'dftemplate';
+export const TEMPLATE_MODE: DocumentFilter[] = [
     { language: TEMPLATE_LANGUAGE, scheme: 'file' }, 
     { language: TEMPLATE_LANGUAGE, scheme: 'untitled' }
 ];
 
-export class Options {
-    public static centeredMessages: boolean;
-    public static diagnostics: boolean;
-    public static modules: string[];
+export function getOptions() {
+    return vscode.workspace.getConfiguration('dftemplate');
 }
 
 export function activate(context: ExtensionContext) {
 
     vscode.languages.setLanguageConfiguration(TEMPLATE_LANGUAGE, { wordPattern: /(={1,2}|%)?(\w|\d)+/g });
-
-    let config = vscode.workspace.getConfiguration('dftemplate');
-    Options.centeredMessages = config.get<boolean>('format.centeredMessages') || Options.centeredMessages;
-    Options.diagnostics = config.get<boolean>('diagnostics.enabled') || Options.diagnostics;
-    Options.modules = config.get<string[]>('modules') || [];
-
-    Language.getInstance().load(context);
-    Modules.getInstance().load(context);
 
     context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(context)));
@@ -51,10 +43,15 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
+    context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider()));
 
-    if (Options.diagnostics) {
-        context.subscriptions.push(makeDiagnosticCollection(context));
-    }
+    Promise.all(Array(
+        Language.getInstance().load(context), 
+        Modules.getInstance().load(context))).then(() => {
+        if (getOptions()['diagnostics']['enabled']) {
+            context.subscriptions.push(makeDiagnosticCollection(context));
+        }
+    }, () => vscode.window.showErrorMessage('Failed to enable diagnostics.'));
 }
 
 export function deactivate() {
@@ -79,7 +76,7 @@ export function parseFromJson(fullPath: string): Thenable<any> {
         if (obj) {
             return obj;
         }
-    });
+    }, () => console.log('Failed to parse ' + fullPath));
 }
 
 export function* iterateAll<T>(...iterables: Iterable<T>[]): Iterable<T> {
@@ -88,41 +85,4 @@ export function* iterateAll<T>(...iterables: Iterable<T>[]): Iterable<T> {
             yield item;
         }
     }
-}
-
-/**
- * Makes a diagnostic collection and subscribes to events for diagnostic.
- */
-function makeDiagnosticCollection(context: vscode.ExtensionContext): vscode.DiagnosticCollection {
-    const diagnosticCollection = vscode.languages.createDiagnosticCollection(TEMPLATE_LANGUAGE);
-
-    context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((document: vscode.TextDocument) => {
-        if (document.languageId === TEMPLATE_LANGUAGE) {
-
-            const diagnostics: vscode.Diagnostic[] = [];
-
-            for (let index = 0; index < document.lineCount; index++) {
-                const line = document.lineAt(index);
-                for (const error of iterateAll(
-                    Language.getInstance().doDiagnostics(document, line.text),
-                    Modules.getInstance().doDiagnostics(document, line.text))) {
-                    const diagnostic = new vscode.Diagnostic(trimRange(line), error);
-                    diagnostic.source = TEMPLATE_LANGUAGE;
-                    diagnostics.push(diagnostic);
-                }
-            }
-
-            diagnosticCollection.set(document.uri, diagnostics);
-        }
-    }));
-
-    return diagnosticCollection;
-}
-
-/**
- * Gets the range for a line without leading and trailing spaces.
- */
-function trimRange(line: vscode.TextLine): vscode.Range {
-    const end = line.text.replace(/\s+$/, '').length;
-    return new vscode.Range(line.lineNumber, line.firstNonWhitespaceCharacterIndex, line.lineNumber, end);
 }

@@ -5,7 +5,18 @@
 'use strict';
 
 import * as parser from '../parser';
-import { TextDocument, TextLine } from "vscode";
+import { TextDocument, TextLine, Range } from "vscode";
+
+/**
+ * Gets the index of the additional message defined in the given line.
+ * @param line A quest line.
+ */
+export function getMessageIDFromLine(line: TextLine): string | undefined {
+    const result = /^\s*Message:\s+([0-9]+)/.exec(line.text);
+    if (result) {
+        return result[1];
+    }
+}
 
 /**
  * Find the definition of a message from its index.
@@ -42,4 +53,28 @@ export function* findAllMessages(document: TextDocument): Iterable<{ line: TextL
     for (const match of parser.matchAllLines(document, /\s*Message:\s+([0-9]+)/)) {
         yield match;
     }
+}
+
+/**
+ * Finds the first index which is not already used by a message.
+ * @param document A quest document.
+ * @param id The first index to start seeking.
+ */
+export function nextAvailableMessageID(document: TextDocument, id: string): string {
+    let messageID = Number(id);
+    while (parser.findMessageByIndex(document, String(messageID))) {
+        messageID++;
+    }
+    return String(messageID);
+}
+
+/**
+ * Gets the range where the entire task block is found.
+ * @param document A quest document.
+ * @param definitionLine The line where the task is defined.
+ */
+export function getMessageRange(document: TextDocument, definitionLine: number): Range {
+    let line = definitionLine;
+    while (++line < document.lineCount && !/^\s*(\s*(-.*)?|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+))\s*$/.test(document.lineAt(line).text)) {}
+    return new Range(definitionLine, 0, --line, document.lineAt(line).text.length);
 }

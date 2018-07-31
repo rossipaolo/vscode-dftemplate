@@ -8,6 +8,17 @@ import * as parser from '../parser';
 import { TextDocument, TextLine, Range } from "vscode";
 
 /**
+ * Gets the name of the task defined in the given line.
+ * @param line A quest line.
+ */
+export function getTaskName(text: string): string | undefined {
+    const match = text.match(/^\s*variable\s*([a-zA-Z0-9._]+)/)
+        || text.match(/^\s*([a-zA-Z0-9._]+)\s*task:/)
+        || text.match(/^\s*until\s*([a-zA-Z0-9._]+)\s*performed/);
+    if (match) { return match[1]; }
+}
+
+/**
  * Finds the definition of a task from it symbol.
  * @param document A quest document.
  * @param symbol The symbol of a task.
@@ -56,7 +67,7 @@ export function* findAllVariables(document: TextDocument): Iterable<{ line: Text
  */
 export function getTaskRange(document: TextDocument, definitionLine: number): Range {
     let line = definitionLine;
-    while (++line < document.lineCount && !/^\s*$/.test(document.lineAt(line).text)) {}
+    while (++line < document.lineCount && !/^\s*(\s*(-.*)?|variable.*|.*task:|until.*performed)\s*$/.test(document.lineAt(line).text)) {}
     return new Range(definitionLine, 0, --line, document.lineAt(line).text.length);
 }
 

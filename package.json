@@ -73,6 +73,16 @@
                     "default": true,
                     "description": "Find issues with quests."
                 },
+                "dftemplate.diagnostics.live": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run diagnostics on input on the file being edited; otherwise run only when document is opened or saved."
+                },
+                "dftemplate.diagnostics.delay": {
+                    "type": "integer",
+                    "default": 2500,
+                    "description": "The number of milliseconds to delay before execution of live diagnostics. Key input restart the timer."
+                },
                 "dftemplate.modules": {
                     "type": "array",
                     "default": [
