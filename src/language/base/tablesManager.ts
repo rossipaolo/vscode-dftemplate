@@ -21,6 +21,11 @@ var Error = {
         'Incorrect symbol type: ' + symbol + ' is not declared as ' + type + '.'
 };
 
+let isIndividualNpc: (word: string) => boolean;
+export function setIndividualNpcCallback(callback: (word: string) => boolean) {
+    isIndividualNpc = callback;
+}
+
 /**
  * Manages tables with language data for intellisense features.
  */
@@ -66,6 +71,15 @@ export abstract class TablesManager {
                 yield new vscode.Diagnostic(range, message);
             }
         }
+    }
+
+    protected static parseFromJson(fullPath: string): Thenable<any> {
+        return vscode.workspace.openTextDocument(fullPath).then((document) => {
+            let obj = JSON.parse(document.getText());
+            if (obj) {
+                return obj;
+            }
+        }, () => console.log('Failed to parse ' + fullPath));
     }
 
     /**
@@ -124,6 +138,11 @@ export abstract class TablesManager {
             case '${d:task}':
                 if (!parser.findTaskDefinition(document, word)) {
                     return Error.undefinedTask(word);
+                }
+                break;
+            case '${d:IndividualNPC}':
+                if (!isIndividualNpc(word)) {
+                    return Error.undefinedSymbol(word);
                 }
                 break;
             // case '${d:ww}:'

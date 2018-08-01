@@ -5,11 +5,12 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as path from 'path';
 import * as parser from './parser';
 
 import { ExtensionContext } from 'vscode';
-import { loadTable, iterateAll } from '../extension';
-import { TablesManager } from "./base/tablesManager";
+import { iterateAll } from '../extension';
+import { TablesManager, setIndividualNpcCallback } from "./base/tablesManager";
 
 interface Parameter {
     name: string;
@@ -30,6 +31,11 @@ interface LanguageTable {
     globalVariables: Map<string, number>;
 }
 
+class AttributeItem {
+    public attribute: string = '';
+    public values: string[] = [];
+}
+
 export interface LanguageItemResult extends LanguageItem {
     category: string;
 }
@@ -39,6 +45,7 @@ export interface LanguageItemResult extends LanguageItem {
  */
 export class Language extends TablesManager {
     private table: LanguageTable | null = null;
+    private _attributes: AttributeItem[] = [];
 
     private static instance: Language | null;
 
@@ -48,25 +55,38 @@ export class Language extends TablesManager {
         Definition: 'definition'
     };
 
+    public get attributes() {
+        return this._attributes;
+    }
+
     /**
      * Load language tables.
      */
     public load(context: ExtensionContext): Promise<void> {
-        var instance = this;
-        return new Promise((resolve) => {
-            loadTable(context, 'tables/language.json').then((obj) => {
-                instance.table = {
-                    symbols: Language.objectToMap(obj.symbols),
-                    keywords: Language.objectToMap(obj.keywords),
-                    messages: Language.objectToMap(obj.messages),
-                    definitions: Language.objectToMap(obj.definitions),
-                    globalVariables: Language.objectToMap(obj.globalVariables)
-                };
+        const instance = this;
+        return new Promise((resolve, reject) => {
+            Promise.all([
+                Language.loadTable(context, 'language.json').then((obj) => {
+                    instance.table = {
+                        symbols: Language.objectToMap(obj.symbols),
+                        keywords: Language.objectToMap(obj.keywords),
+                        messages: Language.objectToMap(obj.messages),
+                        definitions: Language.objectToMap(obj.definitions),
+                        globalVariables: Language.objectToMap(obj.globalVariables)
+                    };
 
-                parser.setGlobalVariables(instance.table.globalVariables);
-
+                    parser.setGlobalVariables(instance.table.globalVariables);
+                }, () => vscode.window.showErrorMessage('Failed to import language table.')),
+                Language.loadTable(context, 'attributes.json').then((obj) => {
+                    instance._attributes = obj;
+                    
+                    setIndividualNpcCallback((word) =>
+                        instance.attributes.find(x => x.attribute === 'named' && x.values.indexOf(word) !== -1) !== undefined ||
+                        instance.attributes.find(x => x.attribute === 'faction' && x.values.indexOf(word) !== -1) !== undefined);
+                }, () => vscode.window.showErrorMessage('Failed to import attributes table.'))
+            ]).then(() => {
                 return resolve();
-            }, () => vscode.window.showErrorMessage('Failed to import language table.'));
+            }, () => reject());
         });
     }
 
@@ -221,6 +241,15 @@ export class Language extends TablesManager {
             signature: item.signature,
             parameters: item.parameters
         };
+    }
+
+    private static loadTable(context: ExtensionContext, location: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            const tablePath = path.join(context.extensionPath, 'tables', location);
+            Language.parseFromJson(tablePath).then((obj) => {
+                return resolve(obj);
+            }, () => reject('Failed to load ' + location));
+        });
     }
 
     private static objectToMap<T>(obj: any): Map<string, T> {

@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import { ExtensionContext } from 'vscode';
 import { TablesManager } from './base/tablesManager';
 import { BooleanExpression } from './booleanExpression';
-import { getOptions, parseFromJson } from '../extension';
+import { getOptions } from '../extension';
 
 interface Action {
     summary: string;
@@ -137,7 +137,7 @@ export class Modules extends TablesManager {
             path = path.replace('${workspaceFolder}', vscode.workspace.workspaceFolders[0].uri.fsPath);
         }
 
-        return parseFromJson(path).then((obj) => {
+        return Modules.parseFromJson(path).then((obj) => {
             return obj;
         }, () => vscode.window.showErrorMessage('Failed to import module ' + path + '.'));
     }
