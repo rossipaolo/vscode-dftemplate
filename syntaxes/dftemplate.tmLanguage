@@ -194,6 +194,12 @@
                             <key>name</key>
                             <string>support.type.attribute.dftemplate</string>
                         </dict>	
+                        <dict>
+                            <key>match</key>
+                            <string>\b(global)\b</string>
+                            <key>name</key>
+                            <string>storage.modifier.global.dftemplate</string>
+                        </dict>	
                     </array>
                     <key>end</key>
                     <string>$</string>

@@ -198,7 +198,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (parser.isUnreferencedSymbol(document, line)) {
+                if (!parser.firstLine(document, l => l !== line && l.text.indexOf(symbol) !== -1)) {
                     diagnostics.push(Warnings.unusedDeclarationSymbol(wordRange(line, symbol), symbol));
                 }
 
@@ -230,6 +230,32 @@ function doDiagnostics(document: vscode.TextDocument) {
                 // Naming convention violation
                 if (!parser.symbolFollowsNamingConventions(task)) {
                     diagnostics.push(Hints.symbolNamingConventionViolation(wordRange(line, task)));
+                }
+
+                continue;
+            }
+
+            // Global variables
+            const globalVar = parser.getGlobalVariable(line.text);
+            if (globalVar) {
+                
+                // Duplicated definition
+                if (tasks.indexOf(globalVar.symbol) !== - 1) {
+                    diagnostics.push(Errors.duplicatedDefinition(wordRange(line, globalVar.symbol), globalVar.symbol));
+                }
+                else {
+                    tasks.push(globalVar.symbol);
+                }
+
+                // Unused
+                if (!parser.firstLine(document, l => l !== line && l.text.indexOf(globalVar.symbol) !== -1)) {
+                    const name = globalVar.symbol + ' from ' + globalVar.name;
+                    diagnostics.push(Warnings.unusedDeclarationSymbol(wordRange(line, globalVar.symbol), name));
+                }
+
+                // Naming convention violation
+                if (!parser.symbolFollowsNamingConventions(globalVar.symbol)) {
+                    diagnostics.push(Hints.symbolNamingConventionViolation(wordRange(line, globalVar.symbol)));
                 }
 
                 continue;

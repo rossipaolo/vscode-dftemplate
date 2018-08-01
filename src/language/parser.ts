@@ -95,11 +95,11 @@ export function findLinesInAllQuests(regex: RegExp, onePerDocument?: boolean): T
  * @param document A quest document.
  * @param regex A regular expression with a single match.
  */
-export function* matchAllLines(document: TextDocument, regex: RegExp): Iterable<{ line: TextLine, symbol: string }> {
+export function* matchAllLines(document: TextDocument, regex: RegExp, match: number = 1): Iterable<{ line: TextLine, symbol: string }> {
     for (let index = 0; index < document.lineCount; index++) {
         const line = document.lineAt(index);
         const matches = regex.exec(line.text);
-        if (matches) { yield { line: line, symbol: matches[1] }; }
+        if (matches) { yield { line: line, symbol: matches[match] }; }
     }
 }
 

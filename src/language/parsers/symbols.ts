@@ -40,11 +40,15 @@ export function findAllSymbolsInALine(line: string): RegExpMatchArray | null {
 }
 
 /**
- * Remove prefixes from a derived symbol.
+ * Remove prefixes from a derived symbol. 
  * @param derived An occurrence of a symbol.
+ * @example 
+ * `__symbol_` -> `_symbol_`
+ * `=symbol_` -> `_symbol_`
+ * `symbol` -> `symbol`
  */
 export function getBaseSymbol(derived: string): string {
-    return '_' + derived.replace(/^_+/, '').replace(/^=+/, '');
+    return derived.replace(/^_+/, '_').replace(/^=+/, '_');
 }
 
 /**
@@ -158,14 +162,4 @@ export function* findSymbolReferences(document: TextDocument, symbolName: string
             }
         }
     }
-}
-
-export function isUnreferencedSymbol(document: TextDocument, line: TextLine): boolean {
-    const match = /^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/.exec(line.text);
-    if (match) {
-        const regex = new RegExp('(_{1,3}|={1,2})' + getSymbolName(match[1]) + '_');
-        return !parser.firstLine(document, l => regex.test(l.text) && l !== line) ? true : false;
-    }
-
-    return false;
 }

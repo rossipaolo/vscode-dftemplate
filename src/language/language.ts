@@ -5,6 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from './parser';
 
 import { ExtensionContext } from 'vscode';
 import { loadTable, iterateAll } from '../extension';
@@ -26,6 +27,7 @@ interface LanguageTable {
     keywords: Map<string, LanguageItem>;
     messages: Map<string, LanguageItem>;
     definitions: Map<string, LanguageItem>;
+    globalVariables: Map<string, number>;
 }
 
 export interface LanguageItemResult extends LanguageItem {
@@ -57,8 +59,12 @@ export class Language extends TablesManager {
                     symbols: Language.objectToMap(obj.symbols),
                     keywords: Language.objectToMap(obj.keywords),
                     messages: Language.objectToMap(obj.messages),
-                    definitions: Language.objectToMap(obj.definitions)
+                    definitions: Language.objectToMap(obj.definitions),
+                    globalVariables: Language.objectToMap(obj.globalVariables)
                 };
+
+                parser.setGlobalVariables(instance.table.globalVariables);
+
                 return resolve();
             }, () => vscode.window.showErrorMessage('Failed to import language table.'));
         });
@@ -87,13 +93,21 @@ export class Language extends TablesManager {
         if (definition) {
             return Language.itemToResult(definition, Language.ItemKind.Definition);
         }
+
+        const globalVar = this.findGlobalVariable(name);
+        if (globalVar) {
+            return { category: 'task', summary: 'Global variable number ' + globalVar + '.', signature: name, parameters: [] };
+        }
     }
 
     /**
      * Retrieve all items whose start match the given string.
      */
     public *seekByPrefix(prefix: string): Iterable<LanguageItemResult> {
-        for (const result of iterateAll(this.findKeywords(prefix), this.findMessages(prefix))) {
+        for (const result of iterateAll(
+            this.findKeywords(prefix),
+            this.findMessages(prefix),
+            this.findGlobalVariables(prefix))) {
             yield result;
         }
     }
@@ -122,6 +136,12 @@ export class Language extends TablesManager {
         }
     }
 
+    public findGlobalVariable(name: string): number | undefined {
+        if (this.table && this.table.globalVariables) {
+            return this.table.globalVariables.get(name);
+        }
+    }
+
     public *findSymbols(prefix: string): Iterable<LanguageItemResult> {
         if (this.table && this.table.symbols) {
             for (const symbol of this.table.symbols) {
@@ -144,6 +164,19 @@ export class Language extends TablesManager {
         if (this.table && this.table.messages) {
             for (const message of Language.filterItems(this.table.messages, prefix)) {
                 yield Language.itemToResult(message, Language.ItemKind.Message);
+            }
+        }
+    }
+
+    public *findGlobalVariables(prefix: string): Iterable<LanguageItemResult> {
+        if (this.table && this.table.globalVariables) {
+            for (const globalVar of this.table.globalVariables) {
+                if (globalVar["0"].startsWith(prefix)) {
+                    yield {
+                        category: 'task', summary: 'Global variable number ' + globalVar["1"] + '.',
+                        signature: globalVar["0"] + ' ${1:_varSymbol_}', parameters: []
+                    };
+                }
             }
         }
     }

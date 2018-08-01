@@ -6,6 +6,20 @@
 
 import * as parser from '../parser';
 import { TextDocument, TextLine, Range } from "vscode";
+import { iterateAll } from '../../extension';
+
+let globalVarsAlternation: string;
+let globalMatch: RegExp;
+
+/**
+ * Set known names and numbers of global variables used in the main quest.
+ * @param globalVars A map of global variables.
+ */
+export function setGlobalVariables(globalVars: Map<string, number>) {
+    const globalVariables = Array.from(globalVars.keys());
+    globalVarsAlternation = globalVariables.join('|');
+    globalMatch = new RegExp('^\\s*(' + globalVarsAlternation + ')\\s*([a-zA-Z0-9._]+)');
+}
 
 /**
  * Gets the name of the task defined in the given line.
@@ -55,7 +69,9 @@ export function* findAllTasks(document: TextDocument): Iterable<{ line: TextLine
  * @param document A quest document.
  */
 export function* findAllVariables(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
-    for (const variable of parser.matchAllLines(document, /^\s*variable\s*([a-zA-Z0-9._]+)/)) {
+    for (const variable of iterateAll(
+        parser.matchAllLines(document, /^\s*variable\s*([a-zA-Z0-9._]+)/),
+        parser.matchAllLines(document, globalMatch, 2))) {
         yield variable;
     }
 }
@@ -71,6 +87,14 @@ export function getTaskRange(document: TextDocument, definitionLine: number): Ra
     return new Range(definitionLine, 0, --line, document.lineAt(line).text.length);
 }
 
+export function getGlobalVariable(text: string): { name: string, symbol: string } | undefined {
+    const match = text.match(globalMatch);
+    if (match) {
+        return { name: match[1], symbol: match[2] };
+    }
+}
+
 function makeTaskRegex(symbol: string) {
-    return new RegExp('^\\s*(' + symbol + '\\s+task:|' + 'until\\s*' + symbol + '\\s*performed|variable\\s+' + symbol + ')');
+    return new RegExp('^\\s*(' + symbol + '\\s+task:|' + 'until\\s*' + symbol + '\\s*performed|' +
+        '(variable|' + globalVarsAlternation + ')\\s+' + symbol + ')');
 }
