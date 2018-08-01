@@ -7,15 +7,9 @@
 import * as vscode from 'vscode';
 import * as parser from '../language/parser';
 
-import { ExtensionContext, TextDocument, Position, CompletionItem } from 'vscode';
-import { loadTable } from '../extension';
+import { TextDocument, Position, CompletionItem } from 'vscode';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
-
-class AttributeItem {
-    public attribute: string = '';
-    public values: string[] = [];
-}
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
@@ -34,16 +28,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
     ]
 
-    private attributes: AttributeItem[] = [];
-
-    constructor(context: ExtensionContext) {
-        loadTable(context, 'tables/attributes.json').then((obj) => {
-            this.attributes = obj;
-        });
-    }
-
     public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
-        let instance: TemplateCompletionItemProvider = this;
         return new Promise(function (resolve, reject) {
             const line = document.lineAt(position.line);
             const text = line.text.substring(0, position.character - 2).trim();
@@ -57,7 +42,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             }
 
             // Find attributes
-            for (const attributeItem of instance.attributes) {
+            for (const attributeItem of Language.getInstance().attributes) {
                 if (text.endsWith(attributeItem.attribute)) {
                     return resolve(attributeItem.values.map((value, index, array) =>
                         new vscode.CompletionItem(value, vscode.CompletionItemKind.EnumMember)));

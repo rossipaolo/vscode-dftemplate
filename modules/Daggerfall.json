@@ -86,13 +86,13 @@
         {
             "summary": "Triggers when player clicks on an individual NPC that is not currently assigned to another quest.",
             "overloads": [
-                "when ${1:_person_} is available"
+                "when ${1:IndividualNPC} is available"
             ]
         },
         {
             "summary": "Triggers when player reputation with a special named NPC equals or exceeds a minimum value.",
             "overloads": [
-                "when repute with ${1:_person_} is at least ${2:dd}"
+                "when repute with ${1:IndividualNPC} is at least ${2:dd}"
             ]
         }
     ],
