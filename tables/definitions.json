@@ -193,13 +193,21 @@
     "Place": [
         {
             "snippet": "Place ${1:_place} ${2|local,remote,permanent|} ${3:siteName}",
-            "match": "(Place|place) [a-zA-Z0-9_.-]+ (local|remote|permanent) \\w+",
-            "signature": "Place _place_ local,remote,permanent siteName",
+            "match": "(Place|place) [a-zA-Z0-9_.-]+ (local|remote|permanent) \\w+( anyInfo \\d+)?( rumors \\d+)?",
+            "signature": "Place _place_ local,remote,permanent siteName anyInfo messageID rumors messageID",
             "summary": "Defines a place. A __permanent__ site is one that appears the same for every Daggerfall incarnation; __local__ associates a house or shop in the town currently occupied by the PC (there are no local dungeons); __remote__ chooses a random location in the current province that has the type of remote site requested (house, shop or dungeon).",
             "parameters": [
                 {
                     "name": "siteName",
                     "description": "The name of the place."
+                },
+                {
+                    "name": "anyInfo",
+                    "description": "(optional) Add the message to the _Tell me about..._ dialog responses under the location's name."
+                },
+                {
+                    "name": "rumors",
+                    "description": "(optional) Adds the message as a possible response when gossiping in the dialog panel under _Any News?_."
                 }
             ]
         }
