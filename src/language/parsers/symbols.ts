@@ -28,7 +28,7 @@ const types: string[] = ['Item', 'Person', 'Place', 'Clock', 'Foe'];
 * @param word A word of text.
 */
 export function isSymbol(word: string): boolean {
-    return /(_{1,3}|={1,2})\w+_/.test(word);
+    return /(_{1,3}|={1,2})[a-zA-Z0-9_.-]+_/.test(word);
 }
 
 /**
@@ -36,7 +36,7 @@ export function isSymbol(word: string): boolean {
  * @param line A string to seek symbols within.
  */
 export function findAllSymbolsInALine(line: string): RegExpMatchArray | null {
-    return line.match(/(_{1,3}|={1,2})\w+_/g);
+    return line.match(/(_{1,3}|={1,2})[a-zA-Z0-9_.-]+_/g);
 }
 
 /**
