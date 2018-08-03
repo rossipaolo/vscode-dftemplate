@@ -26,6 +26,14 @@ export function getWord(document: TextDocument, position: Position): string | un
 }
 
 /**
+ * Checks if a line is empty or a comment.
+ * @param text A line of a quest.
+ */
+export function isEmptyOrComment(text: string): boolean {
+    return /^\s*(-.*)?\s*$/.test(text);
+}
+
+/**
  * Finds a comment above a definition and returns its content.
  * @param document A quest document.
  * @param definitionLine Line index of item whose summary is requested.

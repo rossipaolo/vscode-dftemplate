@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+### Improved
+- Format document/selection now detects the quest headless entry point.
+
 ## 0.2.0
 
 ### Added
