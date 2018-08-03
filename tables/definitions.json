@@ -1,0 +1,207 @@
+{
+    "Clock": [
+        {
+            "snippet": "Clock ${1:_clock_}",
+            "match": "Clock [a-zA-Z0-9_.-]+( flag \\d+)?( range \\d+ \\d+)?",
+            "signature": "Clock _clock_",
+            "summary": "An alarm that that executes a task with the same symbol name, with a random amount of time to run."
+        },
+        {
+            "snippet": "Clock ${1:_clock_} ${2:dd}.${3:hh}:${4:mm}",
+            "match": "Clock [a-zA-Z0-9_.-]+( \\d+\\.\\d+:\\d+| \\d+:\\d+| \\d+)( flag \\d+)?( range \\d+ \\d+)?",
+            "signature": "Clock _clock_ time",
+            "summary": "An alarm that that executes a task with the same symbol name, with a specific time to run.",
+            "parameters": [
+                {
+                    "name": "time",
+                    "description": "Timer runs down in this time. Can be expressed as `dd.hh:mm`, `hh:mm` or `mm`."
+                }
+            ]
+        },
+        {
+            "snippet": "Clock ${1:_clock_} ${2:dd}.${3:hh}:${4:mm} ${5:dd}.${6:hh}:${7:mm}",
+            "match": "Clock [a-zA-Z0-9_.-]+( \\d+\\.\\d+:\\d+| \\d+:\\d+| \\d+){2}( flag \\d+)?( range \\d+ \\d+)?",
+            "signature": "Clock _clock_ min max",
+            "summary": "An alarm that that executes a task with the same symbol name, with a range of time to run.",
+            "parameters": [
+                {
+                    "name": "min",
+                    "description": "Timer runs down at least at this time. Can be expressed as `dd.hh:mm`, `hh:mm` or `mm`."
+                },
+                {
+                    "name": "max",
+                    "description": "Timer runs down within this time. Can be expressed as `dd.hh:mm`, `hh:mm` or `mm`."
+                }
+            ]
+        }
+    ],
+    "Foe": [
+        {
+            "snippet": "Foe ${1:_symbol_} is ${2:anEnemy}",
+            "match": "(Foe|foe) [a-zA-Z0-9_.-]+ is \\d+ \\w+",
+            "summary": "An enemy.",
+            "parameters": [
+                {
+                    "name": "anEnemy",
+                    "description": "The name of an enemy type."
+                }
+            ]
+        },
+        {
+            "snippet": "Foe ${1:_symbol_} is ${2:dd} ${3:anEnemy}",
+            "match" : "(Foe|foe) [a-zA-Z0-9_.-]+ is \\w+",
+            "summary": "Multiple enemies.",
+            "parameters": [
+                {
+                    "name": "dd",
+                    "description": "Number of enemies."
+                },
+                {
+                    "name": "anEnemy",
+                    "description": "The name of an enemy type."
+                }
+            ]
+        }
+    ],
+    "Item": [
+        {
+            "snippet": "Item ${1:_item_} gold",
+            "signature": "Item _item_ gold range dd to dd",
+            "match": "(Item|item) [a-zA-Z0-9_.-]+ gold( range \\d+ to \\d+)?",
+            "summary": "A random amount of gold. Use the range parameter to set a range or exact value.",
+            "parameters": [
+                {
+                    "name": "range",
+                    "description": "(optional) The amount of gold; if omitted is proportional to the player's current level."
+                }
+            ]
+        },
+        {
+            "snippet": "Item ${1:_item_} artifact ${2:artifactName}",
+            "signature": "Item _item_ artifact artifactName anyInfo message used message",
+            "match": "(Item|item) [a-zA-Z0-9_.-]+ artifact [a-zA-Z0-9_'.-]+( anyInfo (\\d+|\\w+))?( used (\\d+|\\w+))?",
+            "summary": "An artifact item.",
+            "parameters": [
+                {
+                    "name": "artifactName",
+                    "description": "One of the known Tamriel artifacts."
+                },
+                {
+                    "name": "anyInfo",
+                    "description": "(optional) Add the message to the _Tell me about..._ dialog responses under the NPC's name."
+                },
+                {
+                    "name": "used",
+                    "description": "(optional) A message shown when the item is used in the player's inventory screen."
+                }
+            ]
+        },
+        {
+            "snippet": "Item ${1:_item_} ${2:someItemName}",
+            "signature": "Item _item_ name anyInfo message used message",
+            "match": "(Item|item) [a-zA-Z0-9_.-]+ [a-zA-Z0-9_'.-]+( anyInfo (\\d+|\\w+))?( used (\\d+|\\w+))?",
+            "summary": "A prefabricated common item.",
+            "parameters": [
+                {
+                    "name": "someItemName",
+                    "description": "The name of the item."
+                },
+                {
+                    "name": "anyInfo",
+                    "description": "(optional) Add the message to the _Tell me about..._ dialog responses under the NPC's name."
+                },
+                {
+                    "name": "used",
+                    "description": "(optional) A message shown when the item is used in the player's inventory screen."
+                }
+            ]
+        },
+        {
+            "snippet": "Item ${1:_item_} item class ${2:dd} subclass ${3:dd}",
+            "signature": "Item _item_ item class classIndex subclass subclassIndex",
+            "summary": "A common item created from its item codes.",
+            "parameters": [
+                {
+                    "name": "classIndex",
+                    "description": "The class of the item."
+                },
+                {
+                    "name": "subclassIndex",
+                    "description": "The class of the item."
+                }
+            ]
+        }
+    ],
+    "Person": [
+        {
+            "snippet": "Person ${1:_person_} named ${2:PermanentNPC}",
+            "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? named [a-zA-Z0-9'_.-]+( atHome)?( anyInfo \\d+)?( rumors \\d+)?",
+            "signature": "Person _person_ face dd named name atHome anyInfo messageID rumors messageID",
+            "summary": "A permanent npc with a name. This is one of the named major figures of the royal houses in Daggerfall, Sentinel, or Wayrest, or supernatural figures like the King of Worms.",
+            "parameters": [
+                {
+                    "name": "face dd",
+                    "description": "(optional) Face index."
+                },
+                {
+                    "name": "name",
+                    "description": "The name of an npc."
+                },
+                {
+                    "name": "atHome",
+                    "description": "(optional) Npc is located at their regular place in the game world; otherwise they can be positioned elsewhere for the duration of the quest."
+                },
+                {
+                    "name": "anyInfo",
+                    "description": "(optional) Add the message to the _Tell me about..._ dialog responses under the NPC's name."
+                },
+                {
+                    "name": "rumors",
+                    "description": "(optional) Adds the message as a possible response when gossiping in the dialog panel under _Any News?_."
+                }
+            ]
+        },
+        {
+            "snippet": "Person ${1:_person_} ${2|factionType,faction,group|} ${3:name}",
+            "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? (factionType|factiontype|faction|group) [a-zA-Z0-9'_.-]+( (female|male))?( anyInfo \\d+)?( rumors \\d+)?",
+            "signature": "Person _person_ face dd factionType,faction,group name male,female anyInfo messageID rumors messageID",
+            "summary": "An npc with a faction, factionType or social group alliance.",
+            "parameters":[
+                {
+                    "name": "face dd",
+                    "description": "(optional) Face index."
+                },
+                {
+                    "name": "name",
+                    "description": "The name of the faction or group for this npc."
+                },
+                {
+                    "name": "male,female",
+                    "description": "(optional) Gender of npc; random if omitted."
+                },
+                {
+                    "name": "anyInfo",
+                    "description": "(optional) Add the message to the _Tell me about..._ dialog responses under the NPC's name."
+                },
+                {
+                    "name": "rumors",
+                    "description": "(optional) Adds the message as a possible response when gossiping in the dialog panel under _Any News?_."
+                }
+            ]
+        }
+    ],
+    "Place": [
+        {
+            "snippet": "Place ${1:_place} ${2|local,remote,permanent|} ${3:siteName}",
+            "match": "(Place|place) [a-zA-Z0-9_.-]+ (local|remote|permanent) \\w+",
+            "signature": "Place _place_ local,remote,permanent siteName",
+            "summary": "Defines a place. A __permanent__ site is one that appears the same for every Daggerfall incarnation; __local__ associates a house or shop in the town currently occupied by the PC (there are no local dungeons); __remote__ chooses a random location in the current province that has the type of remote site requested (house, shop or dungeon).",
+            "parameters": [
+                {
+                    "name": "siteName",
+                    "description": "The name of the place."
+                }
+            ]
+        }
+    ]
+}

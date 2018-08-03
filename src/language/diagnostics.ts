@@ -36,6 +36,8 @@ const Errors = {
         makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error),
     duplicatedDefinition: (range: Range, name: string) =>
         makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error),
+    invalidDefinition: (range: Range, symbol: string, type: string) =>
+        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Invalid definition for ' + symbol + ' (' + type + ').', DiagnosticSeverity.Error),
     undefinedExpression: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Action or condition not found.', DiagnosticSeverity.Error)
 };
@@ -46,7 +48,11 @@ const Warnings = {
     unusedDeclarationSymbol: (range: Range, name: string) =>
         makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never used.', DiagnosticSeverity.Warning),
     unusedDeclarationTask: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationTask, name + ' is declared but never used.', DiagnosticSeverity.Warning)
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationTask, name + ' is declared but never used.', DiagnosticSeverity.Warning),
+    unstartedClock: (range: Range, name: string) =>
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never starts.', DiagnosticSeverity.Warning),
+    unlinkedClock: (range: Range, name: string) =>
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + " doesn't activate a task.", DiagnosticSeverity.Warning)
 };
 
 const Hints = {
@@ -189,6 +195,13 @@ function doDiagnostics(document: vscode.TextDocument) {
             const symbol = parser.getSymbolFromLine(line);
             if (symbol) {
 
+                // Invalid signature
+                const text = line.text.trim();
+                const type = text.substring(0, text.indexOf(' '));
+                if (!Language.getInstance().findDefinition(type, text)) {
+                    diagnostics.push(Errors.invalidDefinition(trimRange(line), symbol, type));
+                }
+
                 // Duplicated definition
                 if (symbols.indexOf(symbol) !== - 1) {
                     diagnostics.push(Errors.duplicatedDefinition(wordRange(line, symbol), symbol));
@@ -207,6 +220,15 @@ function doDiagnostics(document: vscode.TextDocument) {
                     diagnostics.push(Hints.symbolNamingConventionViolation(wordRange(line, symbol)));
                 }
 
+                if (type === parser.Types.Clock) {
+                    if (!parser.findLine(document, new RegExp('start timer ' + symbol))) {
+                        diagnostics.push(Warnings.unstartedClock(wordRange(line, symbol), symbol));
+                    }
+                    if (!parser.findTaskDefinition(document, symbol)) {
+                        diagnostics.push(Warnings.unlinkedClock(wordRange(line, symbol), symbol));
+                    }
+                }
+
                 continue;
             }
 
@@ -223,7 +245,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (!parser.firstLine(document, l => l !== line && l.text.indexOf(task) !== -1)) {
+                if (!isTaskUsed(document, line, task)) {
                     diagnostics.push(Warnings.unusedDeclarationTask(wordRange(line, task), task));
                 }
 
@@ -280,6 +302,28 @@ function doDiagnostics(document: vscode.TextDocument) {
     }
 
     return diagnostics;
+}
+
+function isTaskUsed(document: vscode.TextDocument, line: vscode.TextLine, task: string):boolean {
+    
+    // Is set from another task
+    if (parser.firstLine(document, l => l !== line && !/^\s*-/.test(l.text) && l.text.indexOf(task) !== -1)) {
+        return true;
+    }    
+
+    // Has a condition
+    if (document.lineCount > line.lineNumber + 1) {
+        const text = document.lineAt(line.lineNumber + 1).text.trim();
+        const space = text.indexOf(' ');
+        if (space > 0) {
+            const action = Modules.getInstance().findAction(text.substring(0, space), text);
+            if (action && action.actionKind === Modules.ActionKind.Condition) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity)

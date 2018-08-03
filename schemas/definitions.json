@@ -1,50 +1,26 @@
 {
-    "title": "DFTemplate Documentation",
-    "description": "Documentation table for DF Template.",
+    "title": "DFTemplate Symbol Definitions",
+    "description": "Documentation table of symbol definitions for DF Template.",
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
-    "properties": {
-        "symbols": {
-            "type": "object",
-            "description": "Language symbols that provides a value for the quest state.",
-            "additionalProperties": {
-                "type": "string",
-                "description": "A language symbol."
-            }
-        },
-        "keywords": {
-            "type": "object",
-            "description": "Keywords.",
-            "additionalProperties": {
-                "$ref": "#/definitions/item"
-            }
-        },
-        "messages": {
-            "type": "object",
-            "description": "Default quest messages.",
-            "additionalProperties": {
-                "$ref": "#/definitions/item"
-            }
-        }
-    },
-    "required": [
-        "symbols",
-        "keywords",
-        "messages",
-        "definitions"
-    ],
-    "definitions": {
-        "item": {
+    "additionalProperties": {
+        "type": "array",
+        "description": "A symbol type.",
+        "items": {
             "type": "object",
             "description": "An element",
             "properties": {
-                "category": {
+                "snippet": {
                     "type": "string",
-                    "description": "The category of the element."
+                    "description": "A snippet for the base signature."
+                },
+                "match" : {
+                    "type": "string",
+                    "description": "A regular expression that matches the signature with all combinations of parameters."
                 },
                 "signature": {
                     "type": "string",
-                    "description": "Signature of the element."
+                    "description": "A pretty signature of the element including the optional parameters."
                 },
                 "summary": {
                     "type": "string",
@@ -70,10 +46,7 @@
                         ]
                     }
                 }
-            },
-            "required": [
-                "summary"
-            ]
+            }
         }
     },
     "default": {}
