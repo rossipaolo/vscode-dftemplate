@@ -22,102 +22,6 @@
 		],
 		"description": "Insert message"
 	},
-	"Item": {
-		"prefix": "Item",
-		"body": [
-			"Item  ${1:_symbol_}  ${2:itemName}",
-			"$0"
-		],
-		"description": "Describe an item."
-	},
-	"VerboseItem": {
-		"prefix": "Item",
-		"body": [
-			"Item  ${1:_symbol_}  item  class ${2:nn}  subclass ${3:mm}",
-			"$0"
-		],
-		"description": "Describe an item."
-	},
-	"Gold": {
-		"prefix": "Item",
-		"body": [
-			"Item  ${1:_symbol_}  gold  range  ${2:nn}  to  ${3:mm}",
-			"$0"
-		],
-		"description": "Creates a random amount of gold reward proportional to the player's current level."
-	},
-	"Artifact": {
-		"prefix": "Item",
-		"body": [
-			"Item  ${1:_symbol_}  artifact  ${2:artifactName}",
-			"$0"
-		],
-		"description": "Describes an artifact item appearing in a quest."
-	},
-	"Person": {
-		"prefix": "Person",
-		"body": [
-			"Person  ${1:_symbol_}  ${2|named,factionType,group,faction|}  ${3:value}",
-			"$0"
-		],
-		"description": "Describe an NPC with an argument."
-	},
-	"GenderedPerson": {
-		"prefix": "Person",
-		"body": [
-			"Person  ${1:_symbol_}  ${2|named,factionType,group,faction|}  ${3:value}  ${4|male,female|}",
-			"$0"
-		],
-		"description": "Describe an NPC with an argument and a specific gender."
-	},
-	"PersonAtHome": {
-		"prefix": "Person",
-		"body": [
-			"Person  ${1:_symbol_}  named  ${2:value}  athome",
-			"$0"
-		],
-		"description": "Describe an NPC located at home."
-	},
-	"Place": {
-		"prefix": "Place",
-		"body": [
-			"Place  ${1:_symbol_}  ${2|permanent,local,remote|}  ${3:place}",
-			"$0"
-		],
-		"description": "Describe one place a PC might visit in the quest."
-	},
-	"Clock": {
-		"prefix": "Clock",
-		"body": [
-			"Clock  ${1:_symbol_}  ${2:dd}.${3:hh}:${4:mm}",
-			"$0"
-		],
-		"description": "Creates a clock that runs down in dd days, hh hours, and mm minutes."
-	},
-	"ClockRange": {
-		"prefix": "Clock",
-		"body": [
-			"Clock  ${1:_symbol_}  ${2:dd}.${3:hh}:${4:mm} ${5:dd}.${6:hh}:${7:mm}",
-			"$0"
-		],
-		"description": "Creates a clock that runs down between dd.hh:mm and aa.bb:cc."
-	},
-	"Foe": {
-		"prefix": "Foe",
-		"body": [
-			"Foe  ${1:_symbol_}  is  ${2:anEnemy}",
-			"$0"
-		],
-		"description": "Creates a single foe of type anEnemy."
-	},
-	"MultiFoe": {
-		"prefix": "Foe",
-		"body": [
-			"Foe  ${1:_symbol_}  is  ${2:nn}  ${3:anEnemy}",
-			"$0"
-		],
-		"description": "Creates nn foes of type anEnemy."
-	},
 	"Task": {
 		"prefix": "task",
 		"body": [
@@ -145,13 +49,5 @@
 			"end macro"
 		],
 		"description": "Insert an area of commands eligible for special substitutions."
-	},
-	"EnemyWave": {
-		"prefix": "wave",
-		"body": [
-			"${1|create,send|} ${2:aFoe} every ${3:m} minutes ${4:n} times with ${5:k}% success",
-			"\t$0"
-		],
-		"description": "Creates mobs of enemies to harry the player; 'send' spawns only when the player is above ground."
 	}
 }

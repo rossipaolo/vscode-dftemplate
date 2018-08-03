@@ -27,8 +27,15 @@ interface LanguageTable {
     symbols: Map<string, string>;
     keywords: Map<string, LanguageItem>;
     messages: Map<string, LanguageItem>;
-    definitions: Map<string, LanguageItem>;
     globalVariables: Map<string, number>;
+}
+
+interface Definition {
+    snippet: string;
+    signature: string;
+    match: string;
+    summary: string;
+    parameters: Parameter[];
 }
 
 class AttributeItem {
@@ -46,6 +53,7 @@ export interface LanguageItemResult extends LanguageItem {
 export class Language extends TablesManager {
     private table: LanguageTable | null = null;
     private _attributes: AttributeItem[] = [];
+    private definitions: Map<string, Definition[]> | null = null;
 
     private static instance: Language | null;
 
@@ -71,7 +79,6 @@ export class Language extends TablesManager {
                         symbols: Language.objectToMap(obj.symbols),
                         keywords: Language.objectToMap(obj.keywords),
                         messages: Language.objectToMap(obj.messages),
-                        definitions: Language.objectToMap(obj.definitions),
                         globalVariables: Language.objectToMap(obj.globalVariables)
                     };
 
@@ -83,7 +90,10 @@ export class Language extends TablesManager {
                     setIndividualNpcCallback((word) =>
                         instance.attributes.find(x => x.attribute === 'named' && x.values.indexOf(word) !== -1) !== undefined ||
                         instance.attributes.find(x => x.attribute === 'faction' && x.values.indexOf(word) !== -1) !== undefined);
-                }, () => vscode.window.showErrorMessage('Failed to import attributes table.'))
+                }, () => vscode.window.showErrorMessage('Failed to import attributes table.')),
+                Language.loadTable(context, 'definitions.json').then((obj) => {
+                    instance.definitions = Language.objectToMap(obj);
+                })
             ]).then(() => {
                 return resolve();
             }, () => reject());
@@ -109,11 +119,6 @@ export class Language extends TablesManager {
             return Language.itemToResult(message, Language.ItemKind.Message);
         }
 
-        let definition = this.findDefinition(name);
-        if (definition) {
-            return Language.itemToResult(definition, Language.ItemKind.Definition);
-        }
-
         const globalVar = this.findGlobalVariable(name);
         if (globalVar) {
             return { category: 'task', summary: 'Global variable number ' + globalVar + '.', signature: name, parameters: [] };
@@ -127,7 +132,8 @@ export class Language extends TablesManager {
         for (const result of iterateAll(
             this.findKeywords(prefix),
             this.findMessages(prefix),
-            this.findGlobalVariables(prefix))) {
+            this.findGlobalVariables(prefix),
+            this.findDefinitions(prefix))) {
             yield result;
         }
     }
@@ -150,9 +156,23 @@ export class Language extends TablesManager {
         }
     }
 
-    public findDefinition(name: string): LanguageItem | undefined {
-        if (this.table && this.table.definitions.has(name)) {
-            return this.table.definitions.get(name);
+    public findDefinition(name: string, text?: string): Definition | undefined {
+        if (text) {
+            if (this.definitions) {
+                const group = this.definitions.get(name);
+                if (group) {
+                    for (const definition of group) {
+                        const regex = definition.match ? new RegExp('^\\s*' + definition.match + '\\s*$') :
+                            Language.makeRegexFromSignature(definition.snippet);
+                        if (!definition.signature) {
+                            definition.signature = Language.prettySignature(definition.snippet);
+                        }
+                        if (regex.test(text)) {
+                            return definition;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -199,6 +219,36 @@ export class Language extends TablesManager {
                 }
             }
         }
+    }
+
+    public *findDefinitions(prefix: string): Iterable<LanguageItemResult> {
+        if (this.definitions) {
+            for (const definition of this.definitions) {
+                if (definition["0"].startsWith(prefix)) {
+                    for (const signature of definition["1"]) {
+                        yield {
+                            category: 'definition', summary: signature.summary,
+                            signature: signature.snippet, parameters: signature.parameters
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the number of overloads for a symbol type.
+     * @param symbolType A symbol type.
+     */
+    public numberOfOverloads(symbolType: string): number {
+        if (this.definitions) {
+            const def = this.definitions.get(symbolType);
+            if (def) {
+                return def.length;
+            }
+        }
+
+        return 0;
     }
 
     /**

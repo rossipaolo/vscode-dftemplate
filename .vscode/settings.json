@@ -18,6 +18,12 @@
         },
         {
             "fileMatch": [
+                "tables/definitions.json"
+            ],
+            "url": "./schemas/definitions.json"
+        },
+        {
+            "fileMatch": [
                 "tables/language.json"
             ],
             "url": "./schemas/language.json"

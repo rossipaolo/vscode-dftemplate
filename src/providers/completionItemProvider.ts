@@ -129,6 +129,8 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 return vscode.CompletionItemKind.Keyword;
             case Language.ItemKind.Message:
                 return vscode.CompletionItemKind.Struct;
+            case Language.ItemKind.Definition:
+                return vscode.CompletionItemKind.Constructor;
             case Modules.ActionKind.Action:
                 return vscode.CompletionItemKind.Method;
             case Modules.ActionKind.Condition:

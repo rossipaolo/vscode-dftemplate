@@ -74,7 +74,20 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
 
                 // Seek word in documentation files
-                let languageItem = Language.getInstance().seekByName(word);
+                const definition = Language.getInstance().findDefinition(word, document.lineAt(position.line).text);
+                if (definition) {
+                    const item = new TemplateDocumentationItem();
+                    item.category = 'definition';
+                    item.signature = definition.signature;
+                    const overloads = Language.getInstance().numberOfOverloads(word) - 1;
+                    if (overloads > 0) {
+                        item.signature += ' (+' + overloads + ' overloads)';
+                    }
+                    item.summary = definition.summary;
+                    item.parameters = definition.parameters;
+                    return resolve(TemplateHoverProvider.makeHover(item));
+                }
+                const languageItem = Language.getInstance().seekByName(word);
                 if (languageItem) {
                     languageItem.signature = Language.prettySignature(languageItem.signature);
                     return resolve(TemplateHoverProvider.makeHover(languageItem));
