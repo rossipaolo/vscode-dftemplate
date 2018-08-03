@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.2.0
 
 ### Added
 - Show hover on reference to default message via number: signature and summary taken from table.
