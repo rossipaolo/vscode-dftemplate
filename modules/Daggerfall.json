@@ -255,7 +255,7 @@
             "summary": "Plays sound every x minutes y times.",
             "overloads": [
                 "play sound ${1:sound} ${2:mm} ${3:dd}",
-                "play sound ${1:sound} every ${2:mm} minutes ${3:dd}"
+                "play sound ${1:sound} every ${2:mm} minutes ${3:dd} times"
             ]
         },
         {
@@ -289,9 +289,10 @@
             ]
         },
         {
-            "summary": "Reveals location on travelmap.",
+            "summary": "Reveals location on travelmap. This can be a remote dungeon or a location revelead in a province with a _magicNumber_, meaning the key to an entry in the Map Table.",
             "overloads": [
-                "reveal ${1:_place_}"
+                "reveal ${1:_place_}",
+                "reveal ${1:_place_} in province ${2:dd} at ${3:dd}"
             ]
         },
         {
@@ -357,9 +358,9 @@
             ]
         },
         {
-            "summary": "Permanently disable a task.",
+            "summary": "Permanently disable one or more tasks. ",
             "overloads": [
-                "unset ${1:task}"
+                "unset ${1:...task}"
             ]
         }
     ]

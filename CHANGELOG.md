@@ -5,6 +5,9 @@
 ### Improved
 - Format document/selection now detects the quest headless entry point.
 
+### Fixed
+- A few action/definition signatures.
+
 ## 0.2.0
 
 ### Added
