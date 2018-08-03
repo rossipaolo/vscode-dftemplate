@@ -4,6 +4,8 @@
 
 'use strict';
 
+import * as parser from './parser';
+
 import { Range, TextEdit, TextLine } from 'vscode';
 import { getOptions } from '../extension';
 
@@ -17,6 +19,9 @@ export interface FormatLineRequest {
     requestLine: (line: TextLine) => boolean;
     formatLine: (line: TextLine) => FormatterResults | undefined;
 }
+
+
+type FormatterCallback = (line: TextLine) => FormatterResults | undefined;
 
 export class Formatter {
 
@@ -47,6 +52,25 @@ export class Formatter {
             wanted: /^[a-zA-Z]+:\s{2}\[[0-9]+\]$/,
             text: "$:  [$]"
         }
+    ];
+
+    /**
+     * Formatters for preamble and QRC block.
+     */
+    public static qrcFormatters: FormatterCallback[] = [
+        Formatter.formatKeyword,
+        Formatter.formatComment,
+        Formatter.formatCenteredMessage,
+    ];
+
+    /**
+     * Formatters for QBN block.
+     */
+    public static qbnFormatters: FormatterCallback[] = [
+        Formatter.formatComment,
+        Formatter.formatSymbolDefinition,
+        Formatter.formatHeadlessEntryPoint,
+        Formatter.formatTask
     ];
 
     public static formatKeyword(line: TextLine): FormatterResults | undefined {
@@ -145,6 +169,19 @@ export class Formatter {
             }
 
             return needsEdit ? Formatter.makeResults(line, length, text) : Formatter.unaltered;
+        }
+    }
+
+    /**
+     * Format a headless entry point.
+     */
+    public static formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
+
+        if (!parser.isEmptyOrComment(line.text) &&
+            !parser.getSymbolFromLine(line) &&
+            !parser.getTaskName(line.text) &&
+            !parser.getGlobalVariable(line.text)) {
+            return Formatter.formatTaskScope(line);
         }
     }
 

@@ -5,27 +5,20 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from '../language/parser';
 
-import { TextDocument, TextLine, Range, FormattingOptions, TextEdit } from 'vscode';
+import { TextDocument, Range, FormattingOptions, TextEdit } from 'vscode';
 import { Formatter, FormatterResults } from '../language/formatter';
 
 export class TemplateDocumentRangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
 
-    private static formatters: { (line: TextLine): FormatterResults | undefined }[] = [
-        Formatter.formatKeyword,
-        Formatter.formatComment,
-        Formatter.formatCenteredMessage,
-        Formatter.formatSymbolDefinition,
-        Formatter.formatTask
-    ];
-
     public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> {
         return new Promise(function (resolve, reject) {
-            let textEdits: TextEdit[] = [];
+            const textEdits: TextEdit[] = [];
+            const questBlocks = parser.getQuestBlocksRanges(document);
             for (let i = range.start.line; i <= range.end.line; i++) {
-                let line = document.lineAt(i);
-                for (let j = 0; j < TemplateDocumentRangeFormattingEditProvider.formatters.length; j++) {
-                    let results = TemplateDocumentRangeFormattingEditProvider.formatters[j](line);
+                for (const formatter of i <= questBlocks.qbn.start.line ? Formatter.qrcFormatters : Formatter.qbnFormatters) {
+                    const results = formatter(document.lineAt(i));
                     if (results) {
                         if (results.needsEdit && results.textEdit) {
                             textEdits.push(results.textEdit);
