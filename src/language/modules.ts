@@ -106,15 +106,6 @@ export class Modules extends TablesManager {
         }
     }
 
-    /**
-     * Detects issues with an invocation to action or condition.
-     */
-    public *doDiagnostics(document: vscode.TextDocument, line: vscode.TextLine, actionResult: ActionResult) {
-        for (const diagnostic of Modules.doDiagnostics(document, actionResult.action.overloads[actionResult.overload], line)) {
-            yield diagnostic;
-        }
-    }
-
     public static getInstance(): Modules {
         return Modules.instance ? Modules.instance : Modules.instance = new Modules();
     }

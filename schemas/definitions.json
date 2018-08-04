@@ -18,6 +18,23 @@
                     "type": "string",
                     "description": "A regular expression that matches the signature with all combinations of parameters."
                 },
+                "matches": {
+                    "type": "array",
+                    "description": "Matches for individual parameters.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "regex": {
+                                "type": "string",
+                                "description": "A regular expression that matches a parameter."
+                            },
+                            "signature": {
+                                "type": "string",
+                                "description": "Standard syntax signature for the parameter."
+                            }
+                        }
+                    }
+                },
                 "signature": {
                     "type": "string",
                     "description": "A pretty signature of the element including the optional parameters."

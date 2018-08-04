@@ -38,7 +38,13 @@
     "Foe": [
         {
             "snippet": "Foe ${1:_symbol_} is ${2:anEnemy}",
-            "match": "(Foe|foe) [a-zA-Z0-9_.-]+ is \\d+ \\w+",
+            "match": "(Foe|foe) [a-zA-Z0-9_.-]+ is \\w+",
+            "matches": [
+                {
+                    "regex": "is (\\w+)",
+                    "signature": "${d:foe}"
+                }
+            ],
             "summary": "An enemy.",
             "parameters": [
                 {
@@ -49,7 +55,13 @@
         },
         {
             "snippet": "Foe ${1:_symbol_} is ${2:dd} ${3:anEnemy}",
-            "match" : "(Foe|foe) [a-zA-Z0-9_.-]+ is \\w+",
+            "match" : "(Foe|foe) [a-zA-Z0-9_.-]+ is \\d+ \\w+",
+            "matches": [
+                {
+                    "regex": "is \\d+ (\\w+)",
+                    "signature": "${d:foe}"
+                }
+            ],
             "summary": "Multiple enemies.",
             "parameters": [
                 {
@@ -78,8 +90,22 @@
         },
         {
             "snippet": "Item ${1:_item_} artifact ${2:artifactName}",
-            "signature": "Item _item_ artifact artifactName anyInfo message used message",
             "match": "(Item|item) [a-zA-Z0-9_.-]+ artifact [a-zA-Z0-9_'.-]+( anyInfo (\\d+|\\w+))?( used (\\d+|\\w+))?",
+            "matches": [
+                {
+                    "regex": "artifact ([a-zA-Z0-9_'.-]+)",
+                    "signature": "${d:artifactItem}"
+                },
+                {
+                    "regex": "anyInfo (\\d+\\w+)",
+                    "signature": "${d:message}"
+                },
+                {
+                    "regex": "used (\\d+\\w+)",
+                    "signature": "${d:message}"
+                }
+            ],
+            "signature": "Item _item_ artifact artifactName anyInfo message used message",
             "summary": "An artifact item.",
             "parameters": [
                 {
@@ -98,8 +124,22 @@
         },
         {
             "snippet": "Item ${1:_item_} ${2:someItemName}",
-            "signature": "Item _item_ name anyInfo message used message",
             "match": "(Item|item) [a-zA-Z0-9_.-]+ [a-zA-Z0-9_'.-]+( anyInfo (\\d+|\\w+))?( used (\\d+|\\w+))?",
+            "matches": [
+                {
+                    "regex": "(?:Item|item) [a-zA-Z0-9_.-]+ ([a-zA-Z0-9_'.-]+)",
+                    "signature": "${d:commonItem}"
+                },
+                {
+                    "regex": "anyInfo (\\d+\\w+)",
+                    "signature": "${d:message}"
+                },
+                {
+                    "regex": "used (\\d+\\w+)",
+                    "signature": "${d:message}"
+                }
+            ],
+            "signature": "Item _item_ name anyInfo message used message",
             "summary": "A prefabricated common item.",
             "parameters": [
                 {
@@ -127,15 +167,29 @@
                 },
                 {
                     "name": "subclassIndex",
-                    "description": "The class of the item."
+                    "description": "The subclass of the item."
                 }
             ]
         }
     ],
     "Person": [
         {
-            "snippet": "Person ${1:_person_} named ${2:PermanentNPC}",
+            "snippet": "Person ${1:_person_} named ${2:IndividualNPC}",
             "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? named [a-zA-Z0-9'_.-]+( atHome)?( anyInfo \\d+)?( rumors \\d+)?",
+            "matches": [
+                {
+                    "regex": "named ([a-zA-Z0-9'_.-]+)",
+                    "signature": "${d:IndividualNPC}"
+                },
+                {
+                    "regex": "anyInfo (\\d+)",
+                    "signature": "${d:messageID}"
+                },
+                {
+                    "regex": "rumors (\\d+)",
+                    "signature": "${d:messageID}"
+                }
+            ],
             "signature": "Person _person_ face dd named name atHome anyInfo messageID rumors messageID",
             "summary": "A permanent npc with a name. This is one of the named major figures of the royal houses in Daggerfall, Sentinel, or Wayrest, or supernatural figures like the King of Worms.",
             "parameters": [
@@ -164,6 +218,16 @@
         {
             "snippet": "Person ${1:_person_} ${2|factionType,faction,group|} ${3:name}",
             "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? (factionType|factiontype|faction|group) [a-zA-Z0-9'_.-]+( (female|male))?( anyInfo \\d+)?( rumors \\d+)?",
+            "matches": [
+                {
+                    "regex": "anyInfo (\\d+)",
+                    "signature": "${d:messageID}"
+                },
+                {
+                    "regex": "rumors (\\d+)",
+                    "signature": "${d:messageID}"
+                }
+            ],
             "signature": "Person _person_ face dd factionType,faction,group name male,female anyInfo messageID rumors messageID",
             "summary": "An npc with a faction, factionType or social group alliance.",
             "parameters":[
@@ -194,6 +258,16 @@
         {
             "snippet": "Place ${1:_place} ${2|local,remote,permanent|} ${3:siteName}",
             "match": "(Place|place) [a-zA-Z0-9_.-]+ (local|remote|permanent) \\w+( anyInfo \\d+)?( rumors \\d+)?",
+            "matches": [
+                {
+                    "regex": "anyInfo (\\d+)",
+                    "signature": "${d:messageID}"
+                },
+                {
+                    "regex": "rumors (\\d+)",
+                    "signature": "${d:messageID}"
+                }
+            ],
             "signature": "Place _place_ local,remote,permanent siteName anyInfo messageID rumors messageID",
             "summary": "Defines a place. A __permanent__ site is one that appears the same for every Daggerfall incarnation; __local__ associates a house or shop in the town currently occupied by the PC (there are no local dungeons); __remote__ chooses a random location in the current province that has the type of remote site requested (house, shop or dungeon).",
             "parameters": [
