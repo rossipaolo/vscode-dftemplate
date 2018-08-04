@@ -11,6 +11,7 @@ import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from './language';
 import { Modules } from './modules';
+import { doSignatureChecks, doWordsCheck } from './signatureCheck';
 
 export enum DiagnosticCode {
     GenericError,
@@ -135,7 +136,7 @@ function doDiagnostics(document: vscode.TextDocument) {
         const line = document.lineAt(index);
 
         // Skip comments and empty lines
-        if (/^\s*(-.*)?$/.test(line.text)) {
+        if (parser.isEmptyOrComment(line.text)) {
             continue;
         }
 
@@ -151,10 +152,17 @@ function doDiagnostics(document: vscode.TextDocument) {
 
         if (block === QuestBlock.Preamble) {
 
-            // Check signature
-            for (const diagnostic of Language.getInstance().doDiagnostics(document, line)) {
-                diagnostic.source = TEMPLATE_LANGUAGE;
-                diagnostics.push(diagnostic);
+            const word = parser.getFirstWord(line.text);
+            if (word) {
+                
+                // Check signature
+                const result = Language.getInstance().findKeyword(word);
+                if (result) {
+                    for (const diagnostic of doSignatureChecks(document, result.signature, line)) {
+                        diagnostic.source = TEMPLATE_LANGUAGE;
+                        diagnostics.push(diagnostic);
+                    }
+                }
             }
 
             continue;
@@ -194,12 +202,19 @@ function doDiagnostics(document: vscode.TextDocument) {
             // Symbol definition
             const symbol = parser.getSymbolFromLine(line);
             if (symbol) {
-
-                // Invalid signature
                 const text = line.text.trim();
                 const type = text.substring(0, text.indexOf(' '));
-                if (!Language.getInstance().findDefinition(type, text)) {
+                const definition = Language.getInstance().findDefinition(type, text);
+                
+                // Invalid signature or parameters
+                if (!definition) {
                     diagnostics.push(Errors.invalidDefinition(trimRange(line), symbol, type));
+                }
+                else if (definition.matches) {
+                    for (const diagnostic of doWordsCheck(document, definition.matches, line)) {
+                        diagnostic.source = TEMPLATE_LANGUAGE;
+                        diagnostics.push(diagnostic);
+                    }
                 }
 
                 // Duplicated definition
@@ -284,11 +299,11 @@ function doDiagnostics(document: vscode.TextDocument) {
             }
 
             // Action invokation
-            const action = Modules.getInstance().findInvokedAction(line.text);
-            if (action) {
+            const actionResult = Modules.getInstance().findInvokedAction(line.text);
+            if (actionResult) {
 
                 // Check action signature
-                for (const diagnostic of Modules.getInstance().doDiagnostics(document, line, action)) {
+                for (const diagnostic of doSignatureChecks(document, actionResult.action.overloads[actionResult.overload], line)) {
                     diagnostic.source = TEMPLATE_LANGUAGE;
                     diagnostics.push(diagnostic);
                 }

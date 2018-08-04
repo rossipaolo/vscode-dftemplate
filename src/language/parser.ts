@@ -26,6 +26,17 @@ export function getWord(document: TextDocument, position: Position): string | un
 }
 
 /**
+ * Gets the first word in a line.
+ * @param text A line of text.
+ */
+export function getFirstWord(text: string): string | undefined {
+    const match = /^\s*([a-zA-Z]+)/.exec(text);
+    if (match) {
+        return match[1];
+    }
+}
+
+/**
  * Checks if a line is empty or a comment.
  * @param text A line of a quest.
  */

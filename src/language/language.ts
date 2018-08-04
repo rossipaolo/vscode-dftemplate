@@ -10,7 +10,8 @@ import * as parser from './parser';
 
 import { ExtensionContext } from 'vscode';
 import { iterateAll } from '../extension';
-import { TablesManager, setIndividualNpcCallback } from "./base/tablesManager";
+import { TablesManager } from "./base/tablesManager";
+import { SignatureWord } from './signatureCheck';
 
 interface Parameter {
     name: string;
@@ -34,6 +35,7 @@ interface Definition {
     snippet: string;
     signature: string;
     match: string;
+    matches: SignatureWord[];
     summary: string;
     parameters: Parameter[];
 }
@@ -86,10 +88,6 @@ export class Language extends TablesManager {
                 }, () => vscode.window.showErrorMessage('Failed to import language table.')),
                 Language.loadTable(context, 'attributes.json').then((obj) => {
                     instance._attributes = obj;
-                    
-                    setIndividualNpcCallback((word) =>
-                        instance.attributes.find(x => x.attribute === 'named' && x.values.indexOf(word) !== -1) !== undefined ||
-                        instance.attributes.find(x => x.attribute === 'faction' && x.values.indexOf(word) !== -1) !== undefined);
                 }, () => vscode.window.showErrorMessage('Failed to import attributes table.')),
                 Language.loadTable(context, 'definitions.json').then((obj) => {
                     instance.definitions = Language.objectToMap(obj);
@@ -251,21 +249,17 @@ export class Language extends TablesManager {
         return 0;
     }
 
-    /**
-     * Detects issues and returns error messages.
-     */
-    public *doDiagnostics(document: vscode.TextDocument, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
-        
-        // Signatures
-        let match = /^\s*([a-zA-Z]+)/g.exec(line.text);
-        if (match) {
-            const result = this.findKeyword(match[1]);
-            if (result) {
-                for (const error of Language.doDiagnostics(document, result.signature, line)) {
-                    yield error;
-                }
-            }
-        }
+    public isIndividualNpc(name: string): boolean {
+        return this._attributes.find(x => x.attribute === 'named' && x.values.indexOf(name) !== -1) !== undefined ||
+            this._attributes.find(x => x.attribute === 'faction' && x.values.indexOf(name) !== -1) !== undefined;
+    }
+
+    public isDisease(name: string): boolean {
+        return this._attributes.find(x => x.attribute === 'make pc ill with' && x.values.indexOf(name) !== -1) !== undefined;
+    }
+
+    public isArtifact(name: string): boolean {
+        return this._attributes.find(x => x.attribute === 'artifact' && x.values.indexOf(name) !== -1) !== undefined;
     }
 
     public static getInstance(): Language {
