@@ -10,6 +10,7 @@ import * as parser from '../language/parser';
 import { TextDocument, Position, CompletionItem } from 'vscode';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
+import { Tables } from '../language/tables';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
@@ -41,14 +42,6 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 }), () => reject();
             }
 
-            // Find attributes
-            for (const attributeItem of Language.getInstance().attributes) {
-                if (text.endsWith(attributeItem.attribute)) {
-                    return resolve(attributeItem.values.map((value, index, array) =>
-                        new vscode.CompletionItem(value, vscode.CompletionItemKind.EnumMember)));
-                }
-            }
-
             // Find %abc symbols
             if (line.text[position.character - 2] === '%') {
                 const items: CompletionItem[] = [];
@@ -73,8 +66,19 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 }
             }
 
-            // Seek signatures in language tables and imported modules
-            TemplateCompletionItemProvider.findSignatures(prefix, items);
+            if (text.length === 0) {
+                
+                // Suggests invocation of definition/action/condition
+                TemplateCompletionItemProvider.findSignatures(prefix, items);
+            }
+            else {
+
+                // Suggests values for a parameter
+                const param = TemplateCompletionItemProvider.findParamSignature(line, prefix, text);
+                if (param) {
+                    TemplateCompletionItemProvider.doParamSuggestions(items, param);
+                }
+            }
 
             return items.length > 0 ? resolve(items) : reject();
         });
@@ -111,6 +115,42 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 item.documentation = result.action.summary;
                 items.push(item);
             }
+        }
+    }
+
+    private static findParamSignature(line: vscode.TextLine, prefix: string, previousText: string): string | undefined {
+        const match = line.text.match(/^\s*([a-zA-Z]+)\s+/);
+        if (!match) {
+            return;
+        }
+
+        // Definition
+        const definition = Language.getInstance().findDefinition(match[1], line.text);
+        if (definition) {
+            for (const signatureWord of definition.matches) {
+                const result = line.text.match(signatureWord.regex);
+                if (result && result[1] === prefix) {
+                    return signatureWord.signature;
+                }
+            }
+
+            return;
+        }
+
+        // Action/condition
+        const actionResult = Modules.getInstance().findAction(match[1], line.text);
+        if (actionResult) {
+            const word = actionResult.action.overloads[actionResult.overload].split(' ')[previousText.split(' ').length];
+            return word.replace(/\$\{\d:/, '${d:');
+        }
+    }
+
+    private static doParamSuggestions(items: vscode.CompletionItem[], signatureWord: string) {
+        const suggestions = Tables.getInstance().getValues(signatureWord);
+        if (suggestions) {
+            suggestions.forEach(suggestion => {
+                items.push(new vscode.CompletionItem(suggestion, vscode.CompletionItemKind.EnumMember));
+            });
         }
     }
 

@@ -12,12 +12,6 @@
     "json.schemas": [
         {
             "fileMatch": [
-                "tables/attributes.json"
-            ],
-            "url": "./schemas/attributes.json"
-        },
-        {
-            "fileMatch": [
                 "tables/definitions.json"
             ],
             "url": "./schemas/definitions.json"

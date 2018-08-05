@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Data is now read from local installation of Daggerfall Unity (_StreamingAssets/Tables_).
+
 ### Improved
 - Format document/selection now detects the quest headless entry point.
 

@@ -83,6 +83,11 @@
                     "default": 2500,
                     "description": "The number of milliseconds to delay before execution of live diagnostics. Key input restart the timer."
                 },
+                "dftemplate.tablesPath": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The path to Tables folder in local installation of Daggerfall Unity."
+                },
                 "dftemplate.modules": {
                     "type": "array",
                     "default": [
