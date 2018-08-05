@@ -40,11 +40,6 @@ interface Definition {
     parameters: Parameter[];
 }
 
-class AttributeItem {
-    public attribute: string = '';
-    public values: string[] = [];
-}
-
 export interface LanguageItemResult extends LanguageItem {
     category: string;
 }
@@ -54,7 +49,6 @@ export interface LanguageItemResult extends LanguageItem {
  */
 export class Language extends TablesManager {
     private table: LanguageTable | null = null;
-    private _attributes: AttributeItem[] = [];
     private definitions: Map<string, Definition[]> | null = null;
 
     private static instance: Language | null;
@@ -64,10 +58,6 @@ export class Language extends TablesManager {
         Message: 'message',
         Definition: 'definition'
     };
-
-    public get attributes() {
-        return this._attributes;
-    }
 
     /**
      * Load language tables.
@@ -86,9 +76,6 @@ export class Language extends TablesManager {
 
                     parser.setGlobalVariables(instance.table.globalVariables);
                 }, () => vscode.window.showErrorMessage('Failed to import language table.')),
-                Language.loadTable(context, 'attributes.json').then((obj) => {
-                    instance._attributes = obj;
-                }, () => vscode.window.showErrorMessage('Failed to import attributes table.')),
                 Language.loadTable(context, 'definitions.json').then((obj) => {
                     instance.definitions = Language.objectToMap(obj);
                 })
@@ -154,20 +141,18 @@ export class Language extends TablesManager {
         }
     }
 
-    public findDefinition(name: string, text?: string): Definition | undefined {
-        if (text) {
-            if (this.definitions) {
-                const group = this.definitions.get(name);
-                if (group) {
-                    for (const definition of group) {
-                        const regex = definition.match ? new RegExp('^\\s*' + definition.match + '\\s*$') :
-                            Language.makeRegexFromSignature(definition.snippet);
-                        if (!definition.signature) {
-                            definition.signature = Language.prettySignature(definition.snippet);
-                        }
-                        if (regex.test(text)) {
-                            return definition;
-                        }
+    public findDefinition(name: string, text: string): Definition | undefined {
+        if (this.definitions) {
+            const group = this.definitions.get(name);
+            if (group) {
+                for (const definition of group) {
+                    const regex = definition.match ? new RegExp('^\\s*' + definition.match + '\\s*$') :
+                        Language.makeRegexFromSignature(definition.snippet);
+                    if (!definition.signature) {
+                        definition.signature = Language.prettySignature(definition.snippet);
+                    }
+                    if (regex.test(text)) {
+                        return definition;
                     }
                 }
             }
@@ -247,19 +232,6 @@ export class Language extends TablesManager {
         }
 
         return 0;
-    }
-
-    public isIndividualNpc(name: string): boolean {
-        return this._attributes.find(x => x.attribute === 'named' && x.values.indexOf(name) !== -1) !== undefined ||
-            this._attributes.find(x => x.attribute === 'faction' && x.values.indexOf(name) !== -1) !== undefined;
-    }
-
-    public isDisease(name: string): boolean {
-        return this._attributes.find(x => x.attribute === 'make pc ill with' && x.values.indexOf(name) !== -1) !== undefined;
-    }
-
-    public isArtifact(name: string): boolean {
-        return this._attributes.find(x => x.attribute === 'artifact' && x.values.indexOf(name) !== -1) !== undefined;
     }
 
     public static getInstance(): Language {

@@ -220,6 +220,18 @@
             "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? (factionType|factiontype|faction|group) [a-zA-Z0-9'_.-]+( (female|male))?( anyInfo \\d+)?( rumors \\d+)?",
             "matches": [
                 {
+                    "regex": "factionType (\\w+)",
+                    "signature": "${d:factionType}"
+                },
+                {
+                    "regex": "faction (\\w+)",
+                    "signature": "${d:faction}"
+                },
+                {
+                    "regex": "group (\\w+)",
+                    "signature": "${d:group}"
+                },
+                {
                     "regex": "anyInfo (\\d+)",
                     "signature": "${d:messageID}"
                 },
@@ -256,9 +268,17 @@
     ],
     "Place": [
         {
-            "snippet": "Place ${1:_place} ${2|local,remote,permanent|} ${3:siteName}",
+            "snippet": "Place ${1:_place_} ${2|local,remote,permanent|} ${3:siteName}",
             "match": "(Place|place) [a-zA-Z0-9_.-]+ (local|remote|permanent) \\w+( anyInfo \\d+)?( rumors \\d+)?",
             "matches": [
+                {
+                    "regex": "(?:local|remote) (\\w+)",
+                    "signature": "${d:localRemotePlace}"
+                },
+                {
+                    "regex": "permanent (\\w+)",
+                    "signature": "${d:permanentPlace}"
+                },
                 {
                     "regex": "anyInfo (\\d+)",
                     "signature": "${d:messageID}"

@@ -19,6 +19,7 @@ import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvid
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
+import { Tables } from './language/tables';
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
@@ -46,11 +47,12 @@ export function activate(context: ExtensionContext) {
 
     Promise.all(Array(
         Language.getInstance().load(context), 
-        Modules.getInstance().load(context))).then(() => {
+        Modules.getInstance().load(context),
+        Tables.getInstance().load())).then(() => {
         if (getOptions()['diagnostics']['enabled']) {
             context.subscriptions.push(makeDiagnosticCollection(context));
         }
-    }, () => vscode.window.showErrorMessage('Failed to enable diagnostics.'));
+    }, (e) => vscode.window.showErrorMessage('Failed to enable diagnostics: ' + e));
 }
 
 export function deactivate() {

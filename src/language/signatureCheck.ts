@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from './parser';
-import { Language } from './language';
+import { Tables } from './tables';
 
 export interface SignatureWord {
     regex: string;
@@ -21,7 +21,7 @@ var Error = {
     undefinedMessage: (message: string) => 'Reference to undefined message: ' + message + '.',
     undefinedSymbol: (symbol: string) => 'Reference to undefined symbol: ' + symbol + '.',
     undefinedTask: (symbol: string) => 'Reference to undefined task: ' + symbol + '.',
-    undefinedAttribute: (name: string, group: string) =>  "The name '" + name + "' doesn't exist in the attribute group '" + group + "'.",
+    undefinedAttribute: (name: string, group: string) => "The name '" + name + "' doesn't exist in the attribute group '" + group + "'.",
     incorrectTime: (time: string) => time + ' is not in 24-hour format (00:00 to 23:59).',
     incorrectSymbolType: (symbol: string, type: string) =>
         'Incorrect symbol type: ' + symbol + ' is not declared as ' + type + '.'
@@ -131,27 +131,15 @@ function doWordCheck(document: vscode.TextDocument, word: string, signatureItem:
                 return Error.undefinedTask(word);
             }
             break;
-        case '${d:IndividualNPC}':
-            if (!Language.getInstance().isIndividualNpc(word)) {
-                return Error.undefinedAttribute(word, 'IndividualNPC');
-            }
-            break;
-        case '${d:disease}':
-            if (!Language.getInstance().isDisease(word)) {
-                return Error.undefinedAttribute(word, 'disease');
-            }
-            break;
-        case '${d:artifactItem}':
-            if (!Language.getInstance().isArtifact(word)) {
-                return Error.undefinedAttribute(word, 'artifact');
-            }
-            break;
         // case '${d:ww}:'
         // case '${d:questID}':
         // case '${d:questName}':
-        // case '${d:commonItem}':
-        // case '${d:foe}':
         //     break;
+    }
+
+    const attributes = Tables.getInstance().getValues(signatureItem);
+    if (attributes && attributes.indexOf(word) === -1) {
+        return Error.undefinedAttribute(word, signatureItem.replace('${d:', '').replace('}', ''));
     }
 }
 
@@ -182,7 +170,6 @@ function checkType(document: vscode.TextDocument, symbol: string, type: string):
         return Error.incorrectSymbolType(symbol, type);
     }
 }
-
 
 /**
 * Finds the char index of a word in a string.
