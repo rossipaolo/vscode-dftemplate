@@ -6,6 +6,7 @@
 
 import * as parser from '../parser';
 import { TextDocument, Location, Range, TextLine } from "vscode";
+import { Language } from '../language';
 
 interface Symbol {
     type: string;
@@ -66,6 +67,31 @@ export function getSymbolName(symbol: string): string {
  */
 export function isDerivedSymbol(base: string, derived: string): boolean {
     return new RegExp('(_{1,3}|={1,2})' + base.substring(1), 'g').test(derived);
+}
+
+/**
+ * Checks if the symbol variation has a defined value for its type.
+ * @param symbolOccurrence An occurence of a symbol.
+ * @param type The type of the symbol.
+ */
+export function isSupportedSymbolVariation(symbolOccurrence: string, type: string): boolean {
+    const variations = Language.getInstance().getSymbolVariations(type);
+    const symbol = symbolOccurrence.replace(getSymbolName(symbolOccurrence), '$');
+    return variations !== undefined && variations.findIndex(x => x.word === symbol) !== -1;
+}
+
+/**
+ * Gets all supported variations of a symbol.
+ * @param symbolOccurrence An occurence of a symbol.
+ * @param type The type of the symbol.
+ * @param formatName Format the name of the symbol used in description.
+ */
+export function getSupportedSymbolVariations(symbolOccurrence: string, type: string, formatName?: (name: string) => string) {
+    const name = getSymbolName(symbolOccurrence);
+    const variations = Language.getInstance().getSymbolVariations(type);
+    return variations ? variations.map(x => {
+        return { word: x.word.replace('$', name), description: x.description.replace('$', formatName ? formatName(name) : name) };
+    }) : [];
 }
 
 /**

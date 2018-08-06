@@ -6,7 +6,6 @@
 
 import * as parser from '../language/parser';
 
-import { Types } from '../language/parser';
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString } from 'vscode';
 import { EOL } from 'os';
 import { Modules } from '../language/modules';
@@ -160,73 +159,7 @@ export class TemplateHoverProvider implements HoverProvider {
      * Get a description for symbol according to prefix and type.
      */
     private static getSymbolDescription(symbol: string, type: string): string {
-        if (symbol[0] === '_') {
-            if (symbol.length > 1 && symbol[1] === '_') {
-                if (symbol.length > 2 && symbol[2] === '_') {
-                    if (symbol.length > 3 && symbol[3] === '_') {
-                        if (type === Types.Place) {
-                            return 'the name of the province where ' + this.formatSymbol(symbol, 3) + ' can be found.';
-                        }
-                    }
-                    else {
-                        if (type === Types.Place) {
-                            return 'the dungeon name of ' + this.formatSymbol(symbol, 2) + '.';
-                        }
-                        else if (type === Types.Person) {
-                            return 'the town name where ' + this.formatSymbol(symbol, 2) + ' can be found.';
-                        }
-                    }
-                }
-                else {
-                    if (type === Types.Place) {
-                        return 'the town where the shop ' + this.formatSymbol(symbol, 1) + ' can be found.';
-                    }
-                    else if (type === Types.Person) {
-                        return 'the name of the house/shop in the town where ' + this.formatSymbol(symbol, 1) + ' can be found.';
-                    }
-                }
-            }
-            else {
-                if (type === Types.Place) {
-                    return 'the name of the shop ' + this.formatSymbol(symbol, 0) + '.';
-                }
-                else if (type === Types.Item || type === Types.Person || type === Types.Foe) {
-                    return 'the name of ' + this.formatSymbol(symbol, 0) + '.';
-                }
-                else if (type === Types.Clock) {
-                    return 'base definition of ' + this.formatSymbol(symbol, 0) + ' (use `=' + parser.getSymbolName(symbol) + '_` to get the clock time).';
-                }
-            }
-        }
-        else if (symbol[0] === '=') {
-            if (symbol.length > 1 && symbol[1] === '=') {
-                if (type === Types.Person || type === Types.Foe) {
-                    return 'The faction association of ' + this.formatSymbol(symbol, 1) + '.';
-                }
-            }
-            else {
-                if (type === Types.Person) {
-                    return 'character class of ' + this.formatSymbol(symbol, 0);
-                }
-                else if (type === Types.Foe) {
-                    return this.formatSymbol(symbol, 0) + "'s name.";
-                }
-                else if (type === Types.Clock) {
-                    return 'the number of days ' + this.formatSymbol(symbol, 0) + ' will be active.';
-                }
-            }
-        }
-
-        return 'undefined value for the type `' + type + '`.';
-    }
-
-    /**
-     * MarkDown format a symbol name from one of its derived form.
-     * 
-     * @param derived derived form of symbol
-     * @param leftIndex index of char on the left of symbol name (nearest _ or =).
-     */
-    private static formatSymbol(derived: string, leftIndex: number): string {
-        return '`' + derived.substring(leftIndex + 1, derived.length - 1) + '`';
+        const variation = parser.getSupportedSymbolVariations(symbol, type, x => '`' + x + '`').find(x => x.word === symbol);
+        return variation ? variation.description + '.' : 'Undefined value for the type `' + type + '`.';
     }
 }

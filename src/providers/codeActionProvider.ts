@@ -68,6 +68,21 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             arguments: Array<any>(parser.getTaskRange(document, diagnostic.range.start.line))
                         });
                         break;
+                    case DiagnosticCode.IncorrectSymbolVariation:
+                        const currentSymbol = document.getText(diagnostic.range);
+                        const definition = parser.findSymbolDefinition(document, currentSymbol);
+                        if (definition) {
+                            parser.getSupportedSymbolVariations(currentSymbol, definition.type).forEach((newSymbol) => {
+                                if (newSymbol.word !== currentSymbol) {
+                                    commands.push({
+                                        title: 'Change ' + currentSymbol + ' to ' + newSymbol.word + ' (' + newSymbol.description + ')',
+                                        command: 'dftemplate.renameSymbol',
+                                        arguments: Array<any>(diagnostic.range, newSymbol.word)
+                                    });
+                                }
+                            });
+                        }
+                        break;
                     case DiagnosticCode.SymbolNamingConvention:
                         const symbol = document.getText(diagnostic.range);
                         const newName = parser.forceSymbolNamingConventions(symbol);

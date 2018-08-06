@@ -12,6 +12,26 @@
                 "description": "A language symbol."
             }
         },
+        "symbolsVariations": {
+            "type": "object",
+            "description": "Variation schemas for symbols.",
+            "additionalProperties": {
+                "type": "array",
+                "description": "Schema for a symbol type.",
+                "items": {
+                    "properties": {
+                        "word": {
+                            "type": "string",
+                            "description": "A variation for a generic symbol '$'."
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Description for this variation; '$' is replaced with the symbol name."
+                        }
+                    }
+                }
+            }
+        },
         "keywords": {
             "type": "object",
             "description": "Keywords.",
@@ -29,9 +49,9 @@
     },
     "required": [
         "symbols",
+        "symbolsVariations",
         "keywords",
-        "messages",
-        "definitions"
+        "messages"
     ],
     "definitions": {
         "item": {
