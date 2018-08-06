@@ -7,6 +7,7 @@
 
 ### Improved
 - Format document/selection now detects the quest headless entry point.
+- Completion Proposals provider detects parameter type (symbol definitions and actions/conditions) to offer more fitting suggestions.
 
 ### Fixed
 - A few action/definition signatures.

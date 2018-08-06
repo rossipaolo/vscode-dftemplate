@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { getOptions } from '../extension';
+import { SignatureWords } from './signatureCheck';
 
 abstract class Table {
 
@@ -171,26 +172,25 @@ export class Tables {
      */
     public getValues(signatureWord: string): string[] | undefined {
         switch (signatureWord) {
-            case '${d:disease}':
+            case SignatureWords.disease:
                 return this.diseasesTable.diseases;
-            case '${d:IndividualNPC}':
-            case '${d:faction}':
+            case SignatureWords.faction:
                 return this.factionsTable.factions;
-            case '${d:factionType}':
+            case SignatureWords.factionType:
                 return this.factionsTable.factionTypes;
-            case '${d:group}':
+            case SignatureWords.group:
                 return this.factionsTable.groups;
-            case '${d:foe}':
+            case SignatureWords.group:
                 return this.foesTable.foes;
-            case '${d:commonItem}':
+            case SignatureWords.commonItem:
                 return this.itemsTable.commonItems;
-            case '${d:artifactItem}':
+            case SignatureWords.artifactItem:
                 return this.itemsTable.artifacts;
-            case '${d:localRemotePlace}':
+            case SignatureWords.localRemotePlace:
                 return this.placesTable.localRemoteLocations;
-            case '${d:permanentPlace}':
+            case SignatureWords.permanentPlace:
                 return this.placesTable.permanentLocations;
-            case '${d:sound}':
+            case SignatureWords.sound:
                 return this.soundsTable.sounds;
         }
     }

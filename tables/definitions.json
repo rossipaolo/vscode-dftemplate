@@ -42,7 +42,7 @@
             "matches": [
                 {
                     "regex": "is (\\w+)",
-                    "signature": "${d:foe}"
+                    "signature": "${foe}"
                 }
             ],
             "summary": "An enemy.",
@@ -59,7 +59,7 @@
             "matches": [
                 {
                     "regex": "is \\d+ (\\w+)",
-                    "signature": "${d:foe}"
+                    "signature": "${foe}"
                 }
             ],
             "summary": "Multiple enemies.",
@@ -94,15 +94,15 @@
             "matches": [
                 {
                     "regex": "artifact ([a-zA-Z0-9_'.-]+)",
-                    "signature": "${d:artifactItem}"
+                    "signature": "${artifactItem}"
                 },
                 {
                     "regex": "anyInfo (\\d+\\w+)",
-                    "signature": "${d:message}"
+                    "signature": "${message}"
                 },
                 {
                     "regex": "used (\\d+\\w+)",
-                    "signature": "${d:message}"
+                    "signature": "${message}"
                 }
             ],
             "signature": "Item _item_ artifact artifactName anyInfo message used message",
@@ -128,15 +128,15 @@
             "matches": [
                 {
                     "regex": "(?:Item|item) [a-zA-Z0-9_.-]+ ([a-zA-Z0-9_'.-]+)",
-                    "signature": "${d:commonItem}"
+                    "signature": "${commonItem}"
                 },
                 {
                     "regex": "anyInfo (\\d+\\w+)",
-                    "signature": "${d:message}"
+                    "signature": "${message}"
                 },
                 {
                     "regex": "used (\\d+\\w+)",
-                    "signature": "${d:message}"
+                    "signature": "${message}"
                 }
             ],
             "signature": "Item _item_ name anyInfo message used message",
@@ -174,20 +174,20 @@
     ],
     "Person": [
         {
-            "snippet": "Person ${1:_person_} named ${2:IndividualNPC}",
+            "snippet": "Person ${1:_person_} named ${2:faction}",
             "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? named [a-zA-Z0-9'_.-]+( atHome)?( anyInfo \\d+)?( rumors \\d+)?",
             "matches": [
                 {
                     "regex": "named ([a-zA-Z0-9'_.-]+)",
-                    "signature": "${d:IndividualNPC}"
+                    "signature": "${faction}"
                 },
                 {
                     "regex": "anyInfo (\\d+)",
-                    "signature": "${d:messageID}"
+                    "signature": "${messageID}"
                 },
                 {
                     "regex": "rumors (\\d+)",
-                    "signature": "${d:messageID}"
+                    "signature": "${messageID}"
                 }
             ],
             "signature": "Person _person_ face dd named name atHome anyInfo messageID rumors messageID",
@@ -221,23 +221,23 @@
             "matches": [
                 {
                     "regex": "factionType (\\w+)",
-                    "signature": "${d:factionType}"
+                    "signature": "${factionType}"
                 },
                 {
                     "regex": "faction (\\w+)",
-                    "signature": "${d:faction}"
+                    "signature": "${faction}"
                 },
                 {
                     "regex": "group (\\w+)",
-                    "signature": "${d:group}"
+                    "signature": "${group}"
                 },
                 {
                     "regex": "anyInfo (\\d+)",
-                    "signature": "${d:messageID}"
+                    "signature": "${messageID}"
                 },
                 {
                     "regex": "rumors (\\d+)",
-                    "signature": "${d:messageID}"
+                    "signature": "${messageID}"
                 }
             ],
             "signature": "Person _person_ face dd factionType,faction,group name male,female anyInfo messageID rumors messageID",
@@ -273,19 +273,19 @@
             "matches": [
                 {
                     "regex": "(?:local|remote) (\\w+)",
-                    "signature": "${d:localRemotePlace}"
+                    "signature": "${localRemotePlace}"
                 },
                 {
                     "regex": "permanent (\\w+)",
-                    "signature": "${d:permanentPlace}"
+                    "signature": "${permanentPlace}"
                 },
                 {
                     "regex": "anyInfo (\\d+)",
-                    "signature": "${d:messageID}"
+                    "signature": "${messageID}"
                 },
                 {
                     "regex": "rumors (\\d+)",
-                    "signature": "${d:messageID}"
+                    "signature": "${messageID}"
                 }
             ],
             "signature": "Place _place_ local,remote,permanent siteName anyInfo messageID rumors messageID",
