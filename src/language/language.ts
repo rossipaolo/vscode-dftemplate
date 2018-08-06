@@ -26,6 +26,9 @@ interface LanguageItem {
 
 interface LanguageTable {
     symbols: Map<string, string>;
+    symbolsVariations: Map<string, {
+        word: string, description: string
+    }[]>;
     keywords: Map<string, LanguageItem>;
     messages: Map<string, LanguageItem>;
     globalVariables: Map<string, number>;
@@ -70,6 +73,7 @@ export class Language extends TablesManager {
                 Language.loadTable(context, 'language.json').then((obj) => {
                     instance.table = {
                         symbols: Language.objectToMap(obj.symbols),
+                        symbolsVariations: Language.objectToMap(obj.symbolsVariations),
                         keywords: Language.objectToMap(obj.keywords),
                         messages: Language.objectToMap(obj.messages),
                         globalVariables: Language.objectToMap(obj.globalVariables)
@@ -217,6 +221,16 @@ export class Language extends TablesManager {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Gets all supported variation schemas of a symbol type.
+     * @param type A symbol type.
+     */
+    public getSymbolVariations(type: string) {
+        if (this.table && this.table.symbolsVariations) {
+            return this.table.symbolsVariations.get(type);
         }
     }
 

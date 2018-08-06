@@ -22,6 +22,7 @@ export enum DiagnosticCode {
     UnusedDeclarationMessage,
     UnusedDeclarationSymbol,
     UnusedDeclarationTask,
+    IncorrectSymbolVariation,
     GenericHint,
     SymbolNamingConvention,
 }
@@ -39,6 +40,8 @@ const Errors = {
         makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error),
     invalidDefinition: (range: Range, symbol: string, type: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Invalid definition for ' + symbol + ' (' + type + ').', DiagnosticSeverity.Error),
+    undefinedSymbol: (range: Range, symbol: string) =>
+        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Reference to undefined symbol: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedExpression: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Action or condition not found.', DiagnosticSeverity.Error)
 };
@@ -53,14 +56,18 @@ const Warnings = {
     unstartedClock: (range: Range, name: string) =>
         makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never starts.', DiagnosticSeverity.Warning),
     unlinkedClock: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + " doesn't activate a task.", DiagnosticSeverity.Warning)
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + " doesn't activate a task.", DiagnosticSeverity.Warning),
+    incorrectSymbolVariation: (range: Range, symbol: string, type: string) =>
+        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, symbol + " is not a valid variation for type '" + type + "'.", DiagnosticSeverity.Warning)
 };
 
 const Hints = {
     symbolNamingConventionViolation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.SymbolNamingConvention, 'Violation of naming convention: use _symbol_.', DiagnosticSeverity.Hint),
     incorrectMessagePosition: (range: Range, current: number, previous: number) =>
-        makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint)
+        makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint),
+    SymbolVariation: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
 
 let timer: NodeJS.Timer | null = null;
@@ -191,6 +198,23 @@ function doDiagnostics(document: vscode.TextDocument) {
                 // Unused
                 if (!parser.firstLine(document, l => l !== line && l.text.indexOf(messageID) !== -1)) {
                     diagnostics.push(Warnings.unusedDeclarationMessage(wordRange(line, messageID), messageID));
+                }
+            }
+
+            // Symbol occurrences
+            const symbols = parser.findAllSymbolsInALine(line.text);
+            if (symbols) {
+                for (const symbol of symbols) {
+                    const definition = parser.findSymbolDefinition(document, symbol);
+                    if (!definition) {
+                        diagnostics.push(Errors.undefinedSymbol(wordRange(line, symbol), symbol));
+                    }
+                    else if (!parser.isSupportedSymbolVariation(symbol, definition.type)) {
+                        diagnostics.push(Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, definition.type));
+                    }
+                    else {
+                        diagnostics.push(Hints.SymbolVariation(wordRange(line, symbol)));
+                    }
                 }
             }
 

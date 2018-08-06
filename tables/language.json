@@ -122,6 +122,32 @@
         "%pg3": "[DU] His/Hers (player)",
         "%hrn": "[DU] Home region (of person)"
     },
+    "symbolsVariations": {
+        "Item": [
+            { "word": "_$_", "description": "The name of $" }
+        ],
+        "Person": [
+            { "word": "_$_", "description": "The name of $" },
+            { "word": "__$_", "description": "The name of the house/shop in the town where $ can be found" },
+            { "word": "___$_", "description": "The town name where $ can be found" },
+            { "word": "=$_", "description": "The faction association of $" },
+            { "word": "==$_", "description": "Character class of $" }
+        ],
+        "Place": [
+            { "word": "_$_", "description": "The name of the shop $" },
+            { "word": "__$_", "description": "The town where the shop $ can be found" },
+            { "word": "___$_", "description": "The dungeon name of $" },
+            { "word": "____$_", "description": "The name of the province where $ can be found" }
+        ],
+        "Foe": [
+            { "word": "_$_", "description": "The name of $" },
+            { "word": "=$_", "description": "$'s name" },
+            { "word": "==$_", "description": "The faction association of $" }
+        ],
+        "Clock": [
+            { "word": "=$_", "description": "The number of days $ will be active" }
+        ]
+    },
     "keywords": {
         "Messages": {
             "signature": "Messages: ${1:dd}",
