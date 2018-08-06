@@ -56,7 +56,8 @@ export class Language extends TablesManager {
     public static readonly ItemKind = {
         Keyword: 'keyword',
         Message: 'message',
-        Definition: 'definition'
+        Definition: 'definition',
+        GlobalVar: 'globalVar'
     };
 
     /**
@@ -196,7 +197,7 @@ export class Language extends TablesManager {
             for (const globalVar of this.table.globalVariables) {
                 if (globalVar["0"].startsWith(prefix)) {
                     yield {
-                        category: 'task', summary: 'Global variable number ' + globalVar["1"] + '.',
+                        category: Language.ItemKind.GlobalVar, summary: 'Global variable number ' + globalVar["1"] + '.',
                         signature: globalVar["0"] + ' ${1:_varSymbol_}', parameters: []
                     };
                 }

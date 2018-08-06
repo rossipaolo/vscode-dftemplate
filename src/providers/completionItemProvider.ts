@@ -11,14 +11,11 @@ import { TextDocument, Position, CompletionItem } from 'vscode';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
 import { Tables } from '../language/tables';
+import { SignatureWords } from '../language/signatureCheck';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
-    private static definitionQueries = (document: TextDocument) => [
-        {
-            kind: vscode.CompletionItemKind.Field,
-            result: parser.findAllSymbolDefinitions(document)
-        },
+    private static taskQueries = (document: TextDocument) => [
         {
             kind: vscode.CompletionItemKind.Variable,
             result: parser.findAllVariables(document)
@@ -35,13 +32,6 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             const text = line.text.substring(0, position.character - 2).trim();
             const prefix = TemplateCompletionItemProvider.getPrefix(line.text, position.character);
 
-            // Find quests in the workspace
-            if (parser.isQuestInvocation(document.lineAt(position.line).text)) {
-                return TemplateCompletionItemProvider.findQuestsCompletionItems().then((items) => {
-                    return resolve(items);
-                }), () => reject();
-            }
-
             // Find %abc symbols
             if (line.text[position.character - 2] === '%') {
                 const items: CompletionItem[] = [];
@@ -57,26 +47,70 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             const items: CompletionItem[] = [];
 
-            // Find symbols and taks defined in the quest
-            for (const definitionQuery of TemplateCompletionItemProvider.definitionQueries(document)) {
-                for (const result of definitionQuery.result) {
-                    const item = new vscode.CompletionItem(result.symbol, definitionQuery.kind);
-                    item.detail = result.line.text;
-                    items.push(item);
-                }
-            }
+            const param = TemplateCompletionItemProvider.findParamSignature(line, prefix, text);
+            if (param) {
 
-            if (text.length === 0) {
-                
-                // Suggests invocation of definition/action/condition
-                TemplateCompletionItemProvider.findSignatures(prefix, items);
+                // Inside an invocation: suggests values according to parameter type
+                switch (param) {
+                    case SignatureWords.questName:
+                        return TemplateCompletionItemProvider.findQuestsCompletionItems().then((items) => {
+                            return resolve(items);
+                        }), () => reject();
+                    case SignatureWords.message:
+                    case SignatureWords.messageName:
+                        for (const message of parser.findAllMessages(document)) {
+                            if (message.symbol.startsWith(prefix)) {
+                                const item = new CompletionItem(message.symbol, vscode.CompletionItemKind.Struct);
+                                item.detail = message.line.text.trim();
+                                items.push(item);
+                            }
+                        }
+                        break;
+                    case SignatureWords.symbol:
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix);
+                        break;
+                    case SignatureWords.clockSymbol:
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Clock);
+                        break;
+                    case SignatureWords.foeSymbol:
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Foe);
+                        break;
+                    case SignatureWords.itemSymbol:
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Item);
+                        break;
+                    case SignatureWords.personSymbol:
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Person);
+                        break;
+                    case SignatureWords.placeSymbol:
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Place);
+                        break;
+                    case SignatureWords.task:
+                        for (const definitionQuery of TemplateCompletionItemProvider.taskQueries(document)) {
+                            for (const result of definitionQuery.result) {
+                                const item = new vscode.CompletionItem(result.symbol, definitionQuery.kind);
+                                item.detail = result.line.text;
+                                items.push(item);
+                            }
+                        }
+                        break;
+                    default:
+                        TemplateCompletionItemProvider.doParamSuggestions(items, param);
+                        break;
+                }
+
             }
             else {
 
-                // Suggests values for a parameter
-                const param = TemplateCompletionItemProvider.findParamSignature(line, prefix, text);
-                if (param) {
-                    TemplateCompletionItemProvider.doParamSuggestions(items, param);
+                // Empty string: suggests invocation of definition/action/condition
+                if (text.length === 0) {
+                    TemplateCompletionItemProvider.findSignatures(prefix, items);
+                }
+
+                // Find all symbols defined in the quest
+                for (const result of parser.findAllSymbolDefinitions(document)) {
+                    const item = new vscode.CompletionItem(result.symbol, vscode.CompletionItemKind.Field);
+                    item.detail = result.line.text;
+                    items.push(item);
                 }
             }
 
@@ -141,7 +175,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         const actionResult = Modules.getInstance().findAction(match[1], line.text);
         if (actionResult) {
             const word = actionResult.action.overloads[actionResult.overload].split(' ')[previousText.split(' ').length];
-            return word.replace(/\$\{\d:/, '${d:');
+            return word.replace(/\$\{\d:(\.\.\.)?/, '${');
         }
     }
 
@@ -151,6 +185,17 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             suggestions.forEach(suggestion => {
                 items.push(new vscode.CompletionItem(suggestion, vscode.CompletionItemKind.EnumMember));
             });
+        }
+    }
+
+    private static doSymbolSuggestions(items: vscode.CompletionItem[], document: TextDocument, prefix: string, type?: string) {
+        for (const symbol of parser.findAllSymbolDefinitions(document)) {
+            const definition = symbol.line.text.trim();
+            if ((!type || definition.startsWith(type)) && symbol.symbol.startsWith(prefix)) {
+                const item = new CompletionItem(symbol.symbol, vscode.CompletionItemKind.Field);
+                item.detail = definition;
+                items.push(item);
+            }
         }
     }
 
@@ -171,6 +216,8 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 return vscode.CompletionItemKind.Struct;
             case Language.ItemKind.Definition:
                 return vscode.CompletionItemKind.Constructor;
+            case Language.ItemKind.GlobalVar:
+                return vscode.CompletionItemKind.Property;
             case Modules.ActionKind.Action:
                 return vscode.CompletionItemKind.Method;
             case Modules.ActionKind.Condition:

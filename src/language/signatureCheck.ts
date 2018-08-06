@@ -28,6 +28,36 @@ var Error = {
 };
 
 /**
+ * Placeholders for snippets.
+ */
+export abstract class SignatureWords {
+    public static readonly number = '${dd}';
+    public static readonly time = '${hh}:${mm}';
+    public static readonly questID = '${questID}';
+    public static readonly questName = '${questName}';
+    public static readonly message = '${message}';
+    public static readonly messageID = '${messageID}';
+    public static readonly messageName = '${messageName}';
+    public static readonly symbol = '${_symbol_}';
+    public static readonly clockSymbol = '${_clock_}';
+    public static readonly foeSymbol = '${_foe_}';
+    public static readonly itemSymbol = '${_item_}';
+    public static readonly personSymbol = '${_person_}';
+    public static readonly placeSymbol = '${_place_}';
+    public static readonly task = '${task}';
+    public static readonly disease = '${disease}';
+    public static readonly faction = '${faction}';
+    public static readonly factionType = '${factionType}';
+    public static readonly group = '${group}';
+    public static readonly foe = '${foe}';
+    public static readonly commonItem = '${commonItem}';
+    public static readonly artifactItem = '${artifactItem}';
+    public static readonly localRemotePlace = '${localRemotePlace}';
+    public static readonly permanentPlace = '${permanentPlace}';
+    public static readonly sound = '${sound}';
+}
+
+/**
 * Detects issues with a signature.
 * @param document A quest document.
 * @param signature A snippet with standard syntax.
@@ -36,7 +66,7 @@ var Error = {
 */
 export function* doSignatureChecks(document: vscode.TextDocument, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
     const lineItems = line.text.trim().split(' ');
-    let signatureItems = signature.replace(/\${\d:/g, '${d:').split(' ');
+    let signatureItems = signature.replace(/\${\d:/g, '${').split(' ');
     signatureItems = doParams(signatureItems, lineItems);
     for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
         const word = lineItems[i];
@@ -78,18 +108,18 @@ export function* doWordsCheck(document: vscode.TextDocument, signatureWords: Sig
 */
 function doWordCheck(document: vscode.TextDocument, word: string, signatureItem: string): string | undefined {
     switch (signatureItem) {
-        case '${d:dd}':
+        case SignatureWords.number:
             if (isNaN(Number(word))) {
                 return Error.notANumber(word);
             }
             break;
-        case '${d:hh}:${d:mm}':
+        case SignatureWords.time:
             const time = word.split(':');
             if (Number(time[0]) > 23 || Number(time[1]) > 59) {
                 return Error.incorrectTime(word);
             }
             break;
-        case '${d:message}':
+        case SignatureWords.message:
             if (!isNaN(Number(word))) {
                 if (!parser.findMessageByIndex(document, word)) {
                     return Error.undefinedMessage(word);
@@ -101,51 +131,47 @@ function doWordCheck(document: vscode.TextDocument, word: string, signatureItem:
                 }
             }
             break;
-        case '${d:messageName}':
+        case SignatureWords.messageName:
             if (!parser.findMessageByName(document, word)) {
                 return Error.undefinedMessage(word);
             }
             break;
-        case '${d:messageID}':
+        case SignatureWords.messageID:
             if (!parser.findMessageByIndex(document, word)) {
                 return Error.undefinedMessage(word);
             }
             break;
-        case '${d:_symbol_}':
+        case SignatureWords.symbol:
             if (!parser.findSymbolDefinition(document, word)) {
                 return Error.undefinedSymbol(word);
             }
             break;
-        case '${d:_item_}':
+        case SignatureWords.itemSymbol:
             return checkType(document, word, parser.Types.Item);
-        case '${d:_person_}':
+        case SignatureWords.personSymbol:
             return checkType(document, word, parser.Types.Person);
-        case '${d:_place_}':
+        case SignatureWords.placeSymbol:
             return checkType(document, word, parser.Types.Place);
-        case '${d:_clock_}':
+        case SignatureWords.clockSymbol:
             return checkType(document, word, parser.Types.Clock);
-        case '${d:_foe_}':
+        case SignatureWords.foeSymbol:
             return checkType(document, word, parser.Types.Foe);
-        case '${d:task}':
+        case SignatureWords.task:
             if (!parser.findTaskDefinition(document, word)) {
                 return Error.undefinedTask(word);
             }
             break;
-        // case '${d:ww}:'
-        // case '${d:questID}':
-        // case '${d:questName}':
-        //     break;
     }
 
     const attributes = Tables.getInstance().getValues(signatureItem);
     if (attributes && attributes.indexOf(word) === -1) {
-        return Error.undefinedAttribute(word, signatureItem.replace('${d:', '').replace('}', ''));
+        return Error.undefinedAttribute(word, signatureItem.replace('${', '').replace('}', ''));
     }
 }
 
 function doParams(signatureItems: string[], lineItems: string[]): string[] {
-    if (signatureItems[signatureItems.length - 1].indexOf('${d:...') !== -1) {
-        const last = signatureItems[signatureItems.length - 1].replace('${d:...', '${d:');
+    if (signatureItems[signatureItems.length - 1].indexOf('${...') !== -1) {
+        const last = signatureItems[signatureItems.length - 1].replace('${...', '${');
         signatureItems[signatureItems.length - 1] = last;
         if (lineItems.length > signatureItems.length) {
             signatureItems = signatureItems.concat(Array(lineItems.length - signatureItems.length).fill(last));
