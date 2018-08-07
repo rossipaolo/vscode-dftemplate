@@ -80,6 +80,17 @@ class FoesTable extends Table {
     }
 }
 
+class GlobalVarsTable extends Table {
+
+    public readonly globalVars = new Map<string, number>();
+
+    protected set(data: string[][]) {
+        data.forEach((globalVar) => {
+            this.globalVars.set(globalVar[1], Number(globalVar[0]));
+        });
+    }
+}
+
 class ItemsTable extends Table {
 
     public readonly artifacts: string[] = [];
@@ -139,6 +150,7 @@ export class Tables {
     public readonly diseasesTable = new DiseasesTable();
     public readonly factionsTable = new FactionsTable();
     public readonly foesTable = new FoesTable();
+    public readonly globalVarsTable = new GlobalVarsTable();
     public readonly itemsTable = new ItemsTable();
     public readonly placesTable = new PlacesTable();
     public readonly soundsTable = new SoundsTable();
@@ -159,6 +171,7 @@ export class Tables {
                 instance.diseasesTable.load(path.join(tablesPath, 'Quests-Diseases.txt')),
                 instance.factionsTable.load(path.join(tablesPath, 'Quests-Factions.txt')),
                 instance.foesTable.load(path.join(tablesPath, 'Quests-Foes.txt')),
+                instance.globalVarsTable.load(path.join(tablesPath, 'Quests-GlobalVars.txt')),
                 instance.itemsTable.load(path.join(tablesPath, 'Quests-Items.txt')),
                 instance.placesTable.load(path.join(tablesPath, 'Quests-Places.txt')),
                 instance.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt'))

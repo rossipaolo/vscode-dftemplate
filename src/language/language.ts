@@ -12,6 +12,7 @@ import { ExtensionContext } from 'vscode';
 import { iterateAll } from '../extension';
 import { TablesManager } from "./base/tablesManager";
 import { SignatureWord } from './signatureCheck';
+import { Tables } from './tables';
 
 interface Parameter {
     name: string;
@@ -31,7 +32,6 @@ interface LanguageTable {
     }[]>;
     keywords: Map<string, LanguageItem>;
     messages: Map<string, LanguageItem>;
-    globalVariables: Map<string, number>;
 }
 
 interface Definition {
@@ -76,10 +76,9 @@ export class Language extends TablesManager {
                         symbolsVariations: Language.objectToMap(obj.symbolsVariations),
                         keywords: Language.objectToMap(obj.keywords),
                         messages: Language.objectToMap(obj.messages),
-                        globalVariables: Language.objectToMap(obj.globalVariables)
                     };
 
-                    parser.setGlobalVariables(instance.table.globalVariables);
+                    parser.setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
                 }, () => vscode.window.showErrorMessage('Failed to import language table.')),
                 Language.loadTable(context, 'definitions.json').then((obj) => {
                     instance.definitions = Language.objectToMap(obj);
@@ -165,9 +164,7 @@ export class Language extends TablesManager {
     }
 
     public findGlobalVariable(name: string): number | undefined {
-        if (this.table && this.table.globalVariables) {
-            return this.table.globalVariables.get(name);
-        }
+        return Tables.getInstance().globalVarsTable.globalVars.get(name);
     }
 
     public *findSymbols(prefix: string): Iterable<LanguageItemResult> {
@@ -197,14 +194,12 @@ export class Language extends TablesManager {
     }
 
     public *findGlobalVariables(prefix: string): Iterable<LanguageItemResult> {
-        if (this.table && this.table.globalVariables) {
-            for (const globalVar of this.table.globalVariables) {
-                if (globalVar["0"].startsWith(prefix)) {
-                    yield {
-                        category: Language.ItemKind.GlobalVar, summary: 'Global variable number ' + globalVar["1"] + '.',
-                        signature: globalVar["0"] + ' ${1:_varSymbol_}', parameters: []
-                    };
-                }
+        for (const globalVar of Tables.getInstance().globalVarsTable.globalVars) {
+            if (globalVar["0"].startsWith(prefix)) {
+                yield {
+                    category: Language.ItemKind.GlobalVar, summary: 'Global variable number ' + globalVar["1"] + '.',
+                    signature: globalVar["0"] + ' ${1:_varSymbol_}', parameters: []
+                };
             }
         }
     }
