@@ -219,12 +219,18 @@ export class Tables {
     private static getTablesPath(): string | undefined {
 
         // Path from settings
-        let tablesPath = getOptions()['tablesPath'];
+        const tablesPath = getOptions()['tablesPath'];
         if (tablesPath) {
-            return tablesPath;
-        }
 
-        if (vscode.workspace.workspaceFolders) {
+            if (path.isAbsolute(tablesPath)) {
+                return tablesPath;
+            }
+
+            if (vscode.workspace.workspaceFolders) {
+                return path.resolve(vscode.workspace.workspaceFolders[0].uri.fsPath, tablesPath);
+            }
+        }
+        else if (vscode.workspace.workspaceFolders) {
             const rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
             // From StreamingAssets/Quests to StreamingAssets/Tables
