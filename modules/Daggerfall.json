@@ -2,14 +2,14 @@
     "displayName": "Daggerfall",
     "conditions": [
         {
-            "summary": "Clicked item.",
+            "summary": "Triggers when the player character clicks on an item.",
             "overloads": [
                 "clicked item ${1:_item_}",
                 "clicked item ${1:_item_} say ${2:message}"
             ]
         },
         {
-            "summary": "Handles player clicking on NPC.",
+            "summary": "Triggers when the player character clicks on an NPC; the quest can assign a cost to the quest item and take different actions if the PC doesn't have the requisite cash available.",
             "overloads": [
                 "clicked npc ${1:_person_}",
                 "clicked npc ${1:_person_} say ${2:message}",
@@ -23,7 +23,7 @@
             ]
         },
         {
-            "summary": "Dropped item at place.",
+            "summary": "Triggers when the PC drops a quest item at a quest location.",
             "overloads": [
                 "dropped ${1:_item_} at ${2:_place_}",
                 "dropped ${1:_item_} at ${2:_place_} saying ${3:messageID}"
@@ -43,7 +43,7 @@
             ]
         },
         {
-            "summary": "Killed foe; kills required must be at least 1.",
+            "summary": "Triggers when the PC slaughters the specified foe or the specified number of foes.",
             "overloads": [
                 "killed ${1:_foe_}",
                 "killed ${1:dd} ${2:_foe_}",
@@ -70,7 +70,7 @@
             ]
         },
         {
-            "summary": "Condition triggers when player clicks on NPC while holding a quest Item in their inventory.",
+            "summary": "Triggers when player clicks on NPC while holding a quest Item in their inventory.",
             "overloads": [
                 "toting ${1:_item_} and ${2:_person_} clicked",
                 "toting ${1:_item_} and ${2:_person_} clicked saying ${3:message}"
@@ -158,7 +158,7 @@
             ]
         },
         {
-            "summary": "Dialog link.",
+            "summary": "Adds a stock _Any news?_ reply to gossip about the quest symbol. Additionally can create a dialog bridge between symbols; when the NPC chats about a symbol, a new entry will appear in the picklist for the other. For a linked topic to appear in the dialog screen picklist, its symbol name must appear within the linking dialog Qrc block.",
             "overloads": [
                 "dialog link for ${1|item,person,location|} ${2:_symbol_}",
                 "dialog link for ${1|person,location|} ${2:_symbol_} item ${3:_item_}",
@@ -173,7 +173,7 @@
             ]
         },
         {
-            "summary": "End quest",
+            "summary": "Completes the quest's activity; all quest-related objects in the player's inventory are removed, other quest resources are discarded and the player's log book emptied.",
             "overloads": [
                 "end quest",
                 "end quest saying ${1:messageID}"
@@ -296,7 +296,7 @@
             ]
         },
         {
-            "summary": "Makes talk options available.",
+            "summary": "Adds a Qrc message block to the set of rumors that an NPC may respond with when asked about _Any News?_ in the dialog screen.",
             "overloads": [
                 "rumor mill ${1:messageID}"
             ]
