@@ -6,11 +6,11 @@
 
 import * as parser from '../language/parser';
 
-import { ReferenceProvider, TextDocument, Position, Location } from 'vscode';
+import { ReferenceProvider, TextDocument, Position, Location, CancellationToken } from 'vscode';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
 
-    public provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }): Thenable<Location[]> {
+    public provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Thenable<Location[]> {
         return new Promise(function (resolve, reject) {
             let word = parser.getWord(document, position);
             if (word) {
@@ -25,13 +25,12 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                     for (const line of parser.findTasksReferences(document, symbol, options.includeDeclaration)) {
                         locations.push(new Location(document.uri, new Position(line.lineNumber, 0)));
                     }
-                    console.log(locations);
                     return resolve(locations);
                 }
                 
                 // Quest
                 if (parser.isQuestReference(document.lineAt(position.line).text)) {
-                    return parser.findQuestReferences(word);
+                    return parser.findQuestReferences(word, token).then((locations) => resolve(locations), () => reject());
                 }
             }
 

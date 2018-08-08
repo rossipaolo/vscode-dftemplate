@@ -4,6 +4,7 @@
 
 'use strict';
 
+import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { TextDocument, Range, Location, Position } from "vscode";
 
@@ -58,9 +59,9 @@ export function findDisplayName(document: TextDocument): string {
  * Find quest definition.
  * @param name Name pattern of quest.
  */
-export function findQuestDefinition(name: string): Promise<Quest> {
+export function findQuestDefinition(name: string, token?: vscode.CancellationToken): Promise<Quest> {
     return new Promise((resolve, reject) => {
-        return parser.findAllQuests().then((quests) => {
+        return parser.findAllQuests(token).then((quests) => {
             const quest = quests.find((quest) => quest.pattern === name);
             return quest ? resolve(quest) : reject();
         }, () => reject());
@@ -71,24 +72,23 @@ export function findQuestDefinition(name: string): Promise<Quest> {
  * Finds all references to a quest in all files.
  * @param questName Name pattern of quest.
  */
-export function findQuestReferences(questName: string): Thenable<Location[]> {
-    return parser.findLinesInAllQuests(questReferencePattern).then(results => {
-        const ranges: Location[] = [];
-        for (const result of results) {
+export function findQuestReferences(questName: string, token?: vscode.CancellationToken): Thenable<Location[]> {
+    return parser.findLinesInAllQuests(questReferencePattern, false, token).then(results => {
+        return results.reduce((locations, result) => {
             const index = result.line.text.indexOf(questName);
             if (index !== -1) {
-                ranges.push(new Location(result.document.uri, new Range(result.line.lineNumber, index, result.line.lineNumber, index + questName.length)));
+                locations.push(new Location(result.document.uri, new Range(result.line.lineNumber, index, result.line.lineNumber, index + questName.length)));
             }
-        }
-        return ranges;
+            return locations;
+        }, new Array<Location>());
     });
 }
 
 /**
  * Finds all quests in the workspace.
  */
-export function findAllQuests(): Thenable<Quest[]> {
-    return parser.findLinesInAllQuests(questDefinitionPattern, true).then(results => {
+export function findAllQuests(token?: vscode.CancellationToken): Thenable<Quest[]> {
+    return parser.findLinesInAllQuests(questDefinitionPattern, true, token).then(results => {
         return results.reduce((quests, result) => {
             const match = questDefinitionPattern.exec(result.line.text);
             if (match) {
