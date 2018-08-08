@@ -140,7 +140,7 @@
             { "word": "____$_", "description": "The name of the province where $ can be found" }
         ],
         "Foe": [
-            { "word": "_$_", "description": "The name of $" },
+            { "word": "_$_", "description": "The kind of enemy of $" },
             { "word": "=$_", "description": "$'s name" },
             { "word": "==$_", "description": "The faction association of $" }
         ],
