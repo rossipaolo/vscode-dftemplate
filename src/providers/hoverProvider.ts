@@ -6,7 +6,7 @@
 
 import * as parser from '../language/parser';
 
-import { HoverProvider, Hover, TextDocument, Position, MarkdownString } from 'vscode';
+import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
@@ -25,7 +25,7 @@ class TemplateDocumentationItem {
 
 export class TemplateHoverProvider implements HoverProvider {
 
-    public provideHover(document: TextDocument, position: Position): Thenable<Hover> {     
+    public provideHover(document: TextDocument, position: Position, token: CancellationToken): Thenable<Hover> {
         let instance:TemplateHoverProvider = this;
         return new Promise(function (resolve, reject) {
             let word = parser.getWord(document, position);
@@ -57,7 +57,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     if (messageDefinition) {
                         let line = messageDefinition.line;
                         if (messageDefinition.isDefault) {
-                            return resolve(instance.provideHover(document, new Position(line.lineNumber, 0)));
+                            return resolve(instance.provideHover(document, new Position(line.lineNumber, 0), token));
                         }
                         else {
                             let item = new TemplateDocumentationItem();
@@ -94,7 +94,7 @@ export class TemplateHoverProvider implements HoverProvider {
 
                 // Seek quest
                 if (parser.isQuestReference(document.lineAt(position.line).text)) {
-                    return parser.findQuestDefinition(word).then((quest) => {
+                    return parser.findQuestDefinition(word, token).then((quest) => {
                         let item = new TemplateDocumentationItem();
                         item.category = 'quest';
                         item.signature = 'Quest: ' +  quest.pattern;

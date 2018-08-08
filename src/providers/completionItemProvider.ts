@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from '../language/parser';
 
-import { TextDocument, Position, CompletionItem } from 'vscode';
+import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
 import { Tables } from '../language/tables';
@@ -26,7 +26,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
     ]
 
-    public provideCompletionItems(document: TextDocument, position: Position): Thenable<CompletionItem[]> {
+    public provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken): Thenable<CompletionItem[]> {
         return new Promise(function (resolve, reject) {
             const line = document.lineAt(position.line);
             const text = line.text.substring(0, position.character - 2).trim();
@@ -53,7 +53,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 // Inside an invocation: suggests values according to parameter type
                 switch (param) {
                     case SignatureWords.questName:
-                        return TemplateCompletionItemProvider.findQuestsCompletionItems().then((items) => {
+                        return TemplateCompletionItemProvider.findQuestsCompletionItems(token).then((items) => {
                             return resolve(items);
                         }), () => reject();
                     case SignatureWords.message:
@@ -118,8 +118,8 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         });
     }
 
-    private static findQuestsCompletionItems(): Thenable<CompletionItem[]> {
-        return parser.findAllQuests().then((quests) => {
+    private static findQuestsCompletionItems(token: CancellationToken): Thenable<CompletionItem[]> {
+        return parser.findAllQuests(token).then((quests) => {
             return quests.map((quest): CompletionItem => {
                 const item = new CompletionItem(quest.pattern, vscode.CompletionItemKind.Class);
                 item.detail = quest.displayName;

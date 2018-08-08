@@ -94,19 +94,16 @@ export function* findLines(document: TextDocument, regex: RegExp): Iterable<Text
  * @param regex A regular expression matched on all lines.
  * @param onePerDocument Stops on first match for each document.
  */
-export function findLinesInAllQuests(regex: RegExp, onePerDocument?: boolean): Thenable<{ document: TextDocument, line: vscode.TextLine }[]> {
-    return openAllDocuments().then((documents) => {
-        const lines: { document: TextDocument, line: vscode.TextLine }[] = [];
-        for (const document of documents) {
-            for (const line of findLines(document, regex)) {
-                lines.push({ document: document, line: line });
-                if (onePerDocument) {
-                    break;
-                }
+export function findLinesInAllQuests(regex: RegExp, onePerDocument: boolean = false, token?: vscode.CancellationToken): Thenable<{ document: TextDocument, line: vscode.TextLine }[]> {
+    const lines: { document: TextDocument, line: vscode.TextLine }[] = [];
+    return openAllDocuments((document) => {
+        for (const line of findLines(document, regex)) {
+            lines.push({ document: document, line: line });
+            if (onePerDocument) {
+                break;
             }
         }
-        return lines;
-    }, () => []);
+    }, token).then(() => lines, () => []);
 }
 
 /**
@@ -124,16 +121,15 @@ export function* matchAllLines(document: TextDocument, regex: RegExp, match: num
 
 /**
  * Open all documents in the workspace.
+ * @param callback A callback called for each document
  */
-function openAllDocuments(): Thenable<TextDocument[]> {
-    return vscode.workspace.findFiles('*.{txt,dftemplate}').then((uris) => {
-        const documents: TextDocument[] = [];
-        for (const uri of uris) {
+function openAllDocuments(callback: (document: TextDocument) => void, token?: vscode.CancellationToken): Thenable<void> {
+    return vscode.workspace.findFiles('**/*.{txt,dftemplate}', undefined, undefined, token).then((uris) => {
+        uris.forEach((uri) => {
             vscode.workspace.openTextDocument(uri).then((document) => {
-                documents.push(document);
+                callback(document);
             });
-        }
-        return documents;
+        });
     });
 }
 
