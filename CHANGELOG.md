@@ -6,6 +6,7 @@
 - Data is now read from local installation of Daggerfall Unity (_StreamingAssets/Tables_).
 - Automatic rename of symbols to change prefixes and suffixes is proposed as code action; diagnostics detect incorrect symbol variations usage for symbol type.
 - Find all quests in the workspace from command palette.
+- Find references to global variables.
 
 ### Improved
 - Format document/selection now detects the quest headless entry point.

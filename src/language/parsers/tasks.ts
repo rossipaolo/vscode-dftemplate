@@ -4,8 +4,9 @@
 
 'use strict';
 
+import * as vscode from 'vscode';
 import * as parser from '../parser';
-import { TextDocument, TextLine, Range } from "vscode";
+import { TextDocument, TextLine, Range, Location } from "vscode";
 import { iterateAll } from '../../extension';
 
 let globalVarsAlternation: string;
@@ -92,6 +93,14 @@ export function getGlobalVariable(text: string): { name: string, symbol: string 
     if (match) {
         return { name: match[1], symbol: match[2] };
     }
+}
+
+/**
+ * Finds all references to a global variable in all files.
+ * @param name Name of global variable.
+ */
+export function findGlobalVarsReferences(name: string, token?: vscode.CancellationToken): Thenable<Location[]> {
+    return parser.findReferences(name, globalMatch, token);
 }
 
 function makeTaskRegex(symbol: string) {

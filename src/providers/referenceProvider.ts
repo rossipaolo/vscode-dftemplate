@@ -32,6 +32,9 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 if (parser.isQuestReference(document.lineAt(position.line).text)) {
                     return parser.findQuestReferences(word, token).then((locations) => resolve(locations), () => reject());
                 }
+
+                // Global variables
+                return parser.findGlobalVarsReferences(word, token).then((locations) => resolve(locations), () => reject());
             }
 
             return reject();

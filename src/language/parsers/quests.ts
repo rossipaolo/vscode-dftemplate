@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parser';
-import { TextDocument, Range, Location, Position } from "vscode";
+import { TextDocument, Location, Position } from "vscode";
 
 const questDefinitionPattern = /^\s*Quest:\s+([a-zA-Z0-9_]+)/;
 const questInvocationPattern = /^\s*start\s+quest\s+([a-zA-Z0-9_]+)/;
@@ -73,15 +73,7 @@ export function findQuestDefinition(name: string, token?: vscode.CancellationTok
  * @param questName Name pattern of quest.
  */
 export function findQuestReferences(questName: string, token?: vscode.CancellationToken): Thenable<Location[]> {
-    return parser.findLinesInAllQuests(questReferencePattern, false, token).then(results => {
-        return results.reduce((locations, result) => {
-            const index = result.line.text.indexOf(questName);
-            if (index !== -1) {
-                locations.push(new Location(result.document.uri, new Range(result.line.lineNumber, index, result.line.lineNumber, index + questName.length)));
-            }
-            return locations;
-        }, new Array<Location>());
-    });
+    return parser.findReferences(questName, questReferencePattern, token);
 }
 
 /**
