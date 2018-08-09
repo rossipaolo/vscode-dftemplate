@@ -43,7 +43,9 @@ const Errors = {
     undefinedSymbol: (range: Range, symbol: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Reference to undefined symbol: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedExpression: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Action or condition not found.', DiagnosticSeverity.Error)
+        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Action or condition not found.', DiagnosticSeverity.Error),
+    undefinedUntilPerformed: (range: Range, symbol: string) =>
+        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Task execution is based on another task which is not defined: ' + symbol + '.', DiagnosticSeverity.Error),
 };
 
 const Warnings = {
@@ -273,7 +275,17 @@ function doDiagnostics(document: vscode.TextDocument) {
 
             // Task definition
             const task = parser.getTaskName(line.text);
-            if (task) {
+            if (task) {                     
+                
+                if (/^\s*until\s/.test(line.text)) {
+
+                    // until performed is associated to undefined task
+                    if (tasks.indexOf(task) === - 1) {
+                        diagnostics.push(Errors.undefinedUntilPerformed(wordRange(line, task), task));
+                    }
+
+                    continue;
+                }
                 
                 // Duplicated definition
                 if (tasks.indexOf(task) !== - 1) {

@@ -59,7 +59,7 @@ export function* findTasksReferences(document: TextDocument, symbol: string, inc
  * @param document A quest document.
  */
 export function* findAllTasks(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
-    for (const variable of parser.matchAllLines(document, /^\s*(?:([a-zA-Z0-9._]+)\s*task:|until\s*([a-zA-Z0-9._]+)\s*performed)/)) {
+    for (const variable of parser.matchAllLines(document, /^\s*(?:until\s*)?([a-zA-Z0-9._]+)\s*(?:task:|performed)/)) {
         yield variable;
     }
 }

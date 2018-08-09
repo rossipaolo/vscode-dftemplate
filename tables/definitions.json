@@ -220,15 +220,15 @@
             "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? (factionType|factiontype|faction|group) [a-zA-Z0-9'_.-]+( (female|male))?( anyInfo \\d+)?( rumors \\d+)?",
             "matches": [
                 {
-                    "regex": "factionType (\\w+)",
+                    "regex": "factionType ([a-zA-Z0-9'_\\.-]+)",
                     "signature": "${factionType}"
                 },
                 {
-                    "regex": "faction (\\w+)",
+                    "regex": "faction ([a-zA-Z0-9'_\\.-]+)",
                     "signature": "${faction}"
                 },
                 {
-                    "regex": "group (\\w+)",
+                    "regex": "group ([a-zA-Z0-9'_\\.-]+)",
                     "signature": "${group}"
                 },
                 {

@@ -25,7 +25,14 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
         {
             kind: vscode.SymbolKind.Struct,
             result: parser.findAllMessages(document),
-            containerName: 'QRC'
+            containerName: 'QRC',
+            getRange: (lineNumber: number) => parser.getMessageRange(document, lineNumber)
+        },
+        {
+            kind: vscode.SymbolKind.Method,
+            result: parser.findAllTasks(document),
+            containerName: 'QBN',
+            getRange: (lineNumber: number) => parser.getTaskRange(document, lineNumber)
         }
     ]
 
@@ -58,16 +65,6 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
                 new vscode.Location(document.uri, blocksRanges.qbn)
             ));
 
-            // Tasks
-            for (const task of parser.findAllTasks(document)) {
-                symbols.push(new SymbolInformation(
-                    task.symbol,
-                    vscode.SymbolKind.Method,
-                    'QRC',
-                    new vscode.Location(document.uri, parser.getTaskRange(document, task.line.lineNumber))
-                ));
-            }
-
             // Symbols
             TemplateDocumentSymbolProvider.symbolQueries(document).forEach(query => {
                 for (const result of query.result) {
@@ -75,7 +72,7 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
                         result.symbol,
                         query.kind,
                         query.containerName,
-                        new vscode.Location(document.uri, result.line.range)
+                        new vscode.Location(document.uri, query.getRange ? query.getRange(result.line.lineNumber) : result.line.range)
                     ));
                 }
             });

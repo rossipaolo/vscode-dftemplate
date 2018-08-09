@@ -5,7 +5,7 @@
 'use strict';
 
 import * as parser from '../parser';
-import { TextDocument, Location, Range, TextLine } from "vscode";
+import { TextDocument, Location, Range, TextLine, Position } from "vscode";
 import { Language } from '../language';
 
 interface Symbol {
@@ -21,8 +21,7 @@ export const enum Types {
     Foe = 'Foe'
 }
 
-const types: string[] = ['Item', 'Person', 'Place', 'Clock', 'Foe'];
-//const definition = '\\s*(' + types.join('|') + ')\\s+';
+const definitionMatch = /^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/;
 
 /**
 * Checks if a word is a symbol with any accepted prefix.
@@ -96,17 +95,12 @@ export function getSupportedSymbolVariations(symbolOccurrence: string, type: str
 
 /**
  * Check if this line is a symbol definition.
- * @param line A quest line.
+ * @param text A quest line.
  * @param base Base symbol (`_symbol_`).
  */
-export function isSymbolDefinition(line: string, base: string): boolean {
-    for (var i = 0; i < types.length; i++) {
-        if (line.startsWith(types[i] + ' ' + base)) {
-            return true;
-        }
-    }
-
-    return false;
+export function isSymbolDefinition(text: string, base: string): boolean {
+    const result = text.match(definitionMatch);
+    return result !== null && result[1] === base;
 }
 
 /**
@@ -114,7 +108,7 @@ export function isSymbolDefinition(line: string, base: string): boolean {
  * @param line A quest line.
  */
 export function getSymbolFromLine(line: TextLine): string | undefined {
-    const result = /^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/.exec(line.text);
+    const result = definitionMatch.exec(line.text);
     if (result) {
         return result[1];
     }
@@ -144,15 +138,14 @@ export function forceSymbolNamingConventions(symbol: string): string {
  * @param symbol A symbol occurence.
  */
 export function findSymbolDefinition(document: TextDocument, symbol: string): Symbol | undefined {
-    symbol = getBaseSymbol(symbol);
-    const text = document.getText();
-    for (const type of types) {
-        const seekedText = type + ' ' + symbol;
-        const index = text.indexOf(seekedText);
+    symbol = getBaseSymbol(symbol);   
+    const line = parser.firstLine(document, l => isSymbolDefinition(l.text, symbol));
+    if (line) {
+        const index = line.text.indexOf(symbol);
         if (index !== -1) {
             return {
-                location: new Location(document.uri, new Range(document.positionAt(index), document.positionAt(index + seekedText.length))),
-                type: type
+                location: new Location(document.uri, new Range(new Position(line.lineNumber, index), new Position(line.lineNumber, index + symbol.length))),
+                type: line.text.substring(0, index).trim()
             };
         }
     }
@@ -163,7 +156,7 @@ export function findSymbolDefinition(document: TextDocument, symbol: string): Sy
  * @param document A quest document.
  */
 export function* findAllSymbolDefinitions(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
-    for (const variable of parser.matchAllLines(document, /^\s*(?:Person|Place|Item|Foe)\s*([a-zA-Z0-9._]+)/)) {
+    for (const variable of parser.matchAllLines(document, definitionMatch)) {
         yield variable;
     }
 }
