@@ -8,7 +8,7 @@ import * as parser from '../parser';
 import { TextDocument, Location, Range, TextLine, Position } from "vscode";
 import { Language } from '../language';
 
-interface Symbol {
+export interface Symbol {
     type: string;
     location: Location;
 }
