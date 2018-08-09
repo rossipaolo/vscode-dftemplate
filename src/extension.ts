@@ -16,6 +16,7 @@ import { TemplateDefinitionProvider } from './providers/definitionProvider';
 import { TemplateReferenceProvider } from './providers/referenceProvider';
 import { TemplateDocumentHighlightProvider } from './providers/documentHighlightProvider';
 import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvider';
+import { TemplateWorkspaceSymbolProvider } from './providers/workspaceSymbolProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
@@ -41,6 +42,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
+    context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(new TemplateWorkspaceSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider()));
