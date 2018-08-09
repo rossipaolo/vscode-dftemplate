@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 
-import { TextDocument, Position, TextLine } from 'vscode';
+import { TextDocument, Position, TextLine, Location } from 'vscode';
 
 export * from './parsers/symbols';
 export * from './parsers/messages';
@@ -117,6 +117,23 @@ export function* matchAllLines(document: TextDocument, regex: RegExp, match: num
         const matches = regex.exec(line.text);
         if (matches) { yield { line: line, symbol: matches[match] }; }
     }
+}
+
+/**
+ * Finds references of a symbol in all files with a regular expression.
+ * @param name Name of symbol.
+ * @param regex A regular expression that matches the symbol references.
+ */
+export function findReferences(name: string, regex: RegExp, token?: vscode.CancellationToken): Thenable<Location[]> {
+    return findLinesInAllQuests(regex, false, token).then(results => {
+        return results.reduce((locations, result) => {
+            const index = result.line.text.indexOf(name);
+            if (index !== -1) {
+                locations.push(new Location(result.document.uri, new vscode.Range(result.line.lineNumber, index, result.line.lineNumber, index + name.length)));
+            }
+            return locations;
+        }, new Array<Location>());
+    });
 }
 
 /**
