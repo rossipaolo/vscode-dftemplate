@@ -37,7 +37,7 @@ export class TemplateHoverProvider implements HoverProvider {
                         let item = new TemplateDocumentationItem();
                         item.category = 'symbol';
                         item.signature = document.lineAt(definition.location.range.start.line).text;
-                        item.summary = TemplateHoverProvider.getSymbolDescription(word, definition.type);
+                        item.summary = TemplateHoverProvider.getSymbolDescription(document, word, definition);
                         return resolve(TemplateHoverProvider.makeHover(item));
                     }
 
@@ -154,12 +154,16 @@ export class TemplateHoverProvider implements HoverProvider {
 
         return new Hover(hovertext);
     }
-
+    
     /**
-     * Get a description for symbol according to prefix and type.
+     * Get the summary and a description for symbol according to prefix and type.
      */
-    private static getSymbolDescription(symbol: string, type: string): string {
-        const variation = parser.getSupportedSymbolVariations(symbol, type, x => '`' + x + '`').find(x => x.word === symbol);
-        return variation ? variation.description + '.' : 'Undefined value for the type `' + type + '`.';
+    private static getSymbolDescription(document: TextDocument, name: string, symbol: parser.Symbol): string {
+        const variation = parser.getSupportedSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
+
+        const summary = parser.makeSummary(document, symbol.location.range.start.line);
+        const meaning = variation ? variation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
+
+        return summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
     }
 }
