@@ -24,7 +24,7 @@
         },
         {
             "fileMatch": [
-                "modules/*.json"
+                "/modules/*.json"
             ],
             "url": "./schemas/module.json"
         }

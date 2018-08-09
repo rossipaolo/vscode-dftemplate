@@ -75,6 +75,23 @@ export function nextAvailableMessageID(document: TextDocument, id: string): stri
  */
 export function getMessageRange(document: TextDocument, definitionLine: number): Range {
     let line = definitionLine;
-    while (++line < document.lineCount && !/^\s*(\s*(-.*)?|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+))\s*$/.test(document.lineAt(line).text)) {}
-    return new Range(definitionLine, 0, --line, document.lineAt(line).text.length);
+    let previousLineIsEmpty = false;
+    while (++line < document.lineCount) {
+        const text = document.lineAt(line).text;
+
+        // Start of a new message block, comment or QBN
+        if (/^\s*(\s*-.*|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+)|QBN:)\s*$/.test(text)) {
+            break;
+        }
+
+        // Two empty lines
+        const lineIsEmpty = /^\s*$/.test(text);
+        if (lineIsEmpty && previousLineIsEmpty) {
+            break;
+        }
+
+        previousLineIsEmpty = lineIsEmpty;
+    }
+
+    return new Range(definitionLine, 0, line - 2, document.lineAt(line).text.length);
 }
