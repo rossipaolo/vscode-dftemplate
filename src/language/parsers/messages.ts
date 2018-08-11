@@ -6,6 +6,9 @@
 
 import * as parser from '../parser';
 import { TextDocument, TextLine, Range } from "vscode";
+import { Language } from '../language';
+import { SignatureWords } from '../signatureCheck';
+import { Modules } from '../modules';
 
 /**
  * Gets the index of the additional message defined in the given line.
@@ -44,6 +47,48 @@ export function findMessageByIndex(document: TextDocument, id: string): { line: 
  */
 export function findMessageByName(document: TextDocument, name: string): TextLine | undefined {
     return parser.findLine(document, new RegExp('\\s*' + name + '\\s*:\\s*\\[\\s*\\d+\\s*\\]', 'g'));
+}
+
+/**
+ * Finds all references to a message in a quest.
+ * @param document A quest document.
+ */
+export function* findMessageReferences(document: TextDocument, idOrName: string, includeDeclaration: boolean = true): Iterable<Range> {
+
+    const isId = !isNaN(Number(idOrName));
+    const declaration = isId ?
+        new RegExp('^\\s*([a-zA-Z]+\\s+\\[\\s*' + idOrName + '\\s*\\]|Message:\\s+' + idOrName + ')\\b') :
+        new RegExp('\\s*' + idOrName + '\\s*:\\s*\\[\\s*\\d+\\s*\\]');
+
+    for (const line of parser.findLines(document, new RegExp('\\b' + idOrName + '\\b'))) {
+        if (includeDeclaration || !declaration.test(line.text)) {
+            const firstWord = parser.getFirstWord(line.text);
+            if (firstWord) {
+
+                // Check this is a message for symbol definition
+                const symbolDefinition = Language.getInstance().findDefinition(firstWord, line.text);
+                if (symbolDefinition) {
+                    if (symbolDefinition.matches.find(x => x.signature === SignatureWords.message || (isId ? x.signature === SignatureWords.messageID : x.signature === SignatureWords.messageName))) {
+                        const index = line.text.indexOf(idOrName);
+                        yield new Range(line.lineNumber, index, line.lineNumber, index + idOrName.length);
+                    }
+
+                    continue;
+                }
+
+                // Check this is a message for action invocation
+                const actionInvocation = Modules.getInstance().findAction(firstWord, line.text);
+                if (actionInvocation) {
+                    if (Modules.actionHasParameters(actionInvocation, SignatureWords.message, isId ? SignatureWords.messageID : SignatureWords.messageName)) {
+                        const index = line.text.indexOf(idOrName);
+                        yield new Range(line.lineNumber, index, line.lineNumber, index + idOrName.length);
+                    }
+
+                    continue;
+                }
+            }
+        }
+    }
 }
 
 export function* findAllMessages(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
