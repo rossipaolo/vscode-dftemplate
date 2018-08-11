@@ -28,6 +28,7 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
     + Seek other quests in workspace
 * Show all symbol and task definitions
 * Show all quests in workspace
+* CodeLenses with references and other details.
 * Rename symbols
     + Keep symbol variations (prefixes) in QRC block
 * Format source code

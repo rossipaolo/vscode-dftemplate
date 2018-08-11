@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { TextDocument, TextLine, Range, Location } from "vscode";
 import { iterateAll } from '../../extension';
+import { Modules } from '../modules';
 
 let globalVarsAlternation: string;
 let globalMatch: RegExp;
@@ -46,11 +47,12 @@ export function findTaskDefinition(document: TextDocument, symbol: string): Text
  * Finds all references to a task in a quest.
  * @param document A quest document.
  */
-export function* findTasksReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true): Iterable<TextLine> {
+export function* findTasksReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true): Iterable<Range> {
     const declaration = makeTaskRegex(symbol);
-    for (const line of parser.findLines(document, new RegExp('\b' + symbol + '\b'))) {
+    for (const line of parser.findLines(document, new RegExp('\\b' + symbol + '\\b'))) {
         if (includeDeclaration || !declaration.test(line.text)) {
-            yield line;
+            const index = line.text.indexOf(symbol);
+            yield new Range(line.lineNumber, index, line.lineNumber, index + symbol.length);
         }
     }
 }
@@ -101,6 +103,26 @@ export function getGlobalVariable(text: string): { name: string, symbol: string 
  */
 export function findGlobalVarsReferences(name: string, token?: vscode.CancellationToken): Thenable<Location[]> {
     return parser.findReferences(name, globalMatch, token);
+}
+
+/**
+ * Has this task one or more conditions?
+ * @param document A quest document.
+ * @param lineNumber The declaration line.
+ */
+export function isConditionalTask(document: TextDocument, lineNumber: number): boolean {
+    if (document.lineCount > lineNumber + 1) {
+        const text = document.lineAt(lineNumber + 1).text.trim();
+        const space = text.indexOf(' ');
+        if (space > 0) {
+            const action = Modules.getInstance().findAction(text.substring(0, space), text);
+            if (action && action.actionKind === Modules.ActionKind.Condition) {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 function makeTaskRegex(symbol: string) {
