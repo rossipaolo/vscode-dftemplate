@@ -27,6 +27,12 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                     }
                     return resolve(locations);
                 }
+
+                // Messages
+                const messages = Array.from(parser.findMessageReferences(document, word, options.includeDeclaration));
+                if (messages.length > 0) {
+                    return resolve(messages.map(x => new Location(document.uri, x)));
+                }
                 
                 // Quest
                 if (parser.isQuestReference(document.lineAt(position.line).text)) {

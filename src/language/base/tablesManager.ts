@@ -5,6 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import { ActionResult } from '../modules';
 
 /**
  * Manages tables with language data for intellisense features.
@@ -16,6 +17,16 @@ export abstract class TablesManager {
      */
     public static prettySignature(signature: string): string {
         return signature.replace(/\${\d(:|\|)?/g, '').replace(/\|?}/g, '');
+    }
+
+    /**
+     * Checks if action signature contains the given parameter types.
+     * @param action An action result.
+     * @param parameters Parameters as signature words.
+     */
+    public static actionHasParameters(action: ActionResult, ...parameters: string[]): boolean {
+        const signature = action.action.overloads[action.overload].replace(/\$\{\d:/, '${');
+        return parameters.find(x => signature.indexOf(x) !== -1) !== null;
     }
 
     /**
