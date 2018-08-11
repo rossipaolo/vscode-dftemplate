@@ -363,15 +363,8 @@ function isTaskUsed(document: vscode.TextDocument, line: vscode.TextLine, task: 
     }    
 
     // Has a condition
-    if (document.lineCount > line.lineNumber + 1) {
-        const text = document.lineAt(line.lineNumber + 1).text.trim();
-        const space = text.indexOf(' ');
-        if (space > 0) {
-            const action = Modules.getInstance().findAction(text.substring(0, space), text);
-            if (action && action.actionKind === Modules.ActionKind.Condition) {
-                return true;
-            }
-        }
+    if (parser.isConditionalTask(document, line.lineNumber)) {
+        return true;
     }
 
     return false;

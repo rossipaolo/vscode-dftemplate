@@ -17,6 +17,7 @@ import { TemplateReferenceProvider } from './providers/referenceProvider';
 import { TemplateDocumentHighlightProvider } from './providers/documentHighlightProvider';
 import { TemplateDocumentSymbolProvider } from './providers/documentSymbolProvider';
 import { TemplateWorkspaceSymbolProvider } from './providers/workspaceSymbolProvider';
+import { TemplateCodeLensProvider } from './providers/codeLensProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
@@ -46,6 +47,10 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider()));
+
+    if (getOptions()['codeLens']['enabled']) {
+        context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider()));
+    }
 
     Promise.all(Array(
         Language.getInstance().load(context), 

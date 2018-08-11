@@ -22,8 +22,8 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                     for (const range of parser.findSymbolReferences(document, symbol, options.includeDeclaration)) {
                         locations.push(new Location(document.uri, range));
                     }
-                    for (const line of parser.findTasksReferences(document, symbol, options.includeDeclaration)) {
-                        locations.push(new Location(document.uri, new Position(line.lineNumber, 0)));
+                    for (const range of parser.findTasksReferences(document, symbol, options.includeDeclaration)) {
+                        locations.push(new Location(document.uri, range));
                     }
                     return resolve(locations);
                 }
