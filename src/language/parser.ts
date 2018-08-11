@@ -64,12 +64,12 @@ export function findLine(document: TextDocument, regex: RegExp): TextLine | unde
 }
 
 /**
- * Find the first line that satisfy the filter predicate.
+ * Find the first line that satisfy the filter predicate. Ignore empty lines and comments.
  */
 export function firstLine(document: TextDocument, filter: (line: TextLine) => boolean): TextLine | undefined {
     for (let index = 0; index < document.lineCount; index++) {
         const line = document.lineAt(index);
-        if (filter(line)) {
+        if (!isEmptyOrComment(line.text) && filter(line)) {
             return line;
         }
     }

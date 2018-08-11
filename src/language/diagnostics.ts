@@ -198,7 +198,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (!parser.firstLine(document, l => l !== line && l.text.indexOf(messageID) !== -1)) {
+                if (parser.findMessageReferences(document, messageID, false)[Symbol.iterator]().next().value === undefined) {
                     diagnostics.push(Warnings.unusedDeclarationMessage(wordRange(line, messageID), messageID));
                 }
             }
@@ -252,7 +252,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (!parser.firstLine(document, l => l !== line && l.text.indexOf(symbol) !== -1)) {
+                if (!hasAnotherOccurrence(document, line.lineNumber, symbol)) {
                     diagnostics.push(Warnings.unusedDeclarationSymbol(wordRange(line, symbol), symbol));
                 }
 
@@ -296,7 +296,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (!isTaskUsed(document, line, task)) {
+                if (!parser.isConditionalTask(document, line.lineNumber) && !hasAnotherOccurrence(document, line.lineNumber, task)) {
                     diagnostics.push(Warnings.unusedDeclarationTask(wordRange(line, task), task));
                 }
 
@@ -321,7 +321,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (!parser.firstLine(document, l => l !== line && l.text.indexOf(globalVar.symbol) !== -1)) {
+                if (!hasAnotherOccurrence(document, line.lineNumber, globalVar.symbol)) {
                     const name = globalVar.symbol + ' from ' + globalVar.name;
                     diagnostics.push(Warnings.unusedDeclarationSymbol(wordRange(line, globalVar.symbol), name));
                 }
@@ -355,19 +355,8 @@ function doDiagnostics(document: vscode.TextDocument) {
     return diagnostics;
 }
 
-function isTaskUsed(document: vscode.TextDocument, line: vscode.TextLine, task: string):boolean {
-    
-    // Is set from another task
-    if (parser.firstLine(document, l => l !== line && !/^\s*-/.test(l.text) && l.text.indexOf(task) !== -1)) {
-        return true;
-    }    
-
-    // Has a condition
-    if (parser.isConditionalTask(document, line.lineNumber)) {
-        return true;
-    }
-
-    return false;
+function hasAnotherOccurrence(document: vscode.TextDocument, ignored: number, symbol: string): boolean {
+    return parser.firstLine(document, l => l.lineNumber !== ignored && l.text.indexOf(symbol) !== -1) !== undefined;
 }
 
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity)
