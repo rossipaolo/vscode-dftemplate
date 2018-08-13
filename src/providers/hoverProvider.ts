@@ -131,25 +131,23 @@ export class TemplateHoverProvider implements HoverProvider {
      * Make a formatted markdown for the given documentation item.
      */
     private static makeHover(item: TemplateDocumentationItem): Hover {
-        let hovertext: MarkdownString[] = [];
+        const hovertext: MarkdownString[] = [];
 
         if (item.signature) {
-            let signature = new MarkdownString();
-            let signatureText = item.category ? '(' + item.category + ') ' + item.signature : item.signature;
-            hovertext.push(signature.appendMarkdown(['```dftemplate', signatureText, '```', ''].join(EOL)));
+            const signature = new MarkdownString();
+            signature.appendCodeblock(item.category ? '(' + item.category + ') ' + item.signature : item.signature, 'dftemplate');
+            hovertext.push(signature);
         }
 
         if (item.summary) {
-            let summary = new MarkdownString();
-            hovertext.push(summary.appendMarkdown(item.summary));
-        }
+            const summaryLines: string[] = [];
 
-        if (item.parameters) {
-            let parameters: string[] = [];
-            item.parameters.forEach(parameter => {
-                parameters.push('*@param* `' + parameter.name + '` - ' + parameter.description);
-            });
-            hovertext.push(new MarkdownString(parameters.join('\n\n')));
+            summaryLines.push(item.summary);
+            if (item.parameters) {
+                item.parameters.map(x => '*@param* `' + x.name + '` - ' + x.description).forEach(x => summaryLines.push(x));
+            }
+
+            hovertext.push(new MarkdownString(summaryLines.join(EOL.repeat(2))));
         }
 
         return new Hover(hovertext);

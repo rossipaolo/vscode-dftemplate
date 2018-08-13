@@ -135,7 +135,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             let item = new vscode.CompletionItem(prettySignature, TemplateCompletionItemProvider.getCompletionItemKind(languageItem.category));
             item.insertText = new vscode.SnippetString(languageItem.signature);
             item.detail = prettySignature;
-            item.documentation = languageItem.summary;
+            item.documentation = new vscode.MarkdownString(languageItem.summary);
             items.push(item);
         }
 
@@ -146,7 +146,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 let item = new vscode.CompletionItem(signature, TemplateCompletionItemProvider.getCompletionItemKind(result.actionKind));
                 item.insertText = new vscode.SnippetString(overload);
                 item.detail = result.moduleName + ' -> ' + signature;
-                item.documentation = result.action.summary;
+                item.documentation = new vscode.MarkdownString(result.action.summary);
                 items.push(item);
             }
         }

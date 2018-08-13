@@ -13,5 +13,13 @@
                 "when skill ${1:ww} is at least ${2:dd}"
             ]
         }
+    ],
+    "actions": [
+        {
+            "summary": "Sets a variable. Can be unset with **_clear_**.",
+            "overloads": [
+                "setvar ${1:task}"
+            ]
+        }
     ]
 }
