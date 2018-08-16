@@ -5,72 +5,20 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from './parser';
+import * as parser from '../language/parser';
 
-import { Range, DiagnosticSeverity } from 'vscode';
+import { Range } from 'vscode';
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
-import { Language } from './language';
-import { Modules } from './modules';
+import { Language } from '../language/language';
+import { Modules } from '../language/modules';
 import { doSignatureChecks, doWordsCheck } from './signatureCheck';
-
-export enum DiagnosticCode {
-    GenericError,
-    DuplicatedMessageNumber,
-    DuplicatedDefinition,
-    UndefinedExpression,
-    GenericWarning,
-    UnusedDeclarationMessage,
-    UnusedDeclarationSymbol,
-    UnusedDeclarationTask,
-    IncorrectSymbolVariation,
-    GenericHint,
-    SymbolNamingConvention,
-}
+import { Hints, Errors, Warnings } from './common';
 
 enum QuestBlock {
     Preamble,
     QRC,
     QBN
 }
-
-const Errors = {
-    duplicatedMessageNumber: (range: Range, id: number) =>
-        makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error),
-    duplicatedDefinition: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error),
-    invalidDefinition: (range: Range, symbol: string, type: string) =>
-        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Invalid definition for ' + symbol + ' (' + type + ').', DiagnosticSeverity.Error),
-    undefinedSymbol: (range: Range, symbol: string) =>
-        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Reference to undefined symbol: ' + symbol + '.', DiagnosticSeverity.Error),
-    undefinedExpression: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Action or condition not found.', DiagnosticSeverity.Error),
-    undefinedUntilPerformed: (range: Range, symbol: string) =>
-        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Task execution is based on another task which is not defined: ' + symbol + '.', DiagnosticSeverity.Error),
-};
-
-const Warnings = {
-    unusedDeclarationMessage: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationMessage, name + ' is declared but never used.', DiagnosticSeverity.Warning),
-    unusedDeclarationSymbol: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never used.', DiagnosticSeverity.Warning),
-    unusedDeclarationTask: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationTask, name + ' is declared but never used.', DiagnosticSeverity.Warning),
-    unstartedClock: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never starts.', DiagnosticSeverity.Warning),
-    unlinkedClock: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + " doesn't activate a task.", DiagnosticSeverity.Warning),
-    incorrectSymbolVariation: (range: Range, symbol: string, type: string) =>
-        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, symbol + " is not a valid variation for type '" + type + "'.", DiagnosticSeverity.Warning)
-};
-
-const Hints = {
-    symbolNamingConventionViolation: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.SymbolNamingConvention, 'Violation of naming convention: use _symbol_.', DiagnosticSeverity.Hint),
-    incorrectMessagePosition: (range: Range, current: number, previous: number) =>
-        makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint),
-    SymbolVariation: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
-};
 
 let timer: NodeJS.Timer | null = null;
 
@@ -163,7 +111,7 @@ function doDiagnostics(document: vscode.TextDocument) {
 
             const word = parser.getFirstWord(line.text);
             if (word) {
-                
+
                 // Check signature
                 const result = Language.getInstance().findKeyword(word);
                 if (result) {
@@ -176,19 +124,19 @@ function doDiagnostics(document: vscode.TextDocument) {
 
             continue;
         }
-        
+
         if (block === QuestBlock.QRC) {
 
             // Message definition
             const messageID = parser.getMessageIDFromLine(line);
             if (messageID) {
                 const id = Number(messageID);
-                
+
                 // Incorrect position
                 if (id < messages[messages.length - 1]) {
-                    diagnostics.push(Hints.incorrectMessagePosition(wordRange(line, messageID), id, messages[messages.length - 1]));    
+                    diagnostics.push(Hints.incorrectMessagePosition(wordRange(line, messageID), id, messages[messages.length - 1]));
                 }
-                
+
                 // Duplicated definition
                 if (messages.indexOf(id) !== -1) {
                     diagnostics.push(Errors.duplicatedMessageNumber(wordRange(line, messageID), id));
@@ -222,7 +170,7 @@ function doDiagnostics(document: vscode.TextDocument) {
 
             continue;
         }
-        
+
         if (block === QuestBlock.QBN) {
 
             // Symbol definition
@@ -231,7 +179,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 const text = line.text.trim();
                 const type = text.substring(0, text.indexOf(' '));
                 const definition = Language.getInstance().findDefinition(type, text);
-                
+
                 // Invalid signature or parameters
                 if (!definition) {
                     diagnostics.push(Errors.invalidDefinition(trimRange(line), symbol, type));
@@ -275,8 +223,8 @@ function doDiagnostics(document: vscode.TextDocument) {
 
             // Task definition
             const task = parser.getTaskName(line.text);
-            if (task) {                     
-                
+            if (task) {
+
                 if (/^\s*until\s/.test(line.text)) {
 
                     // until performed is associated to undefined task
@@ -286,7 +234,7 @@ function doDiagnostics(document: vscode.TextDocument) {
 
                     continue;
                 }
-                
+
                 // Duplicated definition
                 if (tasks.indexOf(task) !== - 1) {
                     diagnostics.push(Errors.duplicatedDefinition(wordRange(line, task), task));
@@ -311,7 +259,7 @@ function doDiagnostics(document: vscode.TextDocument) {
             // Global variables
             const globalVar = parser.getGlobalVariable(line.text);
             if (globalVar) {
-                
+
                 // Duplicated definition
                 if (tasks.indexOf(globalVar.symbol) !== - 1) {
                     diagnostics.push(Errors.duplicatedDefinition(wordRange(line, globalVar.symbol), globalVar.symbol));
@@ -357,14 +305,6 @@ function doDiagnostics(document: vscode.TextDocument) {
 
 function hasAnotherOccurrence(document: vscode.TextDocument, ignored: number, symbol: string): boolean {
     return parser.firstLine(document, l => l.lineNumber !== ignored && l.text.indexOf(symbol) !== -1) !== undefined;
-}
-
-function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity)
-    : vscode.Diagnostic {
-    const diagnostic = new vscode.Diagnostic(range, label, severity);
-    diagnostic.code = code;
-    diagnostic.source = TEMPLATE_LANGUAGE;
-    return diagnostic;
 }
 
 function trimRange(line: vscode.TextLine): vscode.Range {

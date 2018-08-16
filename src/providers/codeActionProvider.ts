@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../language/parser';
-import { DiagnosticCode } from '../language/diagnostics';
+import { DiagnosticCode } from '../diagnostics/common';
 
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {

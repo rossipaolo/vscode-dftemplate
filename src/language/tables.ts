@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { getOptions } from '../extension';
-import { SignatureWords } from './signatureCheck';
+import { SignatureWords } from '../diagnostics/common';
 
 abstract class Table {
 
