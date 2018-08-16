@@ -7,7 +7,7 @@
 import * as parser from '../parser';
 import { TextDocument, TextLine, Range } from "vscode";
 import { Language } from '../language';
-import { SignatureWords } from '../signatureCheck';
+import { SignatureWords } from '../../diagnostics/common';
 import { Modules } from '../modules';
 
 /**

@@ -11,7 +11,7 @@ import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscod
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
 import { Tables } from '../language/tables';
-import { SignatureWords } from '../language/signatureCheck';
+import { SignatureWords } from '../diagnostics/common';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 

@@ -11,7 +11,7 @@ import * as parser from './parser';
 import { ExtensionContext } from 'vscode';
 import { iterateAll } from '../extension';
 import { TablesManager } from "./base/tablesManager";
-import { SignatureWord } from './signatureCheck';
+import { SignatureWord } from '../diagnostics/signatureCheck';
 import { Tables } from './tables';
 
 interface Parameter {

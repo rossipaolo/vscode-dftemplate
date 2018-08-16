@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import { DocumentFilter, ExtensionContext } from 'vscode';
 import { Modules } from './language/modules';
 import { Language } from './language/language';
-import { makeDiagnosticCollection } from './language/diagnostics';
+import { makeDiagnosticCollection } from './diagnostics/diagnostics';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
 import { TemplateDefinitionProvider } from './providers/definitionProvider';
