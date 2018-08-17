@@ -18,7 +18,7 @@ export class TemplateRenameProvider implements RenameProvider {
 
                 if (parser.isSymbol(word)) {
                     newName = parser.getSymbolName(newName);
-                    for (const range of parser.findSymbolReferences(document, parser.getSymbolName(word))) {
+                    for (const range of parser.findSymbolReferences(document, word)) {
                         edit.replace(document.uri, range, newName);
                     }
                     return resolve(edit);

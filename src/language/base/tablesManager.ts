@@ -20,13 +20,23 @@ export abstract class TablesManager {
     }
 
     /**
-     * Checks if action signature contains the given parameter types.
+     * Gets the index of a parameter inside an invocation.
+     * @param text A string with an invocation.
+     * @param word A word in the invocation.
+     * @returns `word` position as index or -1.
+     */
+    public static getWordIndex(text: string, word: string): number {
+        return text.trim().split(' ').indexOf(word);
+    }
+
+    /**
+     * Checks if action signature has at least one of the given parameter types at the given position.
      * @param action An action result.
+     * @param index Index of the parameter.
      * @param parameters Parameters as signature words.
      */
-    public static actionHasParameters(action: ActionResult, ...parameters: string[]): boolean {
-        const signature = action.action.overloads[action.overload].replace(/\$\{\d:/, '${');
-        return parameters.find(x => signature.indexOf(x) !== -1) !== null;
+    public static actionHasParameterAtPosition(action: ActionResult, index: number, ...parameters: string[]): boolean {
+        return parameters.indexOf(action.action.overloads[action.overload].split(' ')[index].replace(/\$\{\d:/, '${')) !== -1;
     }
 
     /**

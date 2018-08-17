@@ -17,24 +17,21 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
             if (word) {
 
                 // Symbol
-                if (parser.isSymbol(word)) {
-                    const symbolDefinition = parser.findSymbolDefinition(document, word);
-                    if (symbolDefinition) {
-                        return resolve(symbolDefinition.location);
-                    }
+                const symbolDefinition = parser.findSymbolDefinition(document, word);
+                if (symbolDefinition) {
+                    return resolve(symbolDefinition.location);
+                }
 
-                    const taskDefinition = parser.findTaskDefinition(document, word);
-                    if (taskDefinition) {
-                        return resolve(new Location(document.uri, new Position(taskDefinition.lineNumber, 0)));
-                    }
+                // Task
+                const taskDefinition = parser.findTaskDefinition(document, word);
+                if (taskDefinition) {
+                    return resolve(new Location(document.uri, new Position(taskDefinition.lineNumber, 0)));
                 }
 
                 // Message
-                if (!isNaN(Number(word))) {
-                    let messageDefinition = parser.findMessageByIndex(document, word);
-                    if (messageDefinition) {
-                        return resolve(new Location(document.uri, new Position(messageDefinition.line.lineNumber, 0)));
-                    }
+                const messageDefinition = parser.findMessageDefinition(document, word);
+                if (messageDefinition) {
+                    return resolve(new Location(document.uri, messageDefinition));
                 }
 
                 // Quest

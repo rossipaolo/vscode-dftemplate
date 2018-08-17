@@ -12,23 +12,28 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
     public provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Thenable<Location[]> {
         return new Promise(function (resolve, reject) {
-            let word = parser.getWord(document, position);
+            const word = parser.getWord(document, position);
             if (word) {
 
                 // Symbol
-                if (parser.isSymbol(word)) {
-                    const symbol = parser.getSymbolName(word);
+                if (parser.findSymbolDefinition(document, word)) {
                     const locations: Location[] = [];
-                    for (const range of parser.findSymbolReferences(document, symbol, options.includeDeclaration)) {
-                        locations.push(new Location(document.uri, range));
-                    }
-                    for (const range of parser.findTasksReferences(document, symbol, options.includeDeclaration)) {
+                    for (const range of parser.findSymbolReferences(document, word, options.includeDeclaration)) {
                         locations.push(new Location(document.uri, range));
                     }
                     return resolve(locations);
                 }
 
-                // Messages
+                // Task
+                if (parser.findTaskDefinition(document, word)) {
+                    const locations: Location[] = [];
+                    for (const range of parser.findTasksReferences(document, word, options.includeDeclaration)) {
+                        locations.push(new Location(document.uri, range));
+                    }
+                    return resolve(locations);
+                }
+
+                // Message
                 const messages = Array.from(parser.findMessageReferences(document, word, options.includeDeclaration));
                 if (messages.length > 0) {
                     return resolve(messages.map(x => new Location(document.uri, x)));

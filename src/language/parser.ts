@@ -37,6 +37,16 @@ export function getFirstWord(text: string): string | undefined {
 }
 
 /**
+ * Gets the range of a word inside a line of text.
+ * @param line A document line.
+ * @param word A word inside `line`.
+ */
+export function rangeOf(line: TextLine, word: string) {
+    const index = line.text.indexOf(word);
+    return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
+}
+
+/**
  * Checks if a line is empty or a comment.
  * @param text A line of a quest.
  */
@@ -116,6 +126,36 @@ export function* matchAllLines(document: TextDocument, regex: RegExp, match: num
         const line = document.lineAt(index);
         const matches = regex.exec(line.text);
         if (matches) { yield { line: line, symbol: matches[match] }; }
+    }
+}
+
+/**
+ * Iterates all lines in a document which are not empty nor comments.
+ */
+export function* getCodeLines(document: TextDocument): Iterable<TextLine> {
+    for (let index = 0; index < document.lineCount; index++) {
+        const line = document.lineAt(index);
+        if (!isEmptyOrComment(line.text)) {
+            yield line;
+        }
+    }
+}
+
+/**
+ * Gets all matches with index in a string.
+ * @param text A string.
+ * @param regex A regular expression with global flag.
+ */
+export function* getMatches(text: string, regex: RegExp): Iterable<{ word: string, index: number }> {
+
+    if (regex.flags.indexOf('g') === -1) {
+        console.error('Regex has no global flag: ' + regex.toString());
+        return;
+    }
+
+    let result: RegExpExecArray | null;
+    while ((result = regex.exec(text)) !== null) {
+        yield { word: result[0], index: result.index };
     }
 }
 

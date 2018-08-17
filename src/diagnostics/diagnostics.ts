@@ -200,7 +200,7 @@ function doDiagnostics(document: vscode.TextDocument) {
                 }
 
                 // Unused
-                if (!hasAnotherOccurrence(document, line.lineNumber, symbol)) {
+                if (parser.findSymbolReferences(document, symbol, false)[Symbol.iterator]().next().value === undefined) {
                     diagnostics.push(Warnings.unusedDeclarationSymbol(wordRange(line, symbol), symbol));
                 }
 

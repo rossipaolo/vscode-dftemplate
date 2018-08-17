@@ -36,7 +36,7 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
         // Symbols
         for (const definition of parser.findAllSymbolDefinitions(document)) {
             const referenceCodeLens = TemplateCodeLensProvider.getReferenceCodeLens(document, definition,
-                () => parser.findSymbolReferences(document, parser.getSymbolName(definition.symbol), false));
+                () => parser.findSymbolReferences(document, definition.symbol, false));
             if (referenceCodeLens) {
                 codelenses.push(referenceCodeLens);
 

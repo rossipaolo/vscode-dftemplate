@@ -54,6 +54,9 @@ export function getBaseSymbol(derived: string): string {
 /**
  * Remove all prefixes and suffixes from a symbol.
  * @param symbol An occurence of a symbol.
+ * @example
+ * `=symbol_` -> `symbol`
+ * `symbol` -> `symbol`
  */
 export function getSymbolName(symbol: string): string {
     return symbol.replace(/^_+/, '').replace(/^=+/, '').replace(/_$/, '');
@@ -164,20 +167,17 @@ export function* findAllSymbolDefinitions(document: TextDocument): Iterable<{ li
 /**
 * Find all occurrences of a symbol with any prefix.
 * @param text seek within this string.
-* @param name base name of symbol without prefixes and suffixes. 
-* @returns Location of symbol excluding prefixes and suffixes.
+* @param symbol The symbol in any variant.
 */
-export function* findSymbolReferences(document: TextDocument, symbolName: string, includeDeclaration: boolean = true): Iterable<Range> {
-    for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
-        const line = document.lineAt(lineIndex);
-        const text = line.text;
-        if (includeDeclaration || !isSymbolDefinition(text, '_' + symbolName + '_')) {
-            for (let char = 0; char < line.text.length; char++) {
-                if (text.substring(char, char + symbolName.length) === symbolName) {
-                    if (text[char + symbolName.length] === '_' && (text[char - 1] === '_' || text[char - 1] === '=')) {
-                        yield new Range(line.lineNumber, char, line.lineNumber, char + symbolName.length);
-                    }
-                }
+export function* findSymbolReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true): Iterable<Range> {
+
+    const name = getSymbolName(symbol);
+    const regex = new RegExp(name !== symbol ? '(_{1,3}|={1,2})' + name + '_' : name, 'g');
+
+    for (const line of parser.getCodeLines(document)) {
+        if (includeDeclaration || !isSymbolDefinition(line.text, symbol)) {
+            for (const result of parser.getMatches(line.text, regex)) {
+                yield new Range(line.lineNumber, result.index, line.lineNumber, result.index + result.word.length);
             }
         }
     }

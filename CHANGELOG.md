@@ -14,9 +14,13 @@
 - Completion Proposals provider detects parameter type (symbol definitions and actions/conditions) to offer more fitting suggestions.
 - Quests are seeked in all workspace folders and subfolders.
 - Improved documentation for some actions.
+- Find definition and references of symbols which don't use `_symbol_` standard syntax.
+- Find definition of standard messages from text alias.
 
 ### Fixed
 - A few action/definition signatures.
+- Fixed an issue which caused diagnostics to consider a symbol unused if its only references are with `=` prefix.
+- Fixed an issue which caused a word defined in the same line as a message reference to be also considered a message reference.
 
 ## 0.2.0
 
