@@ -5,7 +5,7 @@
 'use strict';
 
 import * as parser from '../parser';
-import { TextDocument, TextLine, Range } from "vscode";
+import { TextDocument, TextLine, Range, Position } from "vscode";
 import { Language } from '../language';
 import { SignatureWords } from '../../diagnostics/common';
 import { Modules } from '../modules';
@@ -50,8 +50,30 @@ export function findMessageByName(document: TextDocument, name: string): TextLin
 }
 
 /**
+ * Find the defintion of a message.
+ * @param document A quest document.
+ * @param idOrName Id or name of message.
+ */
+export function findMessageDefinition(document: TextDocument, idOrName: string): Position | undefined {
+    if (!isNaN(Number(idOrName))) {
+        const definition = findMessageByIndex(document, idOrName);
+        if (definition) {
+            return new Position(definition.line.lineNumber, definition.isDefault ? 0 : parser.rangeOf(definition.line, idOrName).start.character);
+        }
+    }
+    else {
+        const definition = findMessageByName(document, idOrName);
+        if (definition) {
+            return new Position(definition.lineNumber, 0);
+        }
+    }
+}
+
+/**
  * Finds all references to a message in a quest.
  * @param document A quest document.
+ * @param idOrName Id or name of message.
+ * @param includeDeclaration Include the position of the message declaration?
  */
 export function* findMessageReferences(document: TextDocument, idOrName: string, includeDeclaration: boolean = true): Iterable<Range> {
 
@@ -61,31 +83,37 @@ export function* findMessageReferences(document: TextDocument, idOrName: string,
         new RegExp('\\s*' + idOrName + '\\s*:\\s*\\[\\s*\\d+\\s*\\]');
 
     for (const line of parser.findLines(document, new RegExp('\\b' + idOrName + '\\b'))) {
-        if (includeDeclaration || !declaration.test(line.text)) {
-            const firstWord = parser.getFirstWord(line.text);
-            if (firstWord) {
 
-                // Check this is a message for symbol definition
-                const symbolDefinition = Language.getInstance().findDefinition(firstWord, line.text);
-                if (symbolDefinition) {
-                    if (symbolDefinition.matches.find(x => x.signature === SignatureWords.message || (isId ? x.signature === SignatureWords.messageID : x.signature === SignatureWords.messageName))) {
-                        const index = line.text.indexOf(idOrName);
-                        yield new Range(line.lineNumber, index, line.lineNumber, index + idOrName.length);
-                    }
+        if (declaration.test(line.text)) {
+            if (includeDeclaration) {
+                yield parser.rangeOf(line, idOrName);
+            }
 
-                    continue;
+            continue;
+        }
+
+        const firstWord = parser.getFirstWord(line.text);
+        if (firstWord) {
+
+            // Check this is a message for symbol definition
+            const symbolDefinition = Language.getInstance().findDefinition(firstWord, line.text);
+            if (symbolDefinition) {
+                if (symbolDefinition.matches.find(x => x.signature === SignatureWords.message || (isId ? x.signature === SignatureWords.messageID : x.signature === SignatureWords.messageName))) {
+                    yield parser.rangeOf(line, idOrName);
                 }
 
-                // Check this is a message for action invocation
-                const actionInvocation = Modules.getInstance().findAction(firstWord, line.text);
-                if (actionInvocation) {
-                    if (Modules.actionHasParameters(actionInvocation, SignatureWords.message, isId ? SignatureWords.messageID : SignatureWords.messageName)) {
-                        const index = line.text.indexOf(idOrName);
-                        yield new Range(line.lineNumber, index, line.lineNumber, index + idOrName.length);
-                    }
+                continue;
+            }
 
-                    continue;
+            // Check this is a message for action invocation
+            const actionInvocation = Modules.getInstance().findAction(firstWord, line.text);
+            if (actionInvocation) {
+                if (Modules.actionHasParameterAtPosition(actionInvocation, Modules.getWordIndex(line.text, idOrName),
+                    SignatureWords.message, isId ? SignatureWords.messageID : SignatureWords.messageName)) {
+                    yield parser.rangeOf(line, idOrName);
                 }
+
+                continue;
             }
         }
     }

@@ -17,7 +17,7 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
 
                 const highlights: vscode.DocumentHighlight[] = [];
 
-                for (const range of parser.findSymbolReferences(document, parser.getSymbolName(word), true)) {
+                for (const range of parser.findSymbolReferences(document, word, true)) {
                     highlights.push(new vscode.DocumentHighlight(range, vscode.DocumentHighlightKind.Write));
                 }
 
