@@ -106,7 +106,7 @@ export function* findMessageReferences(document: TextDocument, idOrName: string,
             }
 
             // Check this is a message for action invocation
-            const actionInvocation = Modules.getInstance().findAction(firstWord, line.text);
+            const actionInvocation = Modules.getInstance().findAction(line.text, firstWord);
             if (actionInvocation) {
                 if (Modules.actionHasParameterAtPosition(actionInvocation, Modules.getWordIndex(line.text, idOrName),
                     SignatureWords.message, isId ? SignatureWords.messageID : SignatureWords.messageName)) {

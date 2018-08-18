@@ -172,7 +172,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
 
         // Action/condition
-        const actionResult = Modules.getInstance().findAction(match[1], line.text);
+        const actionResult = Modules.getInstance().findAction(line.text, match[1]);
         if (actionResult) {
             const word = actionResult.action.overloads[actionResult.overload].split(' ')[previousText.split(' ').length];
             return word.replace(/\$\{\d:(\.\.\.)?/, '${');
