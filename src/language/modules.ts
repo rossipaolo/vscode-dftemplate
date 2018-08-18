@@ -5,6 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from './parser';
 
 import { ExtensionContext } from 'vscode';
 import { TablesManager } from './base/tablesManager';
@@ -43,6 +44,11 @@ export class Modules extends TablesManager {
         Action: 'action'
     };
 
+    private static queries = [
+        { fromModule: (module: Module) => module.conditions, kind: Modules.ActionKind.Condition },
+        { fromModule: (module: Module) => module.actions, kind: Modules.ActionKind.Action }
+    ];
+
     /**
      * Load all enabled modules.
      * @param context Current context of extension.
@@ -59,50 +65,42 @@ export class Modules extends TablesManager {
 
     /**
      * Find the action referenced in a line of a task.
-     * @param prefix Trigger word.
      * @param text All text that contains a call to action.
+     * @param prefix Trigger word. If omitted, this is the first word of the string.
      */
-    public findAction(prefix: string, text: string): ActionResult | undefined {
-        for (const result of this.findActions(prefix)) {
-            for (let i = 0; i < result.action.overloads.length; i++) {
-                if (text.match(Modules.makeRegexFromSignature(result.action.overloads[i]))) {
-                    result.overload = i;
+    public findAction(text: string, prefix?: string): ActionResult | undefined {
+        if (prefix || (prefix = parser.getFirstWord(text))) {
+            for (const result of this.findActions(prefix, true)) {
+                const overload = result.action.overloads.findIndex(x => text.match(Modules.makeRegexFromSignature(x)) !== null);
+                if (overload !== -1) {
+                    result.overload = overload;
                     return result;
                 }
             }
-        }
-        if (BooleanExpression.match(prefix, text)) {
-            return BooleanExpression.makeResult(text);
+
+            if (BooleanExpression.match(prefix, text)) {
+                return BooleanExpression.makeResult(text);
+            }
         }
     }
 
     /**
-     * Find all actions that start with the given string.
+     * Find all actions that start with the given word or have a parameter as first word.
      * @param prefix Start of signature.
+     * @param allowParameterAsFirstWord Accepts an action if the first word is a paremeter.
      */
-    public *findActions(prefix: string): Iterable<ActionResult> {
+    public *findActions(prefix: string, allowParameterAsFirstWord:boolean = false): Iterable<ActionResult> {
         for (const module of this.modules) {
-            if (module.conditions) {
-                for (const condition of Modules.filterActions(module.conditions, prefix)) {
-                    yield { moduleName: module.displayName, actionKind: Modules.ActionKind.Condition, action: condition, overload: 0 };
+            for (const query of Modules.queries) {
+                const actions = query.fromModule(module);
+                if (actions) {
+                    for (const action of actions) {
+                        if (action.overloads[0].startsWith(prefix) || (allowParameterAsFirstWord && action.overloads[0].startsWith('$'))) {
+                            yield { moduleName: module.displayName, actionKind: query.kind, action: action, overload: 0 };
+                        }
+                    }
                 }
             }
-            if (module.actions) {
-                for (const action of Modules.filterActions(module.actions, prefix)) {
-                    yield { moduleName: module.displayName, actionKind: Modules.ActionKind.Action, action: action, overload: 0 };
-                }
-            }
-        }
-    }
-
-    /**
-     * Find action or condition invoked in a line of a task.
-     * @param text A line of a task.
-     */
-    public findInvokedAction(text: string): ActionResult | undefined {
-        const match = /^\s*([a-zA-Z]+)\s/.exec(text);
-        if (match) {
-            return this.findAction(match[1], text);
         }
     }
 
@@ -112,6 +110,15 @@ export class Modules extends TablesManager {
 
     public static release() {
         Modules.instance = null;
+    }
+
+    /**
+     * Checks if a word is the name of an action. The name is the first word in signature
+     * that is not a parameter. Multiple actions can have the same name.
+     */
+    public static isActionName(actionResult: ActionResult, word: string) {
+        const overload = actionResult.action.overloads[actionResult.overload];
+        return overload.startsWith(word) || overload.split(' ').find(x => !x.startsWith('$')) === word;
     }
 
     private static loadModules(paths: string[], context: ExtensionContext): Thenable<Module[]> {
@@ -131,13 +138,5 @@ export class Modules extends TablesManager {
         return Modules.parseFromJson(path).then((obj) => {
             return obj;
         }, () => vscode.window.showErrorMessage('Failed to import module ' + path + '.'));
-    }
-
-    private static *filterActions(actions: Action[], prefix: string) {
-        for (const action of actions) {
-            if (action.overloads[0].startsWith(prefix)) {
-                yield action;
-            }
-        }
     }
 }

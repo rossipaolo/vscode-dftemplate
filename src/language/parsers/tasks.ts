@@ -115,7 +115,7 @@ export function isConditionalTask(document: TextDocument, lineNumber: number): b
         const text = document.lineAt(lineNumber + 1).text.trim();
         const space = text.indexOf(' ');
         if (space > 0) {
-            const action = Modules.getInstance().findAction(text.substring(0, space), text);
+            const action = Modules.getInstance().findAction(text, text.substring(0, space));
             if (action && action.actionKind === Modules.ActionKind.Condition) {
                 return true;
             }

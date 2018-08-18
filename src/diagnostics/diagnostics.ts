@@ -282,8 +282,8 @@ function doDiagnostics(document: vscode.TextDocument) {
                 continue;
             }
 
-            // Action invokation
-            const actionResult = Modules.getInstance().findInvokedAction(line.text);
+            // Action invocation
+            const actionResult = Modules.getInstance().findAction(line.text);
             if (actionResult) {
 
                 // Check action signature

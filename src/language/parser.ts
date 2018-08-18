@@ -30,7 +30,7 @@ export function getWord(document: TextDocument, position: Position): string | un
  * @param text A line of text.
  */
 export function getFirstWord(text: string): string | undefined {
-    const match = /^\s*([a-zA-Z]+)/.exec(text);
+    const match = /^\s*([a-zA-Z_\.']+)/.exec(text);
     if (match) {
         return match[1];
     }

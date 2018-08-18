@@ -104,9 +104,9 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
 
                 // Actions
-                let result = Modules.getInstance().findAction(word, document.lineAt(position.line).text);
-                if (result) {
-                    let item = new TemplateDocumentationItem();
+                const result = Modules.getInstance().findAction(document.lineAt(position.line).text, word);
+                if (result && Modules.isActionName(result, word)) {
+                    const item = new TemplateDocumentationItem();
                     item.category = result.actionKind;
                     let signature = result.moduleName + ' -> ' + result.action.overloads[result.overload];
                     if (result.action.overloads.length > 1) {

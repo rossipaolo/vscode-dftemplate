@@ -16,6 +16,7 @@
 - Improved documentation for some actions.
 - Find definition and references of symbols which don't use `_symbol_` standard syntax.
 - Find definition of standard messages from text alias.
+- Detects actions whose first word is a parameter (example: `${1:_item_} used do ${2:task}`). Hover is shown on the first word that is not a parameter.
 
 ### Fixed
 - A few action/definition signatures.
