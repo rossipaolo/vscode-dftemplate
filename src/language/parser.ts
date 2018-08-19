@@ -86,6 +86,18 @@ export function firstLine(document: TextDocument, filter: (line: TextLine) => bo
 }
 
 /**
+ * Finds all lines that satisfy the filter predicate. Ignore empty lines and comments.
+ */
+export function* filterLines(document: TextDocument, filter: (line: TextLine) => boolean): Iterable<TextLine> {
+    for (let index = 0; index < document.lineCount; index++) {
+        const line = document.lineAt(index);
+        if (!isEmptyOrComment(line.text) && filter(line)) {
+            yield line;
+        }
+    }
+}
+
+/**
  * Finds all lines tht match a regular expression.
  * @param document A quest document.
  * @param regex A regular expression matched on all lines.
@@ -198,4 +210,9 @@ export function getQuestBlocksRanges(document: TextDocument): { qrc: vscode.Rang
         qrc: new vscode.Range(qrc ? qrc.lineNumber : 0, 0, qbn ? qbn.lineNumber - 1 : 0, 0),
         qbn: new vscode.Range(qbn ? qbn.lineNumber : 0, 0, document.lineCount, 0)
     };
+}
+
+export function trimRange(line: vscode.TextLine): vscode.Range {
+    return new vscode.Range(line.lineNumber, line.firstNonWhitespaceCharacterIndex,
+        line.lineNumber, line.text.replace(/\s+$/, '').length);
 }

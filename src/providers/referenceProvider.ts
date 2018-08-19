@@ -7,11 +7,13 @@
 import * as parser from '../language/parser';
 
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken } from 'vscode';
+import { Modules } from '../language/modules';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
 
     public provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Thenable<Location[]> {
         return new Promise(function (resolve, reject) {
+            const line = document.lineAt(position.line);
             const word = parser.getWord(document, position);
             if (word) {
 
@@ -40,8 +42,21 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 }
                 
                 // Quest
-                if (parser.isQuestReference(document.lineAt(position.line).text)) {
+                if (parser.isQuestReference(line.text)) {
                     return parser.findQuestReferences(word, token).then((locations) => resolve(locations), () => reject());
+                }
+
+                // Action
+                const actionResult = Modules.getInstance().findAction(line.text);
+                if (actionResult && Modules.isActionName(actionResult, word)) {
+                    const locations: Location[] = [];
+                    for (const line of parser.filterLines(document, line => {
+                        const actionReference = Modules.getInstance().findAction(line.text);
+                        return actionReference !== undefined && actionReference.action === actionResult.action;
+                    })) {
+                        locations.push(new Location(document.uri, parser.trimRange(line)));
+                    }
+                    return resolve(locations);
                 }
 
                 // Global variables
