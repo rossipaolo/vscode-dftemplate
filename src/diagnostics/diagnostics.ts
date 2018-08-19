@@ -182,7 +182,7 @@ function doDiagnostics(document: vscode.TextDocument) {
 
                 // Invalid signature or parameters
                 if (!definition) {
-                    diagnostics.push(Errors.invalidDefinition(trimRange(line), symbol, type));
+                    diagnostics.push(Errors.invalidDefinition(parser.trimRange(line), symbol, type));
                 }
                 else if (definition.matches) {
                     for (const diagnostic of doWordsCheck(document, definition.matches, line)) {
@@ -295,7 +295,7 @@ function doDiagnostics(document: vscode.TextDocument) {
             else {
 
                 // Undefined action
-                diagnostics.push(Errors.undefinedExpression(trimRange(line)));
+                diagnostics.push(Errors.undefinedExpression(parser.trimRange(line)));
             }
         }
     }
@@ -305,11 +305,6 @@ function doDiagnostics(document: vscode.TextDocument) {
 
 function hasAnotherOccurrence(document: vscode.TextDocument, ignored: number, symbol: string): boolean {
     return parser.firstLine(document, l => l.lineNumber !== ignored && l.text.indexOf(symbol) !== -1) !== undefined;
-}
-
-function trimRange(line: vscode.TextLine): vscode.Range {
-    return new vscode.Range(line.lineNumber, line.firstNonWhitespaceCharacterIndex,
-        line.lineNumber, line.text.replace(/\s+$/, '').length);
 }
 
 function wordRange(line: vscode.TextLine, word: string): Range {
