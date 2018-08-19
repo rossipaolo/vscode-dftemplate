@@ -8,10 +8,10 @@ import * as vscode from 'vscode';
 
 import { TextDocument, Position, TextLine, Location } from 'vscode';
 
-export * from './parsers/symbols';
-export * from './parsers/messages';
-export * from './parsers/quests';
-export * from './parsers/tasks';
+export * from './symbols';
+export * from './messages';
+export * from './quests';
+export * from './tasks';
 
 /**
 * Gets a word from the given position of a document.

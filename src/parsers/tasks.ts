@@ -5,10 +5,10 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
+import * as parser from './parser';
 import { TextDocument, TextLine, Range, Location } from "vscode";
-import { iterateAll } from '../../extension';
-import { Modules } from '../modules';
+import { iterateAll } from '../extension';
+import { Modules } from '../language/modules';
 
 let globalVarsAlternation: string;
 let globalMatch: RegExp;

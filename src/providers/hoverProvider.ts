@@ -4,7 +4,7 @@
 
 'use strict';
 
-import * as parser from '../language/parser';
+import * as parser from '../parsers/parser';
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';

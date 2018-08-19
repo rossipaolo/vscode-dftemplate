@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../language/parser';
+import * as parser from '../parsers/parser';
 
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
 import { Modules } from '../language/modules';
