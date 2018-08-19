@@ -4,7 +4,7 @@
 
 'use strict';
 
-import * as parser from '../language/parser';
+import * as parser from '../parsers/parser';
 
 import { RenameProvider, TextDocument, Position, WorkspaceEdit } from 'vscode';
 

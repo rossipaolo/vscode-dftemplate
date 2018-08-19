@@ -4,7 +4,7 @@
 
 'use strict';
 
-import * as parser from '../language/parser';
+import * as parser from '../parsers/parser';
 
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken } from 'vscode';
 import { Modules } from '../language/modules';

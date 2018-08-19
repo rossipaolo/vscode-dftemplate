@@ -4,9 +4,9 @@
 
 'use strict';
 
-import * as parser from '../parser';
+import * as parser from './parser';
 import { TextDocument, Location, Range, TextLine, Position } from "vscode";
-import { Language } from '../language';
+import { Language } from '../language/language';
 
 export interface Symbol {
     type: string;

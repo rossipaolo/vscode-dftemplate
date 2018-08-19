@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from './parser';
+import * as parser from '../parsers/parser';
 
 import { ExtensionContext } from 'vscode';
 import { TablesManager } from './base/tablesManager';

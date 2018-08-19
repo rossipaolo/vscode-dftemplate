@@ -4,11 +4,11 @@
 
 'use strict';
 
-import * as parser from '../parser';
+import * as parser from './parser';
 import { TextDocument, TextLine, Range, Position } from "vscode";
-import { Language } from '../language';
-import { SignatureWords } from '../../diagnostics/common';
-import { Modules } from '../modules';
+import { Language } from '../language/language';
+import { SignatureWords } from '../diagnostics/common';
+import { Modules } from '../language/modules';
 
 /**
  * Gets the index of the additional message defined in the given line.

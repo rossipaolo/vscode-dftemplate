@@ -4,7 +4,7 @@
 
 'use strict';
 
-import * as parser from './parser';
+import * as parser from '../parsers/parser';
 
 import { Range, TextEdit, TextLine } from 'vscode';
 import { getOptions } from '../extension';

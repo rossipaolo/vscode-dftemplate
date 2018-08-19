@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
+import * as parser from './parser';
 import { TextDocument, Location, Position } from "vscode";
 
 const questDefinitionPattern = /^\s*Quest:\s+([a-zA-Z0-9_]+)/;
