@@ -22,6 +22,7 @@ import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { Tables } from './language/tables';
+import { setGlobalVariables } from './parsers/tasks';
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
@@ -52,14 +53,16 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider()));
     }
 
-    Promise.all(Array(
-        Language.getInstance().load(context), 
+    Promise.all([
+        Language.getInstance().load(context),
         Modules.getInstance().load(context),
-        Tables.getInstance().load())).then(() => {
+        Tables.getInstance().load()
+    ]).then(() => {
+        setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
         if (getOptions()['diagnostics']['enabled']) {
             context.subscriptions.push(makeDiagnosticCollection(context));
         }
-    }, (e) => vscode.window.showErrorMessage('Failed to enable diagnostics: ' + e));
+    }, (e) => vscode.window.showErrorMessage('Failed to load language data: ' + e));
 }
 
 export function deactivate() {

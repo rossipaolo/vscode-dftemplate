@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as parser from '../parsers/parser';
 
 import { ExtensionContext } from 'vscode';
 import { iterateAll } from '../extension';
@@ -77,8 +76,6 @@ export class Language extends TablesManager {
                         keywords: Language.objectToMap(obj.keywords),
                         messages: Language.objectToMap(obj.messages),
                     };
-
-                    parser.setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
                 }, () => vscode.window.showErrorMessage('Failed to import language table.')),
                 Language.loadTable(context, 'definitions.json').then((obj) => {
                     instance.definitions = Language.objectToMap(obj);
