@@ -20,7 +20,7 @@ let globalMatch: RegExp;
 export function setGlobalVariables(globalVars: Map<string, number>) {
     const globalVariables = Array.from(globalVars.keys());
     globalVarsAlternation = globalVariables.join('|');
-    globalMatch = new RegExp('^\\s*(' + globalVarsAlternation + ')\\s*([a-zA-Z0-9._]+)');
+    globalMatch = new RegExp('^\\s*(' + globalVarsAlternation + ')\\s+([a-zA-Z0-9._]+)');
 }
 
 /**
