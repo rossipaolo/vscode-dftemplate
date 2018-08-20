@@ -183,8 +183,8 @@
             "signature": "AcceptQuest:  [1002]",
             "summary": "What the questor says when the PC makes contact for the quest. This is expected for quests started in person."
         },
-        "QuestFailed": {
-            "signature": "QuestFailed:  [1003]",
+        "QuestFail": {
+            "signature": "QuestFail:  [1003]",
             "summary": "What the questor says until the PC completes the quest. This is expected for quests started in person."
         },
         "QuestComplete": {
@@ -195,20 +195,20 @@
             "signature": "RumorsDuringQuest:  [1005]",
             "summary": "Gives information that may come up during *Any News?* dialogs the PC has during the quest. "
         },
-        "RumorsPostFailure": {
-            "signature": "RumorsPostFailure:  [1006]",
+        "RumorsPostfailure": {
+            "signature": "RumorsPostfailure:  [1006]",
             "summary": "Gives information that may come up during *Any News?* dialogs the PC has after failing the quest."
         },
-        "RumorsPostSuccess": {
-            "signature": "RumorsPostFailure:  [1007]",
+        "RumorsPostsuccess": {
+            "signature": "RumorsPostsuccess:  [1007]",
             "summary": "Gives information that may come up during *Any News?* dialogs the PC has after completing the quest."
         },
-        "QuestorPostSuccess": {
-            "signature": "QuestorPostSuccess:  [1008]",
+        "QuestorPostsuccess": {
+            "signature": "QuestorPostsuccess:  [1008]",
             "summary": "What the questor says to the PC in dialog after a successful quest."
         },
-        "QuestorPostFailure": {
-            "signature": "QuestorPostFailure:  [1009]",
+        "QuestorPostfailure": {
+            "signature": "QuestorPostfailure:  [1009]",
             "summary": "What the questor says to the PC in dialog after a failed quest."
         },
         "QuestLogEntry": {
