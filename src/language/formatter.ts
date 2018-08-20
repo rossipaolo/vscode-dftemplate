@@ -93,16 +93,24 @@ export class Formatter {
 
     public static formatComment(line: TextLine): FormatterResults | undefined {
         let text = line.text;
-        let result = /^(\s*)(-+)(\s*)([^\s])/g.exec(text);
+        let result = /^(\s*)(-+)(\s*)(.*)$/g.exec(text);
         if (result) {
-            // Remove indent
-            if (result[1].length > 0) {
-                let length = text.length;
-                text = text.trim();
-                return Formatter.makeResults(line, length, text);
+            let length = text.length;
+            let needsEdit = false;
+
+            // Keep only one space between comment char and text
+            if (result[3].length !== 1) {
+                text = result[1] + result[2] + ' ' + result[4];
+                needsEdit = true;
             }
 
-            return Formatter.unaltered;
+            // Remove spaces after last char
+            if (/\s+$/) {
+                text = text.replace(/\s+$/, '');
+                needsEdit = true;
+            }
+
+            return needsEdit ? Formatter.makeResults(line, length, text) : Formatter.unaltered;
         }
     }
 
@@ -234,7 +242,7 @@ export class Formatter {
                 return !/^\s*$/g.test(line.text);
             },
             formatLine: (line) => {
-                return Formatter.formatTaskScope(line);
+                return Formatter.formatComment(line) || Formatter.formatTaskScope(line);
             }
         };
         return results;
