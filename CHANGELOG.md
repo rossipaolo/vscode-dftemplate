@@ -23,6 +23,7 @@
 - A few action/definition signatures.
 - Fixed an issue which caused diagnostics to consider a symbol unused if its only references are with `=` prefix.
 - Fixed an issue which caused a word defined in the same line as a message reference to be also considered a message reference.
+- Fixed incorrect letter case for the name of some standard messages.
 
 ## 0.2.0
 

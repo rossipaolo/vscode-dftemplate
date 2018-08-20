@@ -104,7 +104,7 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>(^|\s)(QuestorOffer:|RefuseQuest:|AcceptQuest:|QuestComplete:|RumorsDuringQuest:|RumorsPostFailure:|RumorsPostSuccess:|QuestorPostSuccess:|QuestorPostFailure:|QuestLogEntry:|Message:)\s</string>
+                    <string>(^|\s)(QuestorOffer|RefuseQuest|AcceptQuest|QuestFail|QuestComplete|RumorsDuringQuest|RumorsPostfailure|RumorsPostsuccess|QuestorPostsuccess|QuestorPostfailure|QuestLogEntry|QuestTimeLapse|Message):\s</string>
                     <key>name</key>
                     <string>keyword.control.message.dftemplate</string>
                 </dict>
