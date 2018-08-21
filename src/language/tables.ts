@@ -230,18 +230,27 @@ export class Tables {
                 return path.resolve(vscode.workspace.workspaceFolders[0].uri.fsPath, tablesPath);
             }
         }
-        else if (vscode.workspace.workspaceFolders) {
-            const rootPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        else {
 
-            // From StreamingAssets/Quests to StreamingAssets/Tables
-            if (rootPath.endsWith(path.join('StreamingAssets', 'Quests'))) {
-                return path.resolve(rootPath, '../Tables');
+            // From subfolder of 'StreamingAssets' to 'StreamingAssets/Tables'
+            const rootPath = Tables.getRootPath();
+            if (rootPath) {
+                const i = rootPath.lastIndexOf('StreamingAssets');
+                if (i !== -1) {
+                    return path.resolve(rootPath.substring(0, i), path.join('StreamingAssets', 'Tables'));
+                }
             }
+        }
+        
+    }
 
-            // From StreamingAssets/QuestPacks/Author/Pack to StreamingAssets/Tables
-            if (path.resolve(rootPath, '../../').endsWith(path.join('StreamingAssets', 'QuestPacks'))) {
-                return path.resolve(rootPath, '../../../Tables');
-            }
+    private static getRootPath(): string | undefined {
+        if (vscode.workspace.workspaceFolders) {
+            return vscode.workspace.workspaceFolders[0].uri.fsPath;
+        }
+
+        if (vscode.window.activeTextEditor) {
+            return vscode.window.activeTextEditor.document.uri.fsPath;
         }
     }
 }
