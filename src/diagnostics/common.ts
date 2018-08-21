@@ -110,6 +110,9 @@ export const Hints = {
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity): vscode.Diagnostic {
     const diagnostic = new vscode.Diagnostic(range, label, severity);
     diagnostic.code = code;
+    if (code === DiagnosticCode.UnusedDeclarationMessage || code === DiagnosticCode.UnusedDeclarationSymbol || code === DiagnosticCode.UnusedDeclarationTask) {
+        diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
+    }
     diagnostic.source = TEMPLATE_LANGUAGE;
     return diagnostic;
 }
