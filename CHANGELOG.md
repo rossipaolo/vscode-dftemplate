@@ -9,6 +9,7 @@
 - Find references to global variables.
 - Find references to actions and conditions.
 - CodeLenses with references and other details.
+- Unreferenced symbols are rendered faded out.
 
 ### Improved
 - Format document/selection now detects the quest headless entry point.
