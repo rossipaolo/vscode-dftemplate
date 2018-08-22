@@ -30,7 +30,7 @@ interface LanguageTable {
         word: string, description: string
     }[]>;
     keywords: Map<string, LanguageItem>;
-    messages: Map<string, LanguageItem>;
+    messages: Map<string, string>;
 }
 
 interface Definition {
@@ -137,8 +137,9 @@ export class Language extends TablesManager {
     }
 
     public findMessage(name: string): LanguageItem | undefined {
-        if (this.table && this.table.messages.has(name)) {
-            return this.table.messages.get(name);
+        const id = Tables.getInstance().staticMessagesTable.messages.get(name);
+        if (id && this.table) {
+            return Language.makeMessageItem(this.table, id, name);
         }
     }
 
@@ -183,9 +184,11 @@ export class Language extends TablesManager {
     }
 
     public *findMessages(prefix: string): Iterable<LanguageItemResult> {
-        if (this.table && this.table.messages) {
-            for (const message of Language.filterItems(this.table.messages, prefix)) {
-                yield Language.itemToResult(message, Language.ItemKind.Message);
+        if (this.table) {
+            for (const message of Tables.getInstance().staticMessagesTable.messages) {
+                if (message["0"].startsWith(prefix)) {
+                    yield Language.itemToResult(Language.makeMessageItem(this.table, message["1"], message["0"]), Language.ItemKind.Message);
+                }
             }
         }
     }
@@ -281,5 +284,13 @@ export class Language extends TablesManager {
             map.set(k, obj[k]);
         }
         return map;
+    }
+
+    private static makeMessageItem(table: LanguageTable, id: number, name: string): LanguageItem {
+        return {
+            summary: table.messages.get(String(id)) || '',
+            signature: name + ':   [' + id + ']',
+            parameters: []
+        };
     }
 }

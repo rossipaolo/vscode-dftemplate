@@ -10,6 +10,7 @@
 - Find references to actions and conditions.
 - CodeLenses with references and other details.
 - Unreferenced symbols are rendered faded out.
+- Completion proposals provider now suggests an available message id.
 
 ### Improved
 - Format document/selection now detects the quest headless entry point.
@@ -19,12 +20,13 @@
 - Find definition and references of symbols which don't use `_symbol_` standard syntax.
 - Find definition of standard messages from text alias.
 - Detects actions whose first word is a parameter (example: `${1:_item_} used do ${2:task}`). Hover is shown on the first word that is not a parameter.
+- Static messages table is read and used to link id to text alias; diagnostics now detects mismatches and unknown aliases.
 
 ### Fixed
 - A few action/definition signatures.
 - Fixed an issue which caused diagnostics to consider a symbol unused if its only references are with `=` prefix.
 - Fixed an issue which caused a word defined in the same line as a message reference to be also considered a message reference.
-- Fixed incorrect letter case for the name of some standard messages.
+- Highlighting is now correctly applied to all strings that match static message definition syntax.
 
 ## 0.2.0
 

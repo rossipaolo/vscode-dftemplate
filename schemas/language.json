@@ -36,14 +36,53 @@
             "type": "object",
             "description": "Keywords.",
             "additionalProperties": {
-                "$ref": "#/definitions/item"
+                "type": "object",
+                "description": "An element",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "description": "The category of the element."
+                    },
+                    "signature": {
+                        "type": "string",
+                        "description": "Signature of the element."
+                    },
+                    "summary": {
+                        "type": "string",
+                        "description": "A short description of the element."
+                    },
+                    "parameters": {
+                        "type": "array",
+                        "description": "Parameters for a symbol definition.",
+                        "items": {
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "The name of the parameter."
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "A short description of the parameter."
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "description"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "summary"
+                ]
             }
         },
         "messages": {
             "type": "object",
-            "description": "Default quest messages.",
+            "description": "Descriptions for static messages.",
             "additionalProperties": {
-                "$ref": "#/definitions/item"
+                "type": "string",
+                "description": "Description for a message."
             }
         }
     },
@@ -53,48 +92,5 @@
         "keywords",
         "messages"
     ],
-    "definitions": {
-        "item": {
-            "type": "object",
-            "description": "An element",
-            "properties": {
-                "category": {
-                    "type": "string",
-                    "description": "The category of the element."
-                },
-                "signature": {
-                    "type": "string",
-                    "description": "Signature of the element."
-                },
-                "summary": {
-                    "type": "string",
-                    "description": "A short description of the element."
-                },
-                "parameters": {
-                    "type": "array",
-                    "description": "Parameters for a symbol definition.",
-                    "items": {
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "description": "The name of the parameter."
-                            },
-                            "description": {
-                                "type": "string",
-                                "description": "A short description of the parameter."
-                            }
-                        },
-                        "required": [
-                            "name",
-                            "description"
-                        ]
-                    }
-                }
-            },
-            "required": [
-                "summary"
-            ]
-        }
-    },
     "default": {}
 }

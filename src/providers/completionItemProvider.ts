@@ -104,6 +104,10 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 // Empty string: suggests invocation of definition/action/condition
                 if (text.length === 0) {
                     TemplateCompletionItemProvider.findSignatures(prefix, items);
+
+                    if ('message'.startsWith(prefix.toLowerCase())) {
+                        items.push(TemplateCompletionItemProvider.messageDefinition(document, position));
+                    }
                 }
 
                 // Find all symbols defined in the quest
@@ -150,6 +154,14 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 items.push(item);
             }
         }
+    }
+
+    private static messageDefinition(document: TextDocument, position: Position): CompletionItem {
+        const item = new vscode.CompletionItem('Message: id', TemplateCompletionItemProvider.getCompletionItemKind(Language.ItemKind.Message));
+        item.insertText = new vscode.SnippetString('Message:  ${1:' + parser.getMessageIdForPosition(document, position.line) + '}');
+        item.detail = 'Message: id';
+        item.documentation = 'An additional message block';
+        return item;
     }
 
     private static findParamSignature(line: vscode.TextLine, prefix: string, previousText: string): string | undefined {

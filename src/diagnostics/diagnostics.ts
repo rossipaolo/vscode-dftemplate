@@ -13,6 +13,7 @@ import { Language } from '../language/language';
 import { Modules } from '../language/modules';
 import { doSignatureChecks, doWordsCheck } from './signatureCheck';
 import { Hints, Errors, Warnings } from './common';
+import { Tables } from '../language/tables';
 
 enum QuestBlock {
     Preamble,
@@ -127,6 +128,17 @@ function doDiagnostics(document: vscode.TextDocument) {
 
         if (block === QuestBlock.QRC) {
 
+            // Static message
+            const staticMessage = parser.getStaticMessage(line.text);
+            if (staticMessage) {
+                const id = Tables.getInstance().staticMessagesTable.messages.get(staticMessage.name);
+                if (!id || staticMessage.id !== id) {
+                    diagnostics.push(Errors.invalidStaticMessageDefinition(line.range, staticMessage.id, staticMessage.name));
+                }
+
+                continue;
+            }
+            
             // Message definition
             const messageID = parser.getMessageIDFromLine(line);
             if (messageID) {

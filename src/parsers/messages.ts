@@ -21,6 +21,13 @@ export function getMessageIDFromLine(line: TextLine): string | undefined {
     }
 }
 
+export function getStaticMessage(text: string) {
+    const staticMessage = text.match(/^\s*(.*):\s+\[\s*([0-9]+)\s*\]\s*$/);
+    if (staticMessage) {
+        return { id: Number(staticMessage[2]), name: staticMessage[1] };
+    }
+}
+
 /**
  * Find the definition of a message from its index.
  * @param document A quest document.
@@ -139,6 +146,23 @@ export function nextAvailableMessageID(document: TextDocument, id: string): stri
         messageID++;
     }
     return String(messageID);
+}
+
+/**
+ * Finds a message id which is not used and is bigger than the id of the previous message.
+ * @param document A quest document.
+ * @param lineNumber The line where the message ought to be positioned.
+ */
+export function getMessageIdForPosition(document: TextDocument, lineNumber: number): string {
+    for (let index = lineNumber; index > 0; index--) {
+        const line = document.lineAt(index);
+        const match = line.text.match(/\s*Message:\s+([0-9]+)/);
+        if (match) {
+            return nextAvailableMessageID(document, String(Number(match[1]) + 1));
+        }
+    }
+
+    return nextAvailableMessageID(document, '1011');
 }
 
 /**
