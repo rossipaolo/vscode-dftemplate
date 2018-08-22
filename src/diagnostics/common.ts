@@ -65,6 +65,8 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error),
     invalidDefinition: (range: Range, symbol: string, type: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Invalid definition for ' + symbol + ' (' + type + ').', DiagnosticSeverity.Error),
+    invalidStaticMessageDefinition: (range: Range, id: number, name: string) =>
+        makeDiagnostic(range, DiagnosticCode.GenericError, '\'' + name + '\' is not a valid alias for message ' + id + '.', DiagnosticSeverity.Error),
     undefinedMessage: (range: Range, message: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Reference to undefined message: ' + message + '.', DiagnosticSeverity.Error),
     undefinedSymbol: (range: Range, symbol: string) =>

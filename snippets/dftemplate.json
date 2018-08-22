@@ -14,14 +14,6 @@
 		],
 		"description": "Insert Header"
 	},
-	"Message": {
-		"prefix": "Message",
-		"body": [
-			"Message:  $1",
-			"$0"
-		],
-		"description": "Insert message"
-	},
 	"Task": {
 		"prefix": "task",
 		"body": [

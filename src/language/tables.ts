@@ -144,6 +144,19 @@ class SoundsTable extends Table {
     }
 }
 
+class StaticMessagesTable extends Table {
+
+    public readonly messages = new Map<string, number>();
+
+    protected set(data: string[][]) {
+        data.forEach(message => {
+            if (message[0] !== '0') {
+                this.messages.set(message[1], Number(message[0]));
+            }
+        });
+    }
+}
+
 export class Tables {
     private static instance: Tables | null;
 
@@ -154,6 +167,7 @@ export class Tables {
     public readonly itemsTable = new ItemsTable();
     public readonly placesTable = new PlacesTable();
     public readonly soundsTable = new SoundsTable();
+    public readonly staticMessagesTable = new StaticMessagesTable();
 
     private constructor() {
     }
@@ -174,7 +188,8 @@ export class Tables {
                 instance.globalVarsTable.load(path.join(tablesPath, 'Quests-GlobalVars.txt')),
                 instance.itemsTable.load(path.join(tablesPath, 'Quests-Items.txt')),
                 instance.placesTable.load(path.join(tablesPath, 'Quests-Places.txt')),
-                instance.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt'))
+                instance.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt')),
+                instance.staticMessagesTable.load(path.join(tablesPath, 'Quests-StaticMessages.txt'))
             ]).then(() => resolve(),
                 (e) => reject(e));
         });

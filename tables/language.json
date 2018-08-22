@@ -148,6 +148,20 @@
             { "word": "=$_", "description": "The number of days $ will be active" }
         ]
     },
+    "messages": {
+        "1000": "What the questor says when the PC makes contact for the quest.",
+        "1001": "What the questor says when the PC refuses the quest offer.",
+        "1002": "What the questor says when the PC makes contact for the quest.",
+        "1003": "What the questor says until the PC completes the quest.",
+        "1004": "What the questor says when the PC completes the quest and returns.",
+        "1005": "Gives information that may come up during *Any News?* dialogs the PC has during the quest.",
+        "1006": "Gives information that may come up during *Any News?* dialogs the PC has after failing the quest.",
+        "1007": "Gives information that may come up during *Any News?* dialogs the PC has after completing the quest.",
+        "1008": "What the questor says to the PC in dialog after a successful quest.",
+        "1009": "What the questor says to the PC in dialog after a failed quest.",
+        "1010": "The message inserted into the PC's log when the quest is accepted.",
+        "1045": "Displayed when the PC fails to meet a quest with a dead-line."
+    },
     "keywords": {
         "Messages": {
             "signature": "Messages: ${1:dd}",
@@ -168,66 +182,6 @@
         "QBN": {
             "signature": "QBN:",
             "summary": "**Quest Resources and Operations**: this directive announces two subsections. Definitions of entities used by the quest, and condition/responses that operate during the quest (tasks)."
-        }
-    },
-    "messages": {
-        "QuestorOffer": {
-            "signature": "QuestorOffer:  [1000]",
-            "summary": "What the questor says when the PC makes contact for the quest. This is a required message."
-        },
-        "RefuseQuest": {
-            "signature": "RefuseQuest:  [1001]",
-            "summary": "What the questor says when the PC refuses the quest offer. This is a required message"
-        },
-        "AcceptQuest": {
-            "signature": "AcceptQuest:  [1002]",
-            "summary": "What the questor says when the PC makes contact for the quest. This is expected for quests started in person."
-        },
-        "QuestFail": {
-            "signature": "QuestFail:  [1003]",
-            "summary": "What the questor says until the PC completes the quest. This is expected for quests started in person."
-        },
-        "QuestComplete": {
-            "signature": "QuestComplete:  [1004]",
-            "summary": "What the questor says when the PC completes the quest and returns. This is expected for quests started in person. Certain quest actions will post this message automatically."
-        },
-        "RumorsDuringQuest": {
-            "signature": "RumorsDuringQuest:  [1005]",
-            "summary": "Gives information that may come up during *Any News?* dialogs the PC has during the quest. "
-        },
-        "RumorsPostfailure": {
-            "signature": "RumorsPostfailure:  [1006]",
-            "summary": "Gives information that may come up during *Any News?* dialogs the PC has after failing the quest."
-        },
-        "RumorsPostsuccess": {
-            "signature": "RumorsPostsuccess:  [1007]",
-            "summary": "Gives information that may come up during *Any News?* dialogs the PC has after completing the quest."
-        },
-        "QuestorPostsuccess": {
-            "signature": "QuestorPostsuccess:  [1008]",
-            "summary": "What the questor says to the PC in dialog after a successful quest."
-        },
-        "QuestorPostfailure": {
-            "signature": "QuestorPostfailure:  [1009]",
-            "summary": "What the questor says to the PC in dialog after a failed quest."
-        },
-        "QuestLogEntry": {
-            "signature": "QuestLogEntry:  [1010]",
-            "summary": "The message inserted into the PC's log when the quest is accepted. Probably not used automatically."
-        },
-        "QuestTimeLapse": {
-            "signature": "QuestTimeLapse:  [1045]",
-            "summary": "Displayed when the PC fails to meet a quest with a dead-line. Probably not used automatically."
-        },
-        "Message": {
-            "signature": "Message:  ${1:messageNumber}",
-            "summary": "An additional message block.",
-            "parameters": [
-                {
-                    "name": "messageNumber",
-                    "description": "An univocal number for this message."
-                }
-            ]
         }
     }
 }

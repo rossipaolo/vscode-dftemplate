@@ -104,7 +104,29 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>(^|\s)(QuestorOffer|RefuseQuest|AcceptQuest|QuestFail|QuestComplete|RumorsDuringQuest|RumorsPostfailure|RumorsPostsuccess|QuestorPostsuccess|QuestorPostfailure|QuestLogEntry|QuestTimeLapse|Message):\s</string>
+                    <string>(?:^|\s)(.*:)\s*\[\s*(.*)\s*\]</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.control.message.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>patterns</key>
+                            <array>
+                                <dict>
+                                    <key>include</key>
+                                    <string>#literals</string>
+                                </dict>
+                            </array>
+                        </dict>
+                    </dict>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>(^|\s)Message:</string>
                     <key>name</key>
                     <string>keyword.control.message.dftemplate</string>
                 </dict>
