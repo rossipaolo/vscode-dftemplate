@@ -11,6 +11,7 @@
 - CodeLenses with references and other details.
 - Unreferenced symbols are rendered faded out.
 - Completion proposals provider now suggests an available message id.
+- Diagnostics now detect expressions outside of a message block.
 
 ### Improved
 - Format document/selection now detects the quest headless entry point.

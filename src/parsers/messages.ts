@@ -171,24 +171,60 @@ export function getMessageIdForPosition(document: TextDocument, lineNumber: numb
  * @param definitionLine The line where the task is defined.
  */
 export function getMessageRange(document: TextDocument, definitionLine: number): Range {
+
     let line = definitionLine;
-    let previousLineIsEmpty = false;
-    while (++line < document.lineCount) {
-        const text = document.lineAt(line).text;
+    const messageBlock = new MessageBlock(document, line);
+    while (messageBlock.isInside()) {
+        line++;
+    }
+
+    return new Range(definitionLine, 0, line - 1, document.lineAt(line).text.length);
+}
+
+export class MessageBlock {
+    document: TextDocument;
+    lineNumber: number;
+    previousLineIsEmpty = false;
+
+    public get currentLine() {
+        return this.lineNumber;
+    }
+
+    /**
+     * Makes a block range check for a message.
+     * @param document A quest document.
+     * @param lineNumber The QRC line where the message is defined.
+     */
+    public constructor(document: TextDocument, lineNumber: number) {
+        this.document = document;
+        this.lineNumber = lineNumber;
+    }
+
+    /**
+     * Checks that current line is inside a message block. If a line number is provided, 
+     * it checks that the block doesn't end before the requested line.
+     * @param lineNumber The target line number; must be higher than current.
+     */
+    public isInside(lineNumber?: number): boolean {
+        // End of document
+        if (++this.lineNumber >= this.document.lineCount) {
+            return false;
+        }
+
+        const text = this.document.lineAt(this.lineNumber).text;
 
         // Start of a new message block, comment or QBN
         if (/^\s*(\s*-.*|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+)|QBN:)\s*$/.test(text)) {
-            break;
+            return false;
         }
 
         // Two empty lines
-        const lineIsEmpty = /^\s*$/.test(text);
-        if (lineIsEmpty && previousLineIsEmpty) {
-            break;
+        const lineIsEmpty = text.length === 0;
+        if (lineIsEmpty && this.previousLineIsEmpty) {
+            return false;
         }
 
-        previousLineIsEmpty = lineIsEmpty;
+        this.previousLineIsEmpty = lineIsEmpty;
+        return lineNumber && lineNumber > this.lineNumber ? this.isInside(lineNumber) : true;
     }
-
-    return new Range(definitionLine, 0, line - 2, document.lineAt(line).text.length);
 }
