@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.3.0
 
 ### Added
 - Data is now read from local installation of Daggerfall Unity (_StreamingAssets/Tables_).
