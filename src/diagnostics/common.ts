@@ -75,8 +75,8 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Reference to undefined task: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedAttribute: (range: Range, name: string, group: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, "The name '" + name + "' doesn't exist in the attribute group '" + group + "'.", DiagnosticSeverity.Error),
-    undefinedExpression: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Action or condition not found.', DiagnosticSeverity.Error),
+    undefinedExpression: (range: Range, block: string) =>
+        makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Undefined expression inside block \'' + block + '\'.', DiagnosticSeverity.Error),
     undefinedUntilPerformed: (range: Range, symbol: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Task execution is based on another task which is not defined: ' + symbol + '.', DiagnosticSeverity.Error),
     incorrectTime: (range: Range, time: string) =>
@@ -108,6 +108,11 @@ export const Hints = {
     SymbolVariation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
+
+export function wordRange(line: vscode.TextLine, word: string): Range {
+    const index = line.text.indexOf(word);
+    return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
+}
 
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity): vscode.Diagnostic {
     const diagnostic = new vscode.Diagnostic(range, label, severity);
