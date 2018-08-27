@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 import { DiagnosticCode } from '../diagnostics/common';
+import { Tables } from '../language/tables';
 
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
@@ -91,6 +92,21 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             command: 'dftemplate.renameSymbol',
                             arguments: Array<any>(diagnostic.range, newName)
                         });
+                        break;
+                    case DiagnosticCode.UseAliasForStaticMessage:
+                        const messageLine = document.lineAt(diagnostic.range.start.line);
+                        const id = parser.getMessageIDFromLine(messageLine);
+                        if (id) {
+                            for (const message of Tables.getInstance().staticMessagesTable.messages) {
+                                if (String(message["1"]) === id) {
+                                    commands.push({
+                                        title: 'Convert ' + id + ' to ' + message["0"],
+                                        command: 'dftemplate.renameSymbol',
+                                        arguments: Array<any>(messageLine.range, message["0"] + ':   [' + id + ']')
+                                    });
+                                }
+                            }
+                        }
                         break;
                 }
             });

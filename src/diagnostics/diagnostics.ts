@@ -22,6 +22,9 @@ enum QuestBlock {
 }
 
 export interface DiagnosticContext {
+    questName: vscode.Range | null;
+    qrcFound: boolean;
+    qbnFound: boolean;
     messages: number[];
     symbols: string[];
     tasks: string[];
@@ -97,6 +100,9 @@ function doDiagnostics(document: vscode.TextDocument) {
         block === QuestBlock.Preamble ? preambleCheck : (block === QuestBlock.QRC ? qrcCheck : qbnCheck);
 
     const context: DiagnosticContext = {
+        questName: null,
+        qrcFound: false,
+        qbnFound: false,
         messages: [],
         symbols: [],
         tasks: [],
@@ -114,10 +120,12 @@ function doDiagnostics(document: vscode.TextDocument) {
         // Detect next block
         if (line.text.indexOf('QRC:') !== -1) {
             block = QuestBlock.QRC;
+            context.qrcFound = true;
             continue;
         }
         else if (line.text.indexOf('QBN:') !== -1) {
             block = QuestBlock.QBN;
+            context.qbnFound = true;
             continue;
         }
 
@@ -125,6 +133,11 @@ function doDiagnostics(document: vscode.TextDocument) {
         for (const diagnostic of getBlockChecker(block)(document, line, context)) {
             diagnostics.push(diagnostic);
         }
+    }
+
+    // Do diagnostics for quest logic
+    for (const diagnostic of logicCheck(context)) {
+        diagnostics.push(diagnostic);
     }
 
     return diagnostics;
@@ -147,9 +160,25 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
                 diagnostic.source = TEMPLATE_LANGUAGE;
                 yield diagnostic;
             }
+
+            if (!context.questName && /^\s*Quest:/.test(line.text)) {
+                context.questName = line.range;
+            }
+            
         }
         else {
             yield Errors.undefinedExpression(parser.trimRange(line), 'Preamble');   
+        }
+    }
+}
+
+function* logicCheck(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
+    if (context.questName) {
+        if (!context.qrcFound) {
+            yield Errors.blockMissing(context.questName, 'QRC');
+        }
+        if (!context.qbnFound) {
+            yield Errors.blockMissing(context.questName, 'QBN');
         }
     }
 }

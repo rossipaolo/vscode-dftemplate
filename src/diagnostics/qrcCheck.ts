@@ -48,6 +48,14 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
 
         yield* messageCommonCheck(context.messages, id, line);
 
+        // Static message
+        for (const message of Tables.getInstance().staticMessagesTable.messages) {
+            if (message["1"] === id) {
+                yield Hints.useAliasForStaticMessage(wordRange(line, messageID), messageID);
+                break;
+            }
+        }
+
         // Unused
         if (parser.findMessageReferences(document, messageID, false)[Symbol.iterator]().next().value === undefined) {
             yield Warnings.unusedDeclarationMessage(wordRange(line, messageID), messageID);
