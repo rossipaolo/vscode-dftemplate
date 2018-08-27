@@ -54,9 +54,12 @@ export enum DiagnosticCode {
     IncorrectSymbolVariation,
     GenericHint,
     SymbolNamingConvention,
+    UseAliasForStaticMessage
 }
 
 export const Errors = {
+    blockMissing: (range: Range, block: string) =>
+        makeDiagnostic(range, DiagnosticCode.GenericError, 'Block \'' + block + '\' is missing.', DiagnosticSeverity.Error),
     notANumber: (range: Range, word: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, word + ' is not a number.', DiagnosticSeverity.Error),
     duplicatedMessageNumber: (range: Range, id: number) =>
@@ -103,6 +106,8 @@ export const Warnings = {
 export const Hints = {
     symbolNamingConventionViolation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.SymbolNamingConvention, 'Violation of naming convention: use _symbol_.', DiagnosticSeverity.Hint),
+    useAliasForStaticMessage: (range: Range, messageID: string) =>
+        makeDiagnostic(range, DiagnosticCode.UseAliasForStaticMessage, 'Use text alias for static message ' + messageID + '.', DiagnosticSeverity.Hint),
     incorrectMessagePosition: (range: Range, current: number, previous: number) =>
         makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint),
     SymbolVariation: (range: Range) =>
