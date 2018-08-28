@@ -32,7 +32,7 @@ export function isQuestReference(line: string) {
 }
 
 /**
- * Finds the display name of the given quest.
+ * Finds the quest name of the given quest.
  * @param document A quest document.
  */
 export function findQuestName(document: TextDocument): string {

@@ -13,6 +13,7 @@ import { doSignatureChecks } from './signatureCheck';
 import { MessageBlock } from '../parsers/parser';
 import { qrcCheck } from './qrcCheck';
 import { qbnCheck } from './qbnCheck';
+import { tableCheck } from './tableCheck';
 import { Errors } from './common';
 
 enum QuestBlock {
@@ -93,6 +94,11 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
  * Makes diagostics for the given document.
  */
 function doDiagnostics(document: vscode.TextDocument) {
+    
+    if (parser.isQuestTable(document)) {   
+        return Array.from(tableCheck(document));
+    }
+    
     const diagnostics: vscode.Diagnostic[] = [];
     let block = QuestBlock.Preamble;
 

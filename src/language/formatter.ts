@@ -67,10 +67,21 @@ export class Formatter {
      * Formatters for QBN block.
      */
     public static qbnFormatters: FormatterCallback[] = [
+        Formatter.formatEmptyLine,
         Formatter.formatComment,
         Formatter.formatSymbolDefinition,
         Formatter.formatHeadlessEntryPoint,
         Formatter.formatTask
+    ];
+
+    /**
+     * Formatters for Quest Tables
+     */
+    public static tableFormatters: FormatterCallback[] = [
+        Formatter.formatEmptyLine,
+        Formatter.formatComment,
+        Formatter.formatTableSchema,
+        Formatter.formatTableEntry
     ];
 
     public static formatKeyword(line: TextLine): FormatterResults | undefined {
@@ -88,6 +99,18 @@ export class Formatter {
 
                 return Formatter.unaltered;
             }
+        }
+    }
+
+    /**
+     * Remove unnecessary spaces from empty lines.
+     */
+    public static formatEmptyLine(line: TextLine): FormatterResults | undefined {
+        if (/^\s*$/.test(line.text)) {
+            return line.text.length > 0 ? {
+                needsEdit: true,
+                textEdit: new TextEdit(line.range, '')
+            } : Formatter.unaltered;
         }
     }
 
@@ -231,6 +254,37 @@ export class Formatter {
         }
     }
 
+    /**
+     * Format quest table schema declaration.
+     * @example schema: *id, name, description
+     */
+    public static formatTableSchema(line: TextLine): FormatterResults | undefined {
+        if (/^\s*schema:/.test(line.text)) {
+            const args = line.text.split(',');      
+            const formatFirstArgument = () => {         
+                if (!/^\s*schema:\s[^\s]/.test(args[0])) {
+                    const parts = args[0].split(':').map(x => x.trim());
+                    args[0] = parts[0] + ': ' + parts[1];
+                    return true;
+                }
+                return false;
+            };
+
+            return Formatter.formatTableEntryIfRequired(line, args, formatFirstArgument()) || Formatter.unaltered;
+        }
+    }
+
+    /**
+     * Format a quest table entry.
+     * @example 0, example, description for the example
+     * @todo Align a block of entries on the longest argument.
+     */
+    public static formatTableEntry(line: TextLine): FormatterResults | undefined {
+        if (getOptions()['format']['tableEntries'] === 'line') {
+            return Formatter.formatTableEntryIfRequired(line, line.text.split(','));
+        }
+    }
+
     private static makeResults(line: TextLine, length: number, text: string): FormatterResults {
         return { needsEdit: true, textEdit: new TextEdit(new Range(line.range.start.line, 0, line.range.end.line, length), text) };
     }
@@ -246,5 +300,17 @@ export class Formatter {
             }
         };
         return results;
+    }
+
+    /**
+     * Formats a table entry: trims the line and enforces a single space after the separator.
+     */
+    private static formatTableEntryIfRequired(line: TextLine, args: string[], forceFormat: boolean = false) {
+        if (forceFormat || args.find(({}, index) => !(index === 0 ? /^[^\s](.*[^\s])?$/ : /^\s[^\s](.*[^\s])?$/).test(args[index]))) {
+            return {
+                needsEdit: true,
+                textEdit: new TextEdit(line.range, args.map(x => x.trim()).join(', '))
+            };
+        }
     }
 }

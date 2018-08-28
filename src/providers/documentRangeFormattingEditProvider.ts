@@ -12,12 +12,14 @@ import { Formatter, FormatterResults } from '../language/formatter';
 
 export class TemplateDocumentRangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
 
-    public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> {
+    public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> | null {
         return new Promise(function (resolve, reject) {
             const textEdits: TextEdit[] = [];
-            const questBlocks = parser.getQuestBlocksRanges(document);
+            const questBlocks = !parser.isQuestTable(document) ? parser.getQuestBlocksRanges(document) : null;
             for (let i = range.start.line; i <= range.end.line; i++) {
-                for (const formatter of i <= questBlocks.qbn.start.line ? Formatter.qrcFormatters : Formatter.qbnFormatters) {
+                for (const formatter of questBlocks ?
+                    (i <= questBlocks.qbn.start.line ? Formatter.qrcFormatters : Formatter.qbnFormatters) :
+                    Formatter.tableFormatters) {
                     const results = formatter(document.lineAt(i));
                     if (results) {
                         if (results.needsEdit && results.textEdit) {
@@ -38,7 +40,7 @@ export class TemplateDocumentRangeFormattingEditProvider implements vscode.Docum
     /**
      * Give lines to a formatter until it stops matching.
      */
-    private static tryFormatNextLine(document: TextDocument, line: number, endLine: number, results: FormatterResults, textEdits: TextEdit[]): number {    
+    private static tryFormatNextLine(document: TextDocument, line: number, endLine: number, results: FormatterResults, textEdits: TextEdit[]): number {
         if (line < endLine) {
             let nextLine = document.lineAt(line + 1);
             if (results.formatNextLineRequest && results.formatNextLineRequest.requestLine(nextLine)) {
