@@ -168,16 +168,27 @@ export function* findAllSymbolDefinitions(document: TextDocument): Iterable<{ li
 * Find all occurrences of a symbol with any prefix.
 * @param text seek within this string.
 * @param symbol The symbol in any variant.
+* @param innerRange Do not include prefix and suffix in the range.
 */
-export function* findSymbolReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true): Iterable<Range> {
+export function* findSymbolReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true, innerRange: boolean = false): Iterable<Range> {
 
     const name = getSymbolName(symbol);
     const regex = new RegExp(name !== symbol ? '(_{1,3}|={1,2})' + name + '_' : name, 'g');
 
+    function firstNonPrefixChar(symbol: string): number {
+        return (symbol[0] === '_' || symbol[0] === '=') ?
+            ((symbol[1] === '_' || symbol[1] === '=') ? (symbol[1] === '_' ? 3 : 2) : 1) : 0;
+    }
+
+    function lastNonSuffixChar(symbol: string): number {
+        return symbol.endsWith('_') ? symbol.length - 1 : symbol.length;
+    }
+
     for (const line of parser.getCodeLines(document)) {
         if (includeDeclaration || !isSymbolDefinition(line.text, symbol)) {
             for (const result of parser.getMatches(line.text, regex)) {
-                yield new Range(line.lineNumber, result.index, line.lineNumber, result.index + result.word.length);
+                yield new Range(line.lineNumber, innerRange ? result.index + firstNonPrefixChar(result.word) : result.index,
+                    line.lineNumber, result.index + (innerRange ? lastNonSuffixChar(result.word) : result.word.length));
             }
         }
     }
