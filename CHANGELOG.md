@@ -9,6 +9,9 @@
 - Diagnostics detects missing QRC/QBN blocks.
 - Diagnostics and Code Action provider suggest to use text alias when a static message is defined with a message id.
 
+### Fixed
+- Fixed regression which caused incorrect symbol renaming.
+
 ## 0.3.0
 
 ### Added
