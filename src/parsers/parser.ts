@@ -212,6 +212,14 @@ export function getQuestBlocksRanges(document: TextDocument): { qrc: vscode.Rang
     };
 }
 
+/**
+ * Checks if this document is a quest table.
+ * @param document A text document.
+ */
+export function isQuestTable(document: vscode.TextDocument): boolean {
+    return /Quest(s|List)-[a-zA-Z]+\.txt/.test(document.fileName);
+}
+
 export function trimRange(line: vscode.TextLine): vscode.Range {
     return new vscode.Range(line.lineNumber, line.firstNonWhitespaceCharacterIndex,
         line.lineNumber, line.text.replace(/\s+$/, '').length);

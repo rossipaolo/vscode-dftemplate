@@ -68,6 +68,19 @@
                     "default": true,
                     "description": "Messages with <ce> tag are horizontally centered."
                 },
+                "dftemplate.format.tableEntries": {
+                    "type": "string",
+                    "default": "line",
+                    "enum": [
+                        "none",
+                        "line"
+                    ],
+                    "enumDescriptions": [
+                        "no alignment",
+                        "individual line alignment"
+                    ],
+                    "description": "Format alignment for quest table entries."
+                },
                 "dftemplate.codeLens.enabled": {
                     "type": "boolean",
                     "default": false,

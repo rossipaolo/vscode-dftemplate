@@ -85,7 +85,9 @@ export const Errors = {
     incorrectTime: (range: Range, time: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, time + ' is not in 24-hour format (00:00 to 23:59).', DiagnosticSeverity.Error),
     incorrectSymbolType: (range: Range, symbol: string, type: string) =>
-        makeDiagnostic(range, DiagnosticCode.GenericError, 'Incorrect symbol type: ' + symbol + ' is not declared as ' + type + '.', DiagnosticSeverity.Error)
+        makeDiagnostic(range, DiagnosticCode.GenericError, 'Incorrect symbol type: ' + symbol + ' is not declared as ' + type + '.', DiagnosticSeverity.Error),
+    schemaMismatch: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.GenericError, 'Table entry does not implement schema.', DiagnosticSeverity.Error)
 };
 
 export const Warnings = {

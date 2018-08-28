@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Introduced support for quest list tables.
+
 ### Improved
 - Diagnostics detects missing QRC/QBN blocks.
 - Diagnostics and Code Action provider suggest to use text alias when a static message is defined with a message id.
