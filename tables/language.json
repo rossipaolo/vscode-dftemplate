@@ -124,7 +124,8 @@
     },
     "symbolsVariations": {
         "Item": [
-            { "word": "_$_", "description": "The name of $" }
+            { "word": "_$_", "description": "The name of $" },
+            { "word": "=$_", "description": "Gold amount"}
         ],
         "Person": [
             { "word": "_$_", "description": "The name of $" },

@@ -11,6 +11,7 @@
 
 ### Fixed
 - Fixed regression which caused incorrect symbol renaming.
+- `=$_` is now correctly identified as gold amount.
 
 ## 0.3.0
 
