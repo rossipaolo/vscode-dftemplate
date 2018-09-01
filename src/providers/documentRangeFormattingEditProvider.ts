@@ -15,7 +15,7 @@ export class TemplateDocumentRangeFormattingEditProvider implements vscode.Docum
     public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> | null {
         return new Promise(function (resolve, reject) {
             const textEdits: TextEdit[] = [];
-            const formatter = new Formatter(document);
+            const formatter = new Formatter(document, options);
             const questBlocks = !parser.isQuestTable(document) ? parser.getQuestBlocksRanges(document) : null;
             for (let i = range.start.line; i <= range.end.line; i++) {
                 for (const doFormat of questBlocks ?

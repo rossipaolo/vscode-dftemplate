@@ -6,7 +6,7 @@
 
 import * as parser from '../parsers/parser';
 
-import { Range, TextEdit, TextLine, TextDocument } from 'vscode';
+import { Range, TextEdit, TextLine, TextDocument, FormattingOptions } from 'vscode';
 import { getOptions } from '../extension';
 import { MessageBlock } from '../parsers/parser';
 
@@ -45,6 +45,7 @@ export class Formatter {
     ];
 
     private readonly document: TextDocument;
+    private readonly indent: string;
     private readonly _qrcFormatters: FormatterCallback[] = [
         (line) => this.formatKeyword(line),
         (line) => this.formatMessage(line),
@@ -86,8 +87,9 @@ export class Formatter {
         return this._tableFormatters;
     }
 
-    public constructor(document: TextDocument) {
+    public constructor(document: TextDocument, options: FormattingOptions) {
         this.document = document;
+        this.indent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
     }
 
     private formatKeyword(line: TextLine): FormatterResults | undefined {
@@ -337,8 +339,8 @@ export class Formatter {
         let result = /^(\s*)[^\s]/g.exec(text);
         if (result) {
             let needsEdit = false;
-            if (result[1].length !== 4) {
-                text = '    ' + text.trim();
+            if (result[1] !== this.indent) {
+                text = this.indent + text.trim();
                 needsEdit = true;
             }
 
@@ -352,8 +354,8 @@ export class Formatter {
      */
     private formatTableSchema(line: TextLine): FormatterResults | undefined {
         if (/^\s*schema:/.test(line.text)) {
-            const args = line.text.split(',');      
-            const formatFirstArgument = () => {         
+            const args = line.text.split(',');
+            const formatFirstArgument = () => {
                 if (!/^\s*schema:\s[^\s]/.test(args[0])) {
                     const parts = args[0].split(':').map(x => x.trim());
                     args[0] = parts[0] + ': ' + parts[1];
