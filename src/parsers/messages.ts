@@ -178,13 +178,17 @@ export function getMessageRange(document: TextDocument, definitionLine: number):
         line++;
     }
 
-    return new Range(definitionLine, 0, line - 1, document.lineAt(line).text.length);
+    return new Range(document.lineAt(definitionLine).range.start, document.lineAt(line).range.end);
 }
 
+/**
+ * Detects the range of a message block as lines are being provided. 
+ * Also allows to checks multiple lines at once.
+ */
 export class MessageBlock {
-    document: TextDocument;
-    lineNumber: number;
-    previousLineIsEmpty = false;
+
+    private document: TextDocument;
+    private lineNumber: number;
 
     public get currentLine() {
         return this.lineNumber;
@@ -206,25 +210,35 @@ export class MessageBlock {
      * @param lineNumber The target line number; must be higher than current.
      */
     public isInside(lineNumber?: number): boolean {
+        
         // End of document
-        if (++this.lineNumber >= this.document.lineCount) {
+        if (this.isEndOfStream(++this.lineNumber)) {
             return false;
         }
 
+        // Check block ending
         const text = this.document.lineAt(this.lineNumber).text;
-
-        // Start of a new message block, comment or QBN
-        if (/^\s*(\s*-.*|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+)|QBN:)\s*$/.test(text)) {
+        if (text.length === 0 && this.nextLineIsBlockEnding()) {
             return false;
         }
 
-        // Two empty lines
-        const lineIsEmpty = text.length === 0;
-        if (lineIsEmpty && this.previousLineIsEmpty) {
-            return false;
-        }
-
-        this.previousLineIsEmpty = lineIsEmpty;
+        // Fast forward to requested line
         return lineNumber && lineNumber > this.lineNumber ? this.isInside(lineNumber) : true;
+    }
+
+    /**
+     * A message block ends with two empty lines or a line followed by another declaration.
+     */
+    private nextLineIsBlockEnding() {
+        if (this.isEndOfStream(this.lineNumber + 1)) {
+            return false;
+        }
+
+        const text = this.document.lineAt(this.lineNumber + 1).text;
+        return text.length === 0 || /^\s*(\s*-.*|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+)|QBN:)\s*$/.test(text);
+    }
+
+    private isEndOfStream(lineNumber: number) {
+        return lineNumber >= this.document.lineCount;
     }
 }

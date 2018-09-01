@@ -15,12 +15,13 @@ export class TemplateDocumentRangeFormattingEditProvider implements vscode.Docum
     public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> | null {
         return new Promise(function (resolve, reject) {
             const textEdits: TextEdit[] = [];
+            const formatter = new Formatter(document);
             const questBlocks = !parser.isQuestTable(document) ? parser.getQuestBlocksRanges(document) : null;
             for (let i = range.start.line; i <= range.end.line; i++) {
-                for (const formatter of questBlocks ?
-                    (i <= questBlocks.qbn.start.line ? Formatter.qrcFormatters : Formatter.qbnFormatters) :
-                    Formatter.tableFormatters) {
-                    const results = formatter(document.lineAt(i));
+                for (const doFormat of questBlocks ?
+                    (i <= questBlocks.qbn.start.line ? formatter.qrcFormatters : formatter.qbnFormatters) :
+                    formatter.tableFormatters) {
+                    const results = doFormat(document.lineAt(i));
                     if (results) {
                         if (results.needsEdit && results.textEdit) {
                             textEdits.push(results.textEdit);

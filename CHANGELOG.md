@@ -4,6 +4,8 @@
 
 ### Added
 - Introduced support for quest list tables.
+- Message formatting: align split token (`<--->`) to left or center
+- Message formatting: enforce a single space char to mark a empty line in the text block.
 
 ### Improved
 - Diagnostics detects missing QRC/QBN blocks.
