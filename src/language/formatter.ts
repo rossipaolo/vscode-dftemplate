@@ -6,8 +6,9 @@
 
 import * as parser from '../parsers/parser';
 
-import { Range, TextEdit, TextLine } from 'vscode';
+import { Range, TextEdit, TextLine, TextDocument } from 'vscode';
 import { getOptions } from '../extension';
+import { MessageBlock } from '../parsers/parser';
 
 export interface FormatterResults {
     needsEdit: boolean;
@@ -19,7 +20,6 @@ export interface FormatLineRequest {
     requestLine: (line: TextLine) => boolean;
     formatLine: (line: TextLine) => FormatterResults | undefined;
 }
-
 
 type FormatterCallback = (line: TextLine) => FormatterResults | undefined;
 
@@ -42,49 +42,55 @@ export class Formatter {
             wanted: /^(QRC|QBN):$/,
             text: "$:"
         },
-        {
-            match: /^\s*Message:\s*([0-9]+)\s*$/,
-            wanted: /^Message:\s{2}[0-9]+$/,
-            text: "Message:  $"
-        },
-        {
-            match: /^\s*([a-zA-Z]+)\s*:\s*\[\s*([0-9]+)\s*\]\s*$/,
-            wanted: /^[a-zA-Z]+:\s{2}\[[0-9]+\]$/,
-            text: "$:  [$]"
-        }
+    ];
+
+    private readonly document: TextDocument;
+    private readonly _qrcFormatters: FormatterCallback[] = [
+        (line) => this.formatKeyword(line),
+        (line) => this.formatMessage(line),
+        (line) => this.formatEmptyLine(line),
+        (line) => this.formatComment(line)
+    ];
+    private readonly _qbnFormatters: FormatterCallback[] = [
+        (line) => this.formatEmptyLine(line),
+        (line) => this.formatComment(line),
+        (line) => this.formatSymbolDefinition(line),
+        (line) => this.formatHeadlessEntryPoint(line),
+        (line) => this.formatTask(line)
+    ];
+    private readonly _tableFormatters: FormatterCallback[] = [
+        (line) => this.formatEmptyLine(line),
+        (line) => this.formatComment(line),
+        (line) => this.formatTableSchema(line),
+        (line) => this.formatTableEntry(line)
     ];
 
     /**
      * Formatters for preamble and QRC block.
      */
-    public static qrcFormatters: FormatterCallback[] = [
-        Formatter.formatKeyword,
-        Formatter.formatComment,
-        Formatter.formatCenteredMessage,
-    ];
+    public get qrcFormatters() {
+        return this._qrcFormatters;
+    }
 
     /**
      * Formatters for QBN block.
      */
-    public static qbnFormatters: FormatterCallback[] = [
-        Formatter.formatEmptyLine,
-        Formatter.formatComment,
-        Formatter.formatSymbolDefinition,
-        Formatter.formatHeadlessEntryPoint,
-        Formatter.formatTask
-    ];
+    public get qbnFormatters() {
+        return this._qbnFormatters;
+    }
 
     /**
      * Formatters for Quest Tables
      */
-    public static tableFormatters: FormatterCallback[] = [
-        Formatter.formatEmptyLine,
-        Formatter.formatComment,
-        Formatter.formatTableSchema,
-        Formatter.formatTableEntry
-    ];
+    public get tableFormatters() {
+        return this._tableFormatters;
+    }
 
-    public static formatKeyword(line: TextLine): FormatterResults | undefined {
+    public constructor(document: TextDocument) {
+        this.document = document;
+    }
+
+    private formatKeyword(line: TextLine): FormatterResults | undefined {
         let text = line.text;
         let length = text.length;
         for (let i = 0; i < Formatter.keywordsFormat.length; i++) {
@@ -94,7 +100,7 @@ export class Formatter {
                 if (!new RegExp(format.wanted, 'g').test(text)) {
                     let j = 1;
                     text = format.text.replace(/\$/g, () => result ? result[j++] : '');
-                    return Formatter.makeResults(line, length > text.length ? length : text.length, text);
+                    return this.makeResults(line, length > text.length ? length : text.length, text);
                 }
 
                 return Formatter.unaltered;
@@ -105,7 +111,7 @@ export class Formatter {
     /**
      * Remove unnecessary spaces from empty lines.
      */
-    public static formatEmptyLine(line: TextLine): FormatterResults | undefined {
+    private formatEmptyLine(line: TextLine): FormatterResults | undefined {
         if (/^\s*$/.test(line.text)) {
             return line.text.length > 0 ? {
                 needsEdit: true,
@@ -114,7 +120,7 @@ export class Formatter {
         }
     }
 
-    public static formatComment(line: TextLine): FormatterResults | undefined {
+    private formatComment(line: TextLine): FormatterResults | undefined {
         let text = line.text;
         let result = /^(\s*)(-+)(\s*)(.*)$/g.exec(text);
         if (result) {
@@ -133,14 +139,77 @@ export class Formatter {
                 needsEdit = true;
             }
 
-            return needsEdit ? Formatter.makeResults(line, length, text) : Formatter.unaltered;
+            return needsEdit ? this.makeResults(line, length, text) : Formatter.unaltered;
         }
     }
 
     /**
-     * Format messages with a <ce> tag. Message text is aligned left or centered according to options.
+     * Format a message declaration and its text block. Intended text indentation is not altered.
      */
-    public static formatCenteredMessage(line: TextLine): FormatterResults | undefined {
+    private formatMessage(line: TextLine): FormatterResults | undefined {
+        const instance = this;
+        let lastCenteredTokenLine: number = -1;
+
+        // Format message block following a declaration
+        function makeMessageResults(textEdit: TextEdit | undefined) {
+            const messageBlock = new MessageBlock(instance.document, line.lineNumber);
+            const formatterResults: FormatterResults = {
+                needsEdit: textEdit !== undefined,
+                textEdit: textEdit,
+                formatNextLineRequest: {
+                    requestLine: line => messageBlock.isInside(line.lineNumber),
+                    formatLine: line => {
+
+                        // Handle center justification token
+                        const centeredFormat = instance.formatCenteredMessageLine(line);
+                        if (centeredFormat) {
+                            centeredFormat.formatNextLineRequest = formatterResults.formatNextLineRequest;
+                            lastCenteredTokenLine = line.lineNumber;
+                            return centeredFormat;
+                        }
+
+                        // Handle split justification token
+                        const splitToken = instance.formatMessageLineWithSplitToken(line, lastCenteredTokenLine === line.lineNumber - 1);
+                        if (splitToken) {
+                            splitToken.formatNextLineRequest = formatterResults.formatNextLineRequest;
+                            return splitToken;
+                        }
+
+                        // A message block is terminated when another message starts or with two empty lines.
+                        // A single empty line is allowed but is better to use a space char to indicate that
+                        // is only a break in the message text and not a block end.
+                        const needsEdit = /^\s*$/.test(line.text) && line.text !== ' ';
+                        return {
+                            needsEdit: needsEdit,
+                            textEdit: needsEdit ? new TextEdit(line.range, ' ') : undefined,
+                            formatNextLineRequest: formatterResults.formatNextLineRequest
+                        };
+                    }
+                }
+            };
+
+            return formatterResults;
+        }
+
+        // Static message declaration
+        const staticMessage = parser.getStaticMessage(line.text);
+        if (staticMessage) {
+            return makeMessageResults(!/^[a-zA-Z]+:  \[[0-9]+\]$/.test(line.text) ?
+                new TextEdit(line.range, staticMessage.name + ':  [' + staticMessage.id + ']') : undefined);
+        }
+
+        // Additional message declaration
+        const additionalMessageID = parser.getMessageIDFromLine(line);
+        if (additionalMessageID) {
+            return makeMessageResults(!/^Message:  [0-9]+$/.test(line.text) ?
+                new TextEdit(line.range, 'Message:  ' + additionalMessageID) : undefined);
+        }
+    }
+
+    /**
+     * Format messages with a `<ce>` tag. Message text is aligned left or centered according to options.
+     */
+    private formatCenteredMessageLine(line: TextLine): FormatterResults | undefined {
         let text = line.text;
         let result = /^(\s*)(<ce>)(\s*)([^\s])/g.exec(text);
         if (result) {
@@ -175,11 +244,35 @@ export class Formatter {
                 needsEdit = true;
             }
 
-            return needsEdit ? Formatter.makeResults(line, length, text) : Formatter.unaltered;
+            return needsEdit ? this.makeResults(line, length, text) : this.makeUnaltered();
         }
     }
 
-    public static formatSymbolDefinition(line: TextLine): FormatterResults | undefined {
+    /**
+     * Format `<--->` token in a message line. The token is aligned left or centered according to options.
+     */
+    private formatMessageLineWithSplitToken(line: TextLine, centered: boolean): FormatterResults | undefined {
+
+        const token = '<--->';
+        if (/^\s*<--->\s*$/.test(line.text)) {
+
+            // centered
+            if (centered && getOptions()['format']['centeredMessages']) {
+                return !/^( ){37}<--->$/.test(line.text) ? {
+                    needsEdit: true,
+                    textEdit: new TextEdit(line.range, ' '.repeat(37) + token),
+                } : this.makeUnaltered();
+            }
+
+            // left alignment
+            return line.text !== token ? {
+                needsEdit: true,
+                textEdit: new TextEdit(line.range, token),
+            } : this.makeUnaltered();
+        }
+    }
+
+    private formatSymbolDefinition(line: TextLine): FormatterResults | undefined {
         let text = line.text;
         let result = /^(\s*)(Item|Person|Place|Clock|Foe)/g.exec(text);
         if (result) {
@@ -199,27 +292,26 @@ export class Formatter {
                 needsEdit = true;
             }
 
-            return needsEdit ? Formatter.makeResults(line, length, text) : Formatter.unaltered;
+            return needsEdit ? this.makeResults(line, length, text) : Formatter.unaltered;
         }
     }
 
     /**
      * Format a headless entry point.
      */
-    public static formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
-
+    private formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
         if (!parser.isEmptyOrComment(line.text) &&
             !parser.getSymbolFromLine(line) &&
             !parser.getTaskName(line.text) &&
             !parser.getGlobalVariable(line.text)) {
-            return Formatter.formatTaskScope(line);
+            return this.formatTaskScope(line);
         }
     }
 
     /**
      * Format definition of a task and request following lines until the first empty line.
      */
-    public static formatTask(line: TextLine): FormatterResults | undefined {
+    private formatTask(line: TextLine): FormatterResults | undefined {
         let text = line.text;
         let length = text.length;
         let result = /^(\s*)((_{1,3}|={1,2})[a-zA-Z]+(.[0-9]+)?_)(\s+)task:(\s*)$/g.exec(text);
@@ -232,14 +324,14 @@ export class Formatter {
                 text = text.trim();
             }
 
-            return Formatter.makeTaskResults(needsEdit, line, text, length);
+            return this.makeTaskResults(needsEdit, line, text, length);
         }
     }
 
     /**
      * Format lines following a task definition.
      */
-    private static formatTaskScope(line: TextLine): FormatterResults | undefined {
+    private formatTaskScope(line: TextLine): FormatterResults | undefined {
         let text = line.text;
         let length = text.length;
         let result = /^(\s*)[^\s]/g.exec(text);
@@ -250,7 +342,7 @@ export class Formatter {
                 needsEdit = true;
             }
 
-            return Formatter.makeTaskResults(needsEdit, line, text, length);
+            return this.makeTaskResults(needsEdit, line, text, length);
         }
     }
 
@@ -258,7 +350,7 @@ export class Formatter {
      * Format quest table schema declaration.
      * @example schema: *id, name, description
      */
-    public static formatTableSchema(line: TextLine): FormatterResults | undefined {
+    private formatTableSchema(line: TextLine): FormatterResults | undefined {
         if (/^\s*schema:/.test(line.text)) {
             const args = line.text.split(',');      
             const formatFirstArgument = () => {         
@@ -270,7 +362,7 @@ export class Formatter {
                 return false;
             };
 
-            return Formatter.formatTableEntryIfRequired(line, args, formatFirstArgument()) || Formatter.unaltered;
+            return this.formatTableEntryIfRequired(line, args, formatFirstArgument()) || Formatter.unaltered;
         }
     }
 
@@ -279,24 +371,28 @@ export class Formatter {
      * @example 0, example, description for the example
      * @todo Align a block of entries on the longest argument.
      */
-    public static formatTableEntry(line: TextLine): FormatterResults | undefined {
+    private formatTableEntry(line: TextLine): FormatterResults | undefined {
         if (getOptions()['format']['tableEntries'] === 'line') {
-            return Formatter.formatTableEntryIfRequired(line, line.text.split(','));
+            return this.formatTableEntryIfRequired(line, line.text.split(','));
         }
     }
 
-    private static makeResults(line: TextLine, length: number, text: string): FormatterResults {
+    private makeUnaltered(): FormatterResults {
+        return { needsEdit: false };
+    }
+
+    private makeResults(line: TextLine, length: number, text: string): FormatterResults {
         return { needsEdit: true, textEdit: new TextEdit(new Range(line.range.start.line, 0, line.range.end.line, length), text) };
     }
 
-    private static makeTaskResults(needsEdit: boolean, line: TextLine, text: string, length: number) {
-        let results = needsEdit ? Formatter.makeResults(line, length, text) : { needsEdit: false };
+    private makeTaskResults(needsEdit: boolean, line: TextLine, text: string, length: number) {
+        let results = needsEdit ? this.makeResults(line, length, text) : { needsEdit: false };
         results.formatNextLineRequest = {
             requestLine: (line) => {
                 return !/^\s*$/g.test(line.text);
             },
             formatLine: (line) => {
-                return Formatter.formatComment(line) || Formatter.formatTaskScope(line);
+                return this.formatComment(line) || this.formatTaskScope(line);
             }
         };
         return results;
@@ -305,7 +401,7 @@ export class Formatter {
     /**
      * Formats a table entry: trims the line and enforces a single space after the separator.
      */
-    private static formatTableEntryIfRequired(line: TextLine, args: string[], forceFormat: boolean = false) {
+    private formatTableEntryIfRequired(line: TextLine, args: string[], forceFormat: boolean = false) {
         if (forceFormat || args.find(({}, index) => !(index === 0 ? /^[^\s](.*[^\s])?$/ : /^\s[^\s](.*[^\s])?$/).test(args[index]))) {
             return {
                 needsEdit: true,
