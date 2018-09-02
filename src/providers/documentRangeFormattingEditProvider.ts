@@ -8,54 +8,16 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { TextDocument, Range, FormattingOptions, TextEdit } from 'vscode';
-import { Formatter, FormatterResults } from '../language/formatter';
+import { Formatter } from '../language/formatter';
 
 export class TemplateDocumentRangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
 
-    public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> | null {
-        return new Promise(function (resolve, reject) {
-            const textEdits: TextEdit[] = [];
+    public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> {
+        return new Promise((resolve, reject) => {
             const formatter = new Formatter(document, options);
-            const questBlocks = !parser.isQuestTable(document) ? parser.getQuestBlocksRanges(document) : null;
-            for (let i = range.start.line; i <= range.end.line; i++) {
-                for (const doFormat of questBlocks ?
-                    (i <= questBlocks.qbn.start.line ? formatter.qrcFormatters : formatter.qbnFormatters) :
-                    formatter.tableFormatters) {
-                    const results = doFormat(document.lineAt(i));
-                    if (results) {
-                        if (results.needsEdit && results.textEdit) {
-                            textEdits.push(results.textEdit);
-                        }
-
-                        // Matching formatter can immediately request the following line.
-                        i = TemplateDocumentRangeFormattingEditProvider.tryFormatNextLine(document, i, range.end.line, results, textEdits);
-                        break;
-                    }
-                }
-            }
-
+            const textEdits: TextEdit[] = parser.isQuestTable(document) ?
+                formatter.formatTable(range) : formatter.formatQuest(range);
             return textEdits.length > 0 ? resolve(textEdits) : reject();
         });
-    }
-
-    /**
-     * Give lines to a formatter until it stops matching.
-     */
-    private static tryFormatNextLine(document: TextDocument, line: number, endLine: number, results: FormatterResults, textEdits: TextEdit[]): number {
-        if (line < endLine) {
-            let nextLine = document.lineAt(line + 1);
-            if (results.formatNextLineRequest && results.formatNextLineRequest.requestLine(nextLine)) {
-                let nextResults = results.formatNextLineRequest.formatLine(nextLine);
-                if (nextResults) {
-                    if (nextResults.needsEdit && nextResults.textEdit) {
-                        textEdits.push(nextResults.textEdit);
-                    }
-
-                    return TemplateDocumentRangeFormattingEditProvider.tryFormatNextLine(document, ++line, endLine, nextResults, textEdits);
-                }
-            }
-        }
-
-        return line;
     }
 }

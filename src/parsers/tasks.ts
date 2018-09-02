@@ -10,6 +10,17 @@ import { TextDocument, TextLine, Range, Location } from "vscode";
 import { iterateAll } from '../extension';
 import { Modules } from '../language/modules';
 
+export enum TaskType {
+    Standard,
+    Variable,
+}
+
+export interface TaskDefinition {
+    readonly symbol: string;
+    readonly type: TaskType;
+    hasBlock(): boolean;
+}
+
 let globalVarsAlternation: string;
 let globalMatch: RegExp;
 
@@ -21,6 +32,22 @@ export function setGlobalVariables(globalVars: Map<string, number>) {
     const globalVariables = Array.from(globalVars.keys());
     globalVarsAlternation = globalVariables.join('|');
     globalMatch = new RegExp('^\\s*(' + globalVarsAlternation + ')\\s+([a-zA-Z0-9._]+)');
+}
+
+/**
+ * Finds a task defined in the given line.
+ */
+export function parseTaskDefinition(text: string): TaskDefinition | undefined {
+    const symbol = getTaskName(text);
+    if (symbol) {
+        return {
+            symbol: symbol,
+            type: text.indexOf('variable') !== -1 ? TaskType.Variable : TaskType.Standard,
+            hasBlock() {
+                return this.type !== TaskType.Variable;
+            }
+        };
+    }
 }
 
 /**
