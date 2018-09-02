@@ -11,6 +11,7 @@
 ### Improved
 - Diagnostics detects missing QRC/QBN blocks.
 - Diagnostics and Code Action provider suggest to use text alias when a static message is defined with a message id.
+- Formatter makes smaller text edits for some language elements.
 
 ### Fixed
 - Fixed regression which caused incorrect symbol renaming.
