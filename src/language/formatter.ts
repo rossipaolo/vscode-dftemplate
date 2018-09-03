@@ -148,8 +148,34 @@ export class Formatter {
      * Removes unnecessary spaces from empty lines or after a comment.
      */
     private formatEmptyOrComment(line: TextLine): FormatterResults | undefined {
-        if (parser.isEmptyOrComment(line.text)) {
+
+        // Comment
+        if (/^\s*-/.test(line.text)) {
             return { textEdit: Formatter.trimRight(line) };
+        }
+
+        // Empty line
+        if (/^\s*$/.test(line.text)) {
+
+            /**
+             * Removes all empty lines following an empty line.
+             */
+            function removeUnnecessaryEmptyLines(): FormatLineRequest {
+                return {
+                    requestLine: line => /^\s*$/.test(line.text),
+                    formatLine: line => {
+                        return {
+                            textEdit: new TextEdit(line.rangeIncludingLineBreak, ''),
+                            formatNextLineRequest: removeUnnecessaryEmptyLines()
+                        };
+                    }
+                };
+            }
+
+            return {
+                textEdit: Formatter.trimRight(line),
+                formatNextLineRequest: removeUnnecessaryEmptyLines()
+            };
         }
     }
 

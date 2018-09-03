@@ -7,6 +7,7 @@
 - Message formatting: align split token (`<--->`) to left or center
 - Message formatting: enforce a single space char to mark a empty line in the text block.
 - Use tabs or spaces for task indentation following formatting options.
+- Formatting: remove unnecessary empty lines.
 
 ### Improved
 - Diagnostics detects missing QRC/QBN blocks.
