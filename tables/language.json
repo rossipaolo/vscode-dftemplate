@@ -131,6 +131,7 @@
             { "word": "_$_", "description": "The name of $" },
             { "word": "__$_", "description": "The name of the house/shop in the town where $ can be found" },
             { "word": "___$_", "description": "The town name where $ can be found" },
+            { "word": "____$_", "description": "The name of the region where $ can be found" },
             { "word": "=$_", "description": "The faction association of $" },
             { "word": "==$_", "description": "Character class of $" }
         ],

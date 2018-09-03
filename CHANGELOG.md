@@ -16,6 +16,7 @@
 ### Fixed
 - Fixed regression which caused incorrect symbol renaming.
 - `=$_` is now correctly identified as gold amount.
+- ` ____$_` is now correctly identified as the name of the region where a person is found.
 
 ## 0.3.0
 
