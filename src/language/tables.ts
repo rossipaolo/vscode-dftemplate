@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { getOptions } from '../extension';
+import { getOptions, select, where } from '../extension';
 import { SignatureWords } from '../diagnostics/common';
 
 abstract class Table {
@@ -147,6 +147,10 @@ class SoundsTable extends Table {
 class StaticMessagesTable extends Table {
 
     public readonly messages = new Map<string, number>();
+
+    public *getAliases(id: number): Iterable<string> {
+        yield* select(where(this.messages, item => item["1"] === id), item => item["0"]);
+    }
 
     protected set(data: string[][]) {
         data.forEach(message => {
