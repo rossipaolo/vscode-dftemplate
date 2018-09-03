@@ -310,8 +310,7 @@ export class Formatter {
     private formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
         if (!parser.isEmptyOrComment(line.text) &&
             !parser.getSymbolFromLine(line) &&
-            !parser.getTaskName(line.text) &&
-            !parser.getGlobalVariable(line.text)) {
+            !parser.parseTaskDefinition(line.text)) {
             return this.formatTaskScope(line);
         }
     }
@@ -328,7 +327,7 @@ export class Formatter {
                     Formatter.trimLeft(line),
                     ...Formatter.setInnerSpaces(line)
                 ),
-                formatNextLineRequest: task.hasBlock() ? this.getTaskBlockFormatRequest() : undefined
+                formatNextLineRequest: task.type !== TaskType.Variable ? this.getTaskBlockFormatRequest() : undefined
             };
         }
     }
@@ -364,7 +363,7 @@ export class Formatter {
     private getTaskBlockFormatRequest(): FormatLineRequest {
         return {
             requestLine: (line) => {
-                return !/^\s*$/g.test(line.text);
+                return !/^\s*$/g.test(line.text) && !parser.parseTaskDefinition(line.text);
             },
             formatLine: (line) => {
                 return this.formatEmptyOrComment(line) || this.formatTaskScope(line);
