@@ -13,6 +13,7 @@ import { TEMPLATE_LANGUAGE } from '../extension';
 import { doSignatureChecks, doWordsCheck } from './signatureCheck';
 import { Modules } from '../language/modules';
 import { DiagnosticContext } from './diagnostics';
+import { TaskType } from '../parsers/parser';
 
 /**
  * Do diagnostics for a line in a QBN block.
@@ -71,61 +72,36 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
     }
 
     // Task definition
-    const task = parser.getTaskName(line.text);
+    const task = parser.parseTaskDefinition(line.text);
     if (task) {
 
-        if (/^\s*until\s/.test(line.text)) {
+        if (task.type === TaskType.PersistUntil) {
 
             // until performed is associated to undefined task
-            if (context.tasks.indexOf(task) === - 1) {
-                yield Errors.undefinedUntilPerformed(wordRange(line, task), task);
+            if (context.tasks.indexOf(task.symbol) === - 1) {
+                yield Errors.undefinedUntilPerformed(wordRange(line, task.symbol), task.symbol);
             }
 
             return;
         }
 
         // Duplicated definition
-        if (context.tasks.indexOf(task) !== - 1) {
-            yield Errors.duplicatedDefinition(wordRange(line, task), task);
+        if (context.tasks.indexOf(task.symbol) !== - 1) {
+            yield Errors.duplicatedDefinition(wordRange(line, task.symbol), task.symbol);
         }
         else {
-            context.tasks.push(task);
+            context.tasks.push(task.symbol);
         }
 
         // Unused
-        if (!parser.isConditionalTask(document, line.lineNumber) && !hasAnotherOccurrence(document, line.lineNumber, task)) {
-            yield Warnings.unusedDeclarationTask(wordRange(line, task), task);
+        if (!parser.isConditionalTask(document, line.lineNumber) && !hasAnotherOccurrence(document, line.lineNumber, task.symbol)) {
+            const name = task.type === TaskType.GlobalVarLink ? task.symbol + ' from ' + task.globalVarName : task.symbol;
+            yield Warnings.unusedDeclarationSymbol(wordRange(line, task.symbol), name);
         }
 
         // Naming convention violation
-        if (!parser.symbolFollowsNamingConventions(task)) {
-            yield Hints.symbolNamingConventionViolation(wordRange(line, task));
-        }
-
-        return;
-    }
-
-    // Global variables
-    const globalVar = parser.getGlobalVariable(line.text);
-    if (globalVar) {
-
-        // Duplicated definition
-        if (context.tasks.indexOf(globalVar.symbol) !== - 1) {
-            yield Errors.duplicatedDefinition(wordRange(line, globalVar.symbol), globalVar.symbol);
-        }
-        else {
-            context.tasks.push(globalVar.symbol);
-        }
-
-        // Unused
-        if (!hasAnotherOccurrence(document, line.lineNumber, globalVar.symbol)) {
-            const name = globalVar.symbol + ' from ' + globalVar.name;
-            yield Warnings.unusedDeclarationSymbol(wordRange(line, globalVar.symbol), name);
-        }
-
-        // Naming convention violation
-        if (!parser.symbolFollowsNamingConventions(globalVar.symbol)) {
-            yield Hints.symbolNamingConventionViolation(wordRange(line, globalVar.symbol));
+        if (!parser.symbolFollowsNamingConventions(task.symbol)) {
+            yield Hints.symbolNamingConventionViolation(wordRange(line, task.symbol));
         }
 
         return;
