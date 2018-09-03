@@ -8,6 +8,7 @@
 - Message formatting: enforce a single space char to mark a empty line in the text block.
 - Use tabs or spaces for task indentation following formatting options.
 - Formatting: remove unnecessary empty lines.
+- Static message references are now seeked by id and text aliases at the same time.
 
 ### Improved
 - Diagnostics detects missing QRC/QBN blocks.

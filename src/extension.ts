@@ -77,3 +77,23 @@ export function* iterateAll<T>(...iterables: Iterable<T>[]): Iterable<T> {
         }
     }
 }
+
+/**
+ * Filters a sequence of values with a predicate.
+ */
+export function* where<T>(iterable: Iterable<T>, predicate: (item: T) => boolean): Iterable<T> {
+    for (const item of iterable) {
+        if (predicate(item)) {
+            yield item;
+        }
+    }
+}
+
+/**
+ * Projects each element of a sequence with a transform operation.
+ */
+export function* select<T1, T2>(iterable: Iterable<T1>, transform: (item: T1) => T2): Iterable<T2> {
+    for (const item of iterable) {
+        yield transform(item);
+    }
+}
