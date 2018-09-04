@@ -19,6 +19,7 @@
 - Fixed regression which caused incorrect symbol renaming.
 - `=$_` is now correctly identified as gold amount.
 - ` ____$_` is now correctly identified as the name of the region where a person is found.
+- Fixed issue which caused code outline to fail initialization on file open.
 
 ## 0.3.0
 

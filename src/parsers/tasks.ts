@@ -7,7 +7,6 @@
 import * as vscode from 'vscode';
 import * as parser from './parser';
 import { TextDocument, TextLine, Range, Location } from "vscode";
-import { iterateAll } from '../extension';
 import { Modules } from '../language/modules';
 
 export enum TaskType {
@@ -107,10 +106,9 @@ export function* findAllTasks(document: TextDocument): Iterable<{ line: TextLine
  * @param document A quest document.
  */
 export function* findAllVariables(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
-    for (const variable of iterateAll(
-        parser.matchAllLines(document, /^\s*variable\s*([a-zA-Z0-9._]+)/),
-        parser.matchAllLines(document, globalMatch, 2))) {
-        yield variable;
+    yield* parser.matchAllLines(document, /^\s*variable\s*([a-zA-Z0-9._]+)/);
+    if (globalMatch) {
+        yield* parser.matchAllLines(document, globalMatch, 2);
     }
 }
 
