@@ -15,6 +15,7 @@
 - Diagnostics detects missing QRC/QBN blocks.
 - Diagnostics and Code Action provider suggest to use text alias when a static message is defined with a message id.
 - Formatter makes smaller text edits for some language elements.
+- Completion proposals are suggested for all parameters if an action/condition supports any number of ending parameters of the same type.
 
 ### Fixed
 - Fixed regression which caused incorrect symbol renaming.

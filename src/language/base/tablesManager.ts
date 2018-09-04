@@ -40,6 +40,25 @@ export abstract class TablesManager {
     }
 
     /**
+     * Gets the parameter signature at the given position.
+     * @param action An action result.
+     * @param index Index of the parameter. Can be a virtual index if marked as params.
+     */
+    public static getParameterAtPosition(action: ActionResult, index: number): string | undefined {
+
+        function formatWord(word: string): string {
+            return word.replace(/\$\{\d:(\.\.\.)?/, '${');
+        }
+
+        const signatureWords = action.action.overloads[action.overload].split(' ');
+        if (index > 0 && index < signatureWords.length) {
+            return formatWord(signatureWords[index]);
+        } else if (index >= signatureWords.length && /^\$\{\d:\.\.\./.test(signatureWords[signatureWords.length - 1])) {
+            return formatWord(signatureWords[signatureWords.length - 1]);
+        }
+    }
+
+    /**
      * Convert a snippet string to a regular expression that matches the signature.
      */
     protected static makeRegexFromSignature(signature: string): RegExp {
