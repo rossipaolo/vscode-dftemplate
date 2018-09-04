@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.4.0
 
 ### Added
 - Introduced support for quest list tables.
