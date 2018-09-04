@@ -60,6 +60,11 @@
                 "path": "./snippets/dftemplate.json"
             }
         ],
+        "configurationDefaults": {
+            "[dftemplate]": {
+                "editor.suggest.snippetsPreventQuickSuggestions": false
+            }
+        },
         "configuration": {
             "title": "DFTemplate configuration",
             "properties": {

@@ -9,6 +9,7 @@
 - Use tabs or spaces for task indentation following formatting options.
 - Formatting: remove unnecessary empty lines.
 - Static message references are now seeked by id and text aliases at the same time.
+- Added default value of `false` for `editor.suggest.snippetsPreventQuickSuggestions`.
 
 ### Improved
 - Diagnostics detects missing QRC/QBN blocks.
