@@ -304,7 +304,8 @@
         {
             "summary": "Restore NPC previously hidden from world with **_hide npc_**.",
             "overloads": [
-                "restore npc ${1:_person_}"
+                "restore npc ${1:_person_}",
+                "restore ${1:_person_}"
             ]
         },
         {

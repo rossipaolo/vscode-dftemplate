@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+### Improved
+- Added overload for **_restore npc_**.
+
 ## 0.4.0
 
 ### Added
