@@ -13,7 +13,8 @@ import { TEMPLATE_LANGUAGE } from '../extension';
  * Placeholders for snippets.
  */
 export abstract class SignatureWords {
-    public static readonly number = '${dd}';
+    public static readonly naturalNumber = '${nn}';
+    public static readonly integerNumber = '${dd}';
     public static readonly time = '${hh}:${mm}';
     public static readonly questID = '${questID}';
     public static readonly questName = '${questName}';
@@ -62,6 +63,10 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Block \'' + block + '\' is missing.', DiagnosticSeverity.Error),
     notANumber: (range: Range, word: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, word + ' is not a number.', DiagnosticSeverity.Error),
+    numberIsNotNatural: (range: Range, word: string) =>
+        makeDiagnostic(range, DiagnosticCode.GenericError, 'Natural number doesn\'t accept a sign.', DiagnosticSeverity.Error),
+    numberIsNotInteger: (range: Range, word: string) =>
+        makeDiagnostic(range, DiagnosticCode.GenericError, 'Integer number must have a sign.', DiagnosticSeverity.Error),
     duplicatedMessageNumber: (range: Range, id: number) =>
         makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error),
     duplicatedDefinition: (range: Range, name: string) =>

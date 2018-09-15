@@ -3,7 +3,11 @@
 ## Unreleased
 
 ### Improved
+- Diagnostics now distinguish between natural and integer numbers and provide appropriate error messages.
 - Added overload for **_restore npc_**.
+
+### Fixed
+- Added a few missing actions.
 
 ## 0.4.0
 

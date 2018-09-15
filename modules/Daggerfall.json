@@ -13,7 +13,7 @@
             "overloads": [
                 "clicked npc ${1:_person_}",
                 "clicked npc ${1:_person_} say ${2:message}",
-                "clicked ${1:_person_} and at least ${2:dd} gold otherwise do ${3:task}"
+                "clicked ${1:_person_} and at least ${2:nn} gold otherwise do ${3:task}"
             ]
         },
         {
@@ -46,14 +46,14 @@
             "summary": "Triggers when the PC slaughters the specified foe or the specified number of foes.",
             "overloads": [
                 "killed ${1:_foe_}",
-                "killed ${1:dd} ${2:_foe_}",
-                "killed ${1:dd} ${2:_foe_} saying ${3:messageID}"
+                "killed ${1:nn} ${2:_foe_}",
+                "killed ${1:nn} ${2:_foe_} saying ${3:messageID}"
             ]
         },
         {
             "summary": "Triggers when player has reached specified level or higher.",
             "overloads": [
-                "level ${1:dd} completed"
+                "level ${1:nn} completed"
             ]
         },
         {
@@ -66,7 +66,7 @@
         {
             "summary": "Triggers when reputation with NPC exceeds value.",
             "overloads": [
-                "repute with ${1:_person_} exceeds ${2:dd} do ${3:task}"
+                "repute with ${1:_person_} exceeds ${2:nn} do ${3:task}"
             ]
         },
         {
@@ -92,7 +92,7 @@
         {
             "summary": "Triggers when player reputation with a special named NPC equals or exceeds a minimum value.",
             "overloads": [
-                "when repute with ${1:faction} is at least ${2:dd}"
+                "when repute with ${1:faction} is at least ${2:nn}"
             ]
         }
     ],
@@ -128,7 +128,7 @@
         {
             "summary": "Changes reputation with an NPC by specified amount.",
             "overloads": [
-                "change repute with ${1:_person_} by ${2|+,-|}${3:amount}"
+                "change repute with ${1:_person_} by ${2:dd}"
             ]
         },
         {
@@ -140,15 +140,15 @@
         {
             "summary": "Spawn a Foe resource into the world; unlike **_send foe_**, foe can appears both in town and inside dungeons.",
             "overloads": [
-                "create foe ${1:_foe_} every ${2:dd} minutes indefinitely with ${3:dd}% success",
-                "create foe ${1:_foe_} every ${2:dd} minutes ${3:nn} times with ${4:dd}% success"
+                "create foe ${1:_foe_} every ${2:nn} minutes indefinitely with ${3:nn}% success",
+                "create foe ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success"
             ]
         },
         {
             "summary": "Spawn a Foe resource into the world; unlike **_create foe_**, it limits the spawning of foe to the times when the player is above ground.",
             "overloads": [
-                "send ${1:_foe_} every ${2:dd} minutes with ${4:dd}% success",
-                "send ${1:_foe_} every ${2:dd} minutes ${3:dd} times with ${4:dd}% success"
+                "send ${1:_foe_} every ${2:nn} minutes with ${4:nn}% success",
+                "send ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success"
             ]
         },
         {
@@ -166,7 +166,14 @@
         {
             "summary": "Cure specific disease on player received by **_make pc ill_** or through exposure to various elements.",
             "overloads": [
+                "cure ${1|vampirism,lycanthropy|}",
                 "cure ${1:disease}"
+            ]
+        },
+        {
+            "summary": "Destroys a Person resource; unlike **_hide npc_**, any reference to this symbol in a message block become invalid.",
+            "overloads": [
+                "destroy ${1:_person_}"
             ]
         },
         {
@@ -226,10 +233,16 @@
             ]
         },
         {
+            "summary": "Modifies the legal standing of the PC in the current province, or the province where the quest was obtained, by a positive or negative amount of repute.",
+            "overloads": [
+                "legal repute ${1:dd}"
+            ]
+        },
+        {
             "summary": "Adds Qrc text message to player journal. A quest can have up to 10 journal entries; if message has already been added at stepID index, old message gets replaced. A message can be remove with **_remove log step_**.",
             "overloads": [
-                "log ${1:messageID} ${2:dd}",
-                "log ${1:messageID} step ${2:dd}"
+                "log ${1:messageID} ${2:nn}",
+                "log ${1:messageID} step ${2:nn}"
             ]
         },
         {
@@ -260,14 +273,14 @@
             "summary": "Moves foe into world at a reserved site.",
             "overloads": [
                 "place foe ${1:_foe_} at ${2:_place_}",
-                "place foe ${1:_foe_} at ${2:_place_} marker ${3:dd}"
+                "place foe ${1:_foe_} at ${2:_place_} marker ${3:nn}"
             ]
         },
         {
             "summary": "Moves item into world at a reserved site.",
             "overloads": [
                 "place item ${1:_item_} at ${2:_place_}",
-                "place item ${1:_item_} at ${2:_place_} marker ${3:dd}"
+                "place item ${1:_item_} at ${2:_place_} marker ${3:nn}"
             ]
         },
         {
@@ -279,14 +292,14 @@
         {
             "summary": "Plays sound every x minutes y times.",
             "overloads": [
-                "play sound ${1:sound} ${2:mm} ${3:dd}",
-                "play sound ${1:sound} every ${2:mm} minutes ${3:dd} times"
+                "play sound ${1:sound} ${2:mm} ${3:nn}",
+                "play sound ${1:sound} every ${2:mm} minutes ${3:nn} times"
             ]
         },
         {
             "summary": "Plays a video",
             "overloads": [
-                "play video ${1:dd}"
+                "play video ${1:nn}"
             ]
         },
         {
@@ -298,7 +311,7 @@
         {
             "summary": "Removes Qrc text message from player journal.",
             "overloads": [
-                "remove log step ${1:dd}"
+                "remove log step ${1:nn}"
             ]
         },
         {
@@ -318,7 +331,7 @@
             "summary": "Reveals location on travelmap. This can be a remote dungeon or a location revelead in a province with a _magicNumber_, meaning the key to an entry in the Map Table.",
             "overloads": [
                 "reveal ${1:_place_}",
-                "reveal ${1:_place_} in province ${2:dd} at ${3:dd}"
+                "reveal ${1:_place_} in province ${2:nn} at ${3:nn}"
             ]
         },
         {
@@ -374,7 +387,7 @@
         {
             "summary": "Teleport player to a dungeon for dungeon traps, or as part of main quest.",
             "overloads": [
-                "transfer pc inside ${1:_place_} marker ${2:dd}"
+                "transfer pc inside ${1:_place_} marker ${2:nn}"
             ]
         },
         {
