@@ -166,7 +166,7 @@
     },
     "keywords": {
         "Messages": {
-            "signature": "Messages: ${1:dd}",
+            "signature": "Messages: ${1:nn}",
             "summary": "Number of messages the compiler ought to expect. This need not be exact, just a limit."
         },
         "Quest": {

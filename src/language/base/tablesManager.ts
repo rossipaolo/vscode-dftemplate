@@ -61,16 +61,14 @@ export abstract class TablesManager {
     /**
      * Convert a snippet string to a regular expression that matches the signature.
      */
-    protected static makeRegexFromSignature(signature: string): RegExp {
-        signature = signature.replace('+', '\\+');
-        
+    protected static makeRegexFromSignature(signature: string): RegExp {        
         // params: allows the last variable to be repeated
         if (/\$\{\d:\.\.\.[a-zA-Z0-9_-]+\}$/.test(signature)) {
-           signature = signature.substring(0, signature.lastIndexOf(' ')) + "(\\s+[a-zA-Z0-9_\\-'\\.]+)+";
+           signature = signature.substring(0, signature.lastIndexOf(' ')) + "(\\s+[a-zA-Z0-9_\\-\\+'\\.]+)+";
         }
         
-        signature = signature.replace(/\$\{\d\|/g, '(').replace(/\|\}/g, ')').replace(/,/g, '|');     // ${d|a,b|} -> (a|b)
-        signature = signature.replace(/\$\{\d:[a-zA-Z0-9_-]+?\}/g, "[a-zA-Z0-9_\\-'\\.]+");           // ${d:a}    -> [a-zA-Z0-9_-]+    
+        signature = signature.replace(/\$\{\d\|/g, '(').replace(/\|\}/g, ')').replace(/,/g, '|');           // ${d|a,b|} -> (a|b)
+        signature = signature.replace(/\$\{\d:[a-zA-Z0-9_-]+?\}/g, "[a-zA-Z0-9_\\-\\+'\\.]+");              // ${d:a}    -> [a-zA-Z0-9_-]+    
         return new RegExp('^\\s*' + signature + '\\s*$');
     }
 

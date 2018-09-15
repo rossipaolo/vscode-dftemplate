@@ -69,9 +69,18 @@ export function* doWordsCheck(document: vscode.TextDocument, signatureWords: Sig
 */
 function doWordCheck(document: vscode.TextDocument, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     switch (signatureItem) {
-        case SignatureWords.number:
+        case SignatureWords.naturalNumber:
             if (isNaN(Number(word))) {
                 return Errors.notANumber(range(), word);
+            } else if (word.startsWith('+') || word.startsWith('-')) {
+                return Errors.numberIsNotNatural(range(), word);
+            }
+            break;
+        case SignatureWords.integerNumber:
+            if (isNaN(Number(word))) {
+                return Errors.notANumber(range(), word);
+            } else if (!word.startsWith('+') && !word.startsWith('-')) {
+                return Errors.numberIsNotInteger(range(), word);
             }
             break;
         case SignatureWords.time:

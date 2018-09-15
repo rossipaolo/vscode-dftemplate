@@ -10,7 +10,7 @@
         {
             "summary": "Triggers when player has reached specified skill level or higher.",
             "overloads": [
-                "when skill ${1:ww} is at least ${2:dd}"
+                "when skill ${1:ww} is at least ${2:nn}"
             ]
         }
     ],
