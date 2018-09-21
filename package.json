@@ -60,6 +60,21 @@
                 "path": "./snippets/dftemplate.json"
             }
         ],
+        "commands": [
+            {
+                "command": "dftemplate.toggleCeToken",
+                "title": "Toggle center token"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "editorHasSelection && editorTextFocus && !editorReadOnly && resourceLangId == dftemplate",
+                    "group": "1_modification",
+                    "command": "dftemplate.toggleCeToken"
+                }
+            ]
+        },
         "configurationDefaults": {
             "[dftemplate]": {
                 "editor.suggest.snippetsPreventQuickSuggestions": false
