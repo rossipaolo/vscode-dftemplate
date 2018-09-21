@@ -10,7 +10,7 @@ import * as parser from '../parsers/parser';
 import { ExtensionContext } from 'vscode';
 import { TablesManager } from './base/tablesManager';
 import { BooleanExpression } from './booleanExpression';
-import { getOptions } from '../extension';
+import { getOptions, select, where } from '../extension';
 
 interface Action {
     summary: string;
@@ -101,6 +101,17 @@ export class Modules extends TablesManager {
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Finds actions and modules that starts with the given string (case insensitive) and returns their signature.
+     */
+    public *caseInsensitiveSeek(prefix: string): Iterable<string> {
+        prefix = prefix.toUpperCase();
+        for (const module of this.modules) {
+            yield* select(where(module.conditions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
+            yield* select(where(module.actions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
         }
     }
 

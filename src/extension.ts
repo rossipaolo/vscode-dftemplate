@@ -97,3 +97,12 @@ export function* select<T1, T2>(iterable: Iterable<T1>, transform: (item: T1) =>
         yield transform(item);
     }
 }
+
+/**
+ * Projects each element of a sequence with a transform operation and flattens the resulting sequence.
+ */
+export function* selectMany<T1, T2, T3>(iterable: Iterable<T1>, selector: (item: T1) => Iterable<T2>, transform: (item: T2) => T3): Iterable<T3> {
+    for (const item of iterable) {
+        yield* select(selector(item), x => transform(x));
+    }
+}
