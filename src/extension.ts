@@ -53,6 +53,8 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider()));
     }
 
+    registerCommands(context);
+
     Promise.all([
         Language.getInstance().load(context),
         Modules.getInstance().load(context),
@@ -105,4 +107,25 @@ export function* selectMany<T1, T2, T3>(iterable: Iterable<T1>, selector: (item:
     for (const item of iterable) {
         yield* select(selector(item), x => transform(x));
     }
+}
+
+function registerCommands(context: ExtensionContext) {
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', textEditor => {
+        textEditor.edit(editBuilder => {
+            for (let line = textEditor.selection.start.line; line <= textEditor.selection.end.line; line++) {
+                const match = textEditor.document.lineAt(line).text.match(/(\s*<ce>\s*)[^\s]/);
+                if (match) {
+                    editBuilder.replace(new vscode.Range(line, 0, line, match[1].length), '');
+                } else {
+                    editBuilder.insert(new vscode.Position(line, 0), '<ce>');
+                }
+            }
+        }).then(success => {
+            if (success) {
+                vscode.commands.executeCommand('editor.action.formatSelection');
+            } else {
+                vscode.window.showInformationMessage('Failed to toggle ce tokens.');
+            }
+        });
+    }));
 }
