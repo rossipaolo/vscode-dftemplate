@@ -8,6 +8,9 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 import { DiagnosticCode } from '../diagnostics/common';
 import { Tables } from '../language/tables';
+import { Modules } from '../language/modules';
+import { Language } from '../language/language';
+import { TablesManager } from '../language/base/tablesManager';
 
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
@@ -26,6 +29,12 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                 vscode.window.activeTextEditor.edit((editBuilder) => {
                     editBuilder.replace(range, newName);
                 });
+            }
+        });
+
+        vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
+            if (vscode.window.activeTextEditor) {
+                vscode.window.activeTextEditor.insertSnippet(new vscode.SnippetString(snippet), range);
             }
         });
     }
@@ -68,6 +77,20 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             command: 'dftemplate.deleteRange',
                             arguments: Array<any>(parser.getTaskRange(document, diagnostic.range.start.line))
                         });
+                        break;
+                    case DiagnosticCode.UndefinedExpression:
+                        const prefix = parser.getFirstWord((document.lineAt(diagnostic.range.start.line).text));
+                        if (prefix) {
+                            for (const signature of [
+                                ...Language.getInstance().caseInsensitiveSeek(prefix),
+                                ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
+                                commands.push({
+                                    title: 'Change to \'' + TablesManager.prettySignature(signature) + '\'',
+                                    command: 'dftemplate.insertSnippetAtRange',
+                                    arguments: [signature, diagnostic.range]
+                                });
+                            }
+                        }
                         break;
                     case DiagnosticCode.IncorrectSymbolVariation:
                         const currentSymbol = document.getText(diagnostic.range);

@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { ExtensionContext } from 'vscode';
-import { iterateAll } from '../extension';
+import { iterateAll, where, select, selectMany } from '../extension';
 import { TablesManager } from "./base/tablesManager";
 import { SignatureWord } from '../diagnostics/signatureCheck';
 import { Tables } from './tables';
@@ -121,6 +121,18 @@ export class Language extends TablesManager {
             this.findGlobalVariables(prefix),
             this.findDefinitions(prefix))) {
             yield result;
+        }
+    }
+
+    /**
+     * Finds language items that starts with the given string (case insensitive) and returns their signature.
+     */
+    public *caseInsensitiveSeek(prefix: string): Iterable<string> {
+        prefix = prefix.toUpperCase();
+        if (this.table && this.definitions) {
+            yield* select(where(this.table.keywords, x => x["1"].signature.toUpperCase().startsWith(prefix)), x => x["1"].signature);
+            yield* selectMany(where(this.definitions, x => x["0"].toUpperCase().startsWith(prefix)), x => x["1"], x => x.snippet);
+            yield* select(where(Tables.getInstance().globalVarsTable.globalVars, x => x["0"].toUpperCase().startsWith(prefix)), x => x["0"] + ' ${1:_varSymbol_}');
         }
     }
 

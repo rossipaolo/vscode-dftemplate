@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Action provider now proposes suggestions where an unknown expression could be a result of case mismatch or incorrect use of parameters.
+
 ### Improved
 - Diagnostics now distinguish between natural and integer numbers and provide appropriate error messages.
 - Added overload for **_restore npc_**.
