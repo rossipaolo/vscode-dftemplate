@@ -347,7 +347,7 @@
             ]
         },
         {
-            "summary": "Starts another quest from name or index (repeated two times).",
+            "summary": "Starts any quest by name or a `S000nnnn` quest by index (repeated two times).",
             "overloads": [
                 "start quest ${1:questName}",
                 "start quest ${1:questIndex} ${2:questIndex}"

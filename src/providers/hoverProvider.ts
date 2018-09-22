@@ -93,11 +93,11 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
 
                 // Seek quest
-                if (parser.isQuestReference(document.lineAt(position.line).text)) {
+                if (word !== 'start' && parser.isQuestReference(document.lineAt(position.line).text)) {
                     return parser.findQuestDefinition(word, token).then((quest) => {
                         let item = new TemplateDocumentationItem();
                         item.category = 'quest';
-                        item.signature = 'Quest: ' +  quest.pattern;
+                        item.signature = 'Quest: ' + quest.pattern;
                         item.summary = quest.displayName;
                         return resolve(TemplateHoverProvider.makeHover(item));
                     }, () => reject());

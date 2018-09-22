@@ -9,6 +9,8 @@
 ### Improved
 - Diagnostics now distinguish between natural and integer numbers and provide appropriate error messages.
 - Added overload for **_restore npc_**.
+- Hover and highlighting for action `start quest ${1:questIndex} ${2:questIndex}`.
+- Quest references are now also seeked by index for **S000nnnn** family quests.
 
 ### Fixed
 - Added a few missing actions.

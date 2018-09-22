@@ -294,7 +294,7 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>\b(start\squest)\s([^\s]+)\b</string>
+                    <string>\b(start\squest)\s([^\s]+(?:\s[^\s]+)?)\b</string>
                     <key>captures</key>
                     <dict>
                         <key>1</key>
