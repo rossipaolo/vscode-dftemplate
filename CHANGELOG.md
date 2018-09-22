@@ -5,6 +5,7 @@
 ### Added
 - Action provider now proposes suggestions where an unknown expression could be a result of case mismatch or incorrect use of parameters.
 - Added context menu command to toggle message `<ce>` tokens for the selection.
+- Automatically insert task indentation on new line.
 
 ### Improved
 - Diagnostics now distinguish between natural and integer numbers and provide appropriate error messages.

@@ -36,7 +36,7 @@ export function getOptions() {
 
 export function activate(context: ExtensionContext) {
 
-    vscode.languages.setLanguageConfiguration(TEMPLATE_LANGUAGE, { wordPattern: /(={1,2}|%)?([a-zA-Z0-9_-]+\.)?[a-zA-Z0-9_-]+/g });
+    setLanguageConfiguration();
 
     context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider()));
@@ -107,6 +107,20 @@ export function* selectMany<T1, T2, T3>(iterable: Iterable<T1>, selector: (item:
     for (const item of iterable) {
         yield* select(selector(item), x => transform(x));
     }
+}
+
+function setLanguageConfiguration() {
+    vscode.languages.setLanguageConfiguration(TEMPLATE_LANGUAGE, {
+        wordPattern: /(={1,2}|%)?([a-zA-Z0-9_-]+\.)?[a-zA-Z0-9_-]+/g,
+        onEnterRules: [
+            {
+                beforeText: /\s*([^\s]+ task|until [^\s]+ performed):\s*$/,
+                action: {
+                    indentAction: vscode.IndentAction.Indent
+                }
+            }
+        ]
+    });
 }
 
 function registerCommands(context: ExtensionContext) {
