@@ -57,12 +57,13 @@ export function findDisplayName(document: TextDocument): string {
 
 /**
  * Find quest definition.
- * @param name Name pattern of quest.
+ * @param name Name pattern or index of quest.
  */
 export function findQuestDefinition(name: string, token?: vscode.CancellationToken): Promise<Quest> {
+    const questName = !isNaN(Number(name)) ? questIndexToName(name) : name;
     return new Promise((resolve, reject) => {
         return parser.findAllQuests(token).then((quests) => {
-            const quest = quests.find((quest) => quest.pattern === name);
+            const quest = quests.find((quest) => quest.pattern === questName);
             return quest ? resolve(quest) : reject();
         }, () => reject());
     });
@@ -73,7 +74,25 @@ export function findQuestDefinition(name: string, token?: vscode.CancellationTok
  * @param questName Name pattern of quest.
  */
 export function findQuestReferences(questName: string, token?: vscode.CancellationToken): Thenable<Location[]> {
-    return parser.findReferences(questName, questReferencePattern, token);
+
+    /**
+     * Finds references to S000nnnn family quest from its index.
+     */
+    function findIndexReferences(): Thenable<Location[]> {
+        const index = questNameToIndex(questName);
+        const indexPattern = index + ' ' + index;
+        return index ? parser.findLinesInAllQuests(new RegExp('start quest ' + indexPattern), false, token).then(results =>
+            results.map(x => {
+                const char = x.line.text.indexOf(indexPattern);
+                return new Location(x.document.uri, new vscode.Range(x.line.lineNumber, char, x.line.lineNumber, char + indexPattern.length));
+            })) : Promise.resolve([]);
+    }
+
+    // Find references by name and index and merge the results.
+    return Promise.all([
+        parser.findReferences(questName, questReferencePattern, token),
+        findIndexReferences()
+    ]).then(locations => locations[0].concat(locations[1]));
 }
 
 /**
@@ -93,4 +112,21 @@ export function findAllQuests(token?: vscode.CancellationToken): Thenable<Quest[
             return quests;
         }, new Array<Quest>());
     }, () => []);
+}
+
+/**
+ * Gets the name of a S000nnnn family quest from its index.
+ */
+function questIndexToName(index: string): string {
+    return 'S' + '0'.repeat(7 - index.length) + index;
+}
+
+/**
+ * Gets the index of a S000nnnn family quest from its name.
+ */
+function questNameToIndex(name: string): string | undefined {
+    const match = name.match(/S0+([^0]+[0-9]*)/);
+    if (match) {
+        return match[1];
+    }
 }
