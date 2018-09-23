@@ -7,6 +7,7 @@
 - Added context menu command to toggle message `<ce>` tokens for the selection.
 - Automatically insert task indentation on new line.
 - A line or block is formatted when Enter is pressed to make a new line. This behaviour is controlled with the setting `editor.formatOnType`.
+- Added implementation of Signature Help Provider. When a symbol definition or action/condition is accepted from completion proposals, a UI element shows the signature and, when available, the current parameter with a description based on the parameter "type". This functionality can be manually triggered on existing invocations with the keboard shortcut associated to `editor.action.triggerParameterHints`.
 
 ### Improved
 - Diagnostics now distinguish between natural and integer numbers and provide appropriate error messages.

@@ -8,7 +8,8 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { Tables } from '../language/tables';
-import { SignatureWords, Errors } from './common';
+import { Errors } from './common';
+import { ParameterTypes } from '../language/parameterTypes';
 
 export interface SignatureWord {
     regex: string;
@@ -69,27 +70,27 @@ export function* doWordsCheck(document: vscode.TextDocument, signatureWords: Sig
 */
 function doWordCheck(document: vscode.TextDocument, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     switch (signatureItem) {
-        case SignatureWords.naturalNumber:
+        case ParameterTypes.naturalNumber:
             if (isNaN(Number(word))) {
                 return Errors.notANumber(range(), word);
             } else if (word.startsWith('+') || word.startsWith('-')) {
                 return Errors.numberIsNotNatural(range(), word);
             }
             break;
-        case SignatureWords.integerNumber:
+        case ParameterTypes.integerNumber:
             if (isNaN(Number(word))) {
                 return Errors.notANumber(range(), word);
             } else if (!word.startsWith('+') && !word.startsWith('-')) {
                 return Errors.numberIsNotInteger(range(), word);
             }
             break;
-        case SignatureWords.time:
+        case ParameterTypes.time:
             const time = word.split(':');
             if (Number(time[0]) > 23 || Number(time[1]) > 59) {
                 return Errors.incorrectTime(range(), word);
             }
             break;
-        case SignatureWords.message:
+        case ParameterTypes.message:
             if (!isNaN(Number(word))) {
                 if (!parser.findMessageByIndex(document, word)) {
                     return Errors.undefinedMessage(range(), word);
@@ -101,32 +102,32 @@ function doWordCheck(document: vscode.TextDocument, word: string, signatureItem:
                 }
             }
             break;
-        case SignatureWords.messageName:
+        case ParameterTypes.messageName:
             if (!parser.findMessageByName(document, word)) {
                 return Errors.undefinedMessage(range(), word);
             }
             break;
-        case SignatureWords.messageID:
+        case ParameterTypes.messageID:
             if (!parser.findMessageByIndex(document, word)) {
                 return Errors.undefinedMessage(range(), word);
             }
             break;
-        case SignatureWords.symbol:
+        case ParameterTypes.symbol:
             if (!parser.findSymbolDefinition(document, word)) {
                 return Errors.undefinedSymbol(range(), word);
             }
             break;
-        case SignatureWords.itemSymbol:
+        case ParameterTypes.itemSymbol:
             return checkType(document, word, parser.Types.Item, range);
-        case SignatureWords.personSymbol:
+        case ParameterTypes.personSymbol:
             return checkType(document, word, parser.Types.Person, range);
-        case SignatureWords.placeSymbol:
+        case ParameterTypes.placeSymbol:
             return checkType(document, word, parser.Types.Place, range);
-        case SignatureWords.clockSymbol:
+        case ParameterTypes.clockSymbol:
             return checkType(document, word, parser.Types.Clock, range);
-        case SignatureWords.foeSymbol:
+        case ParameterTypes.foeSymbol:
             return checkType(document, word, parser.Types.Foe, range);
-        case SignatureWords.task:
+        case ParameterTypes.task:
             if (!parser.findTaskDefinition(document, word)) {
                 return Errors.undefinedTask(range(), word);
             }
