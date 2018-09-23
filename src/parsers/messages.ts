@@ -7,9 +7,9 @@
 import * as parser from './parser';
 import { TextDocument, TextLine, Range, Position } from "vscode";
 import { Language } from '../language/language';
-import { SignatureWords } from '../diagnostics/common';
 import { Modules } from '../language/modules';
 import { Tables } from '../language/tables';
+import { ParameterTypes } from '../language/parameterTypes';
 
 /**
  * Gets the index of the additional message defined in the given line.
@@ -111,21 +111,21 @@ export function* findMessageReferences(document: TextDocument, idOrName: string,
                 // Check this is a message for symbol definition
                 const symbolDefinition = Language.getInstance().findDefinition(firstWord, line.text);
                 if (symbolDefinition) {
-                    if (symbolDefinition.matches.find(x => x.signature === SignatureWords.message || (isId ? x.signature === SignatureWords.messageID : x.signature === SignatureWords.messageName))) {
+                    if (symbolDefinition.matches.find(x => x.signature === ParameterTypes.message || (isId ? x.signature === ParameterTypes.messageID : x.signature === ParameterTypes.messageName))) {
                         yield parser.rangeOf(line, idOrName);
                     }
-    
+
                     continue;
                 }
-    
+
                 // Check this is a message for action invocation
                 const actionInvocation = Modules.getInstance().findAction(line.text, firstWord);
                 if (actionInvocation) {
                     if (Modules.actionHasParameterAtPosition(actionInvocation, Modules.getWordIndex(line.text, idOrName),
-                        SignatureWords.message, isId ? SignatureWords.messageID : SignatureWords.messageName)) {
+                        ParameterTypes.message, isId ? ParameterTypes.messageID : ParameterTypes.messageName)) {
                         yield parser.rangeOf(line, idOrName);
                     }
-    
+
                     continue;
                 }
             }

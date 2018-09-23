@@ -256,6 +256,17 @@ export class Language extends TablesManager {
         return 0;
     }
 
+    public getOverloads(symbolType: string): Definition[] {
+        if (this.definitions) {
+            const def = this.definitions.get(symbolType);
+            if (def) {
+                return def;
+            }
+        }
+
+        return [];
+    }
+
     public static getInstance(): Language {
         return Language.instance ? Language.instance : Language.instance = new Language();
     }

@@ -14,9 +14,18 @@ export abstract class TablesManager {
 
     /**
      * Convert a snippet string to a pretty signature definition.
+     * @example '${1:example}' -> 'example'
      */
     public static prettySignature(signature: string): string {
         return signature.replace(/\${\d(:|\|)?/g, '').replace(/\|?}/g, '');
+    }
+
+    /**
+     * Convert a snippet string to a standard signature definition.
+     * @example '${1:example}' -> '${example}'
+     */
+    public static formatParameter(word: string): string {
+        return word.replace(/\$\{\d:(\.\.\.)?/, '${');
     }
 
     /**
@@ -45,16 +54,11 @@ export abstract class TablesManager {
      * @param index Index of the parameter. Can be a virtual index if marked as params.
      */
     public static getParameterAtPosition(action: ActionResult, index: number): string | undefined {
-
-        function formatWord(word: string): string {
-            return word.replace(/\$\{\d:(\.\.\.)?/, '${');
-        }
-
         const signatureWords = action.action.overloads[action.overload].split(' ');
         if (index > 0 && index < signatureWords.length) {
-            return formatWord(signatureWords[index]);
+            return TablesManager.formatParameter(signatureWords[index]);
         } else if (index >= signatureWords.length && /^\$\{\d:\.\.\./.test(signatureWords[signatureWords.length - 1])) {
-            return formatWord(signatureWords[signatureWords.length - 1]);
+            return TablesManager.formatParameter(signatureWords[signatureWords.length - 1]);
         }
     }
 

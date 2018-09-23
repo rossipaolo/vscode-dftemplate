@@ -375,7 +375,7 @@
             "summary": "Remove a quest Item from player.",
             "overloads": [
                 "take ${1:_item_} from pc",
-                "take ${1:_item_} from pc saying ${1:messageID}"
+                "take ${1:_item_} from pc saying ${2:messageID}"
             ]
         },
         {

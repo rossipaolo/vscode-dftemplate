@@ -10,37 +10,6 @@ import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 
 /**
- * Placeholders for snippets.
- */
-export abstract class SignatureWords {
-    public static readonly naturalNumber = '${nn}';
-    public static readonly integerNumber = '${dd}';
-    public static readonly time = '${hh}:${mm}';
-    public static readonly questID = '${questID}';
-    public static readonly questName = '${questName}';
-    public static readonly message = '${message}';
-    public static readonly messageID = '${messageID}';
-    public static readonly messageName = '${messageName}';
-    public static readonly symbol = '${_symbol_}';
-    public static readonly clockSymbol = '${_clock_}';
-    public static readonly foeSymbol = '${_foe_}';
-    public static readonly itemSymbol = '${_item_}';
-    public static readonly personSymbol = '${_person_}';
-    public static readonly placeSymbol = '${_place_}';
-    public static readonly task = '${task}';
-    public static readonly disease = '${disease}';
-    public static readonly faction = '${faction}';
-    public static readonly factionType = '${factionType}';
-    public static readonly group = '${group}';
-    public static readonly foe = '${foe}';
-    public static readonly commonItem = '${commonItem}';
-    public static readonly artifactItem = '${artifactItem}';
-    public static readonly localRemotePlace = '${localRemotePlace}';
-    public static readonly permanentPlace = '${permanentPlace}';
-    public static readonly sound = '${sound}';
-}
-
-/**
  * Identifier code for a diagnostic item.
  */
 export enum DiagnosticCode {

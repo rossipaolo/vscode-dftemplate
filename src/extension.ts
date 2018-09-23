@@ -12,6 +12,7 @@ import { Language } from './language/language';
 import { makeDiagnosticCollection } from './diagnostics/diagnostics';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
+import { TemplateSignatureHelpProvider } from './providers/signatureHelpProvider';
 import { TemplateDefinitionProvider } from './providers/definitionProvider';
 import { TemplateReferenceProvider } from './providers/referenceProvider';
 import { TemplateDocumentHighlightProvider } from './providers/documentHighlightProvider';
@@ -41,6 +42,7 @@ export function activate(context: ExtensionContext) {
 
     context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider()));
     context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider()));
+    context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider()));
     context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider()));
     context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider()));

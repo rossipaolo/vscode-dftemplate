@@ -11,9 +11,11 @@ import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscod
 import { Modules } from '../language/modules';
 import { Language } from '../language/language';
 import { Tables } from '../language/tables';
-import { SignatureWords } from '../diagnostics/common';
+import { ParameterTypes } from '../language/parameterTypes';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
+
+    private static readonly signatureInfoCommand = { command: 'editor.action.triggerParameterHints', title: '' };
 
     private static taskQueries = (document: TextDocument) => [
         {
@@ -52,12 +54,12 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
                 // Inside an invocation: suggests values according to parameter type
                 switch (param) {
-                    case SignatureWords.questName:
+                    case ParameterTypes.questName:
                         return TemplateCompletionItemProvider.findQuestsCompletionItems(token).then((items) => {
                             return resolve(items);
                         }), () => reject();
-                    case SignatureWords.message:
-                    case SignatureWords.messageName:
+                    case ParameterTypes.message:
+                    case ParameterTypes.messageName:
                         for (const message of parser.findAllMessages(document)) {
                             if (message.symbol.startsWith(prefix)) {
                                 const item = new CompletionItem(message.symbol, vscode.CompletionItemKind.Struct);
@@ -66,25 +68,25 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                             }
                         }
                         break;
-                    case SignatureWords.symbol:
+                    case ParameterTypes.symbol:
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix);
                         break;
-                    case SignatureWords.clockSymbol:
+                    case ParameterTypes.clockSymbol:
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Clock);
                         break;
-                    case SignatureWords.foeSymbol:
+                    case ParameterTypes.foeSymbol:
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Foe);
                         break;
-                    case SignatureWords.itemSymbol:
+                    case ParameterTypes.itemSymbol:
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Item);
                         break;
-                    case SignatureWords.personSymbol:
+                    case ParameterTypes.personSymbol:
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Person);
                         break;
-                    case SignatureWords.placeSymbol:
+                    case ParameterTypes.placeSymbol:
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Place);
                         break;
-                    case SignatureWords.task:
+                    case ParameterTypes.task:
                         for (const definitionQuery of TemplateCompletionItemProvider.taskQueries(document)) {
                             for (const result of definitionQuery.result) {
                                 const item = new vscode.CompletionItem(result.symbol, definitionQuery.kind);
@@ -140,6 +142,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             item.insertText = new vscode.SnippetString(languageItem.signature);
             item.detail = prettySignature;
             item.documentation = new vscode.MarkdownString(languageItem.summary);
+            item.command = TemplateCompletionItemProvider.signatureInfoCommand;
             items.push(item);
         }
 
@@ -151,6 +154,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 item.insertText = new vscode.SnippetString(overload);
                 item.detail = result.moduleName + ' -> ' + signature;
                 item.documentation = new vscode.MarkdownString(result.action.summary);
+                item.command = TemplateCompletionItemProvider.signatureInfoCommand;
                 items.push(item);
             }
         }

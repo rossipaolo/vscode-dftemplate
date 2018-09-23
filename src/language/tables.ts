@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { getOptions, select, where } from '../extension';
-import { SignatureWords } from '../diagnostics/common';
+import { ParameterTypes } from './parameterTypes';
 
 abstract class Table {
 
@@ -204,25 +204,25 @@ export class Tables {
      */
     public getValues(signatureWord: string): string[] | undefined {
         switch (signatureWord) {
-            case SignatureWords.disease:
+            case ParameterTypes.disease:
                 return this.diseasesTable.diseases;
-            case SignatureWords.faction:
+            case ParameterTypes.faction:
                 return this.factionsTable.factions;
-            case SignatureWords.factionType:
+            case ParameterTypes.factionType:
                 return this.factionsTable.factionTypes;
-            case SignatureWords.group:
+            case ParameterTypes.group:
                 return this.factionsTable.groups;
-            case SignatureWords.group:
+            case ParameterTypes.group:
                 return this.foesTable.foes;
-            case SignatureWords.commonItem:
+            case ParameterTypes.commonItem:
                 return this.itemsTable.commonItems;
-            case SignatureWords.artifactItem:
+            case ParameterTypes.artifactItem:
                 return this.itemsTable.artifacts;
-            case SignatureWords.localRemotePlace:
+            case ParameterTypes.localRemotePlace:
                 return this.placesTable.localRemoteLocations;
-            case SignatureWords.permanentPlace:
+            case ParameterTypes.permanentPlace:
                 return this.placesTable.permanentLocations;
-            case SignatureWords.sound:
+            case ParameterTypes.sound:
                 return this.soundsTable.sounds;
         }
     }
