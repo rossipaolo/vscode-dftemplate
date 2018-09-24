@@ -6,12 +6,14 @@
 - Action provider now proposes suggestions where an unknown expression could be a result of case mismatch or incorrect use of parameters.
 - Added context menu command to toggle message `<ce>` tokens for the selection.
 - Automatically insert task indentation on new line.
+- A line or block is formatted when Enter is pressed to make a new line. This behaviour is controlled with the setting `editor.formatOnType`.
 
 ### Improved
 - Diagnostics now distinguish between natural and integer numbers and provide appropriate error messages.
 - Added overload for **_restore npc_**.
 - Hover and highlighting for action `start quest ${1:questIndex} ${2:questIndex}`.
 - Quest references are now also seeked by index for **S000nnnn** family quests.
+- When a selection format is requested on a part of a block, formatter now seeks context in the previous lines to detect the start of the block.
 
 ### Fixed
 - Added a few missing actions.

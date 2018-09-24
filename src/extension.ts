@@ -20,6 +20,7 @@ import { TemplateWorkspaceSymbolProvider } from './providers/workspaceSymbolProv
 import { TemplateCodeLensProvider } from './providers/codeLensProvider';
 import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
+import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { Tables } from './language/tables';
 import { setGlobalVariables } from './parsers/tasks';
@@ -47,6 +48,7 @@ export function activate(context: ExtensionContext) {
     context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(new TemplateWorkspaceSymbolProvider()));
     context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
     context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
+    context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider()));
 
     if (getOptions()['codeLens']['enabled']) {

@@ -13,11 +13,10 @@ import { Formatter } from '../language/formatter';
 export class TemplateDocumentRangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
 
     public provideDocumentRangeFormattingEdits(document: TextDocument, range: Range, options: FormattingOptions): Thenable<TextEdit[]> {
-        return new Promise((resolve, reject) => {
-            const formatter = new Formatter(document, options);
-            const textEdits: TextEdit[] = parser.isQuestTable(document) ?
-                formatter.formatTable(range) : formatter.formatQuest(range);
-            return textEdits.length > 0 ? resolve(textEdits) : reject();
+        return new Promise(resolve => {
+            const formatter = new Formatter(document, options, true);
+            return resolve(parser.isQuestTable(document) ?
+                formatter.formatTable(range) : formatter.formatQuest(range));
         });
     }
 }

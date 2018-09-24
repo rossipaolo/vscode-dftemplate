@@ -49,15 +49,18 @@ export class Formatter {
 
     private readonly document: TextDocument;
     private readonly indent: string;
+    private readonly formatEmptyLines: boolean;
 
     /**
     * A new instance of a formatter for a Template document.
     * @param document The document to format.
     * @param options Formatting options.
+    * @param formatEmptyLines Trim empty lines and keep a single one between blocks.
     */
-    public constructor(document: TextDocument, options: FormattingOptions) {
+    public constructor(document: TextDocument, options: FormattingOptions, formatEmptyLines: boolean) {
         this.document = document;
         this.indent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
+        this.formatEmptyLines = formatEmptyLines;
     }
 
     /**
@@ -66,10 +69,10 @@ export class Formatter {
      */
     public formatQuest(range: Range): TextEdit[] {
         const questBlocks = parser.getQuestBlocksRanges(this.document);
-        const qrcRange = range.intersection(questBlocks.qrc);
+        const qrcRange = range.intersection(new Range(new Position(0, 0), questBlocks.qrc.end));
         const qbnRange = range.intersection(questBlocks.qbn);
         return [
-            ...qrcRange ? this.doFormat(new Range(new Position(0, 0), qrcRange.end), [
+            ...qrcRange ? this.doFormat(qrcRange, [
                 (line) => this.formatEmptyOrComment(line),
                 (line) => this.formatKeyword(line),
                 (line) => this.formatMessage(line)
@@ -112,32 +115,48 @@ export class Formatter {
                 textEdits.push(...results.textEdits);
             }
         }
-
+        
+        let blockStartFound = false;
         for (let i = range.start.line; i <= range.end.line; i++) {
-            for (const doFormat of formatters) {
-                const results = doFormat(this.document.lineAt(i));
-                if (results) {
-                    pushTextEdits(results);
+            
+            // Do not start from an empty line
+            if (blockStartFound || !this.document.lineAt(i).isEmptyOrWhitespace) {
+                
+                for (const doFormat of formatters) {
+                    const results = doFormat(this.document.lineAt(i));
+                    if (results) {
 
-                    // Matching formatter can immediately request the following line.
-                    function tryFormatNextLine(document: TextDocument, line: number, endLine: number, results: FormatterResults, textEdits: TextEdit[]): number {
-                        if (line < endLine) {
-                            const nextLine = document.lineAt(line + 1);
-                            if (results.formatNextLineRequest && results.formatNextLineRequest.requestLine(nextLine)) {
-                                const nextResults = results.formatNextLineRequest.formatLine(nextLine);
-                                if (nextResults) {
-                                    pushTextEdits(nextResults);
-                                    return tryFormatNextLine(document, ++line, endLine, nextResults, textEdits);
-                                }
-                            }
+                        if (!blockStartFound) {
+                            blockStartFound = true;
                         }
 
-                        return line;
-                    }
+                        pushTextEdits(results);
 
-                    i = tryFormatNextLine(this.document, i, range.end.line, results, textEdits);
-                    break;
+                        // Matching formatter can immediately request the following line.
+                        function tryFormatNextLine(document: TextDocument, line: number, endLine: number, results: FormatterResults, textEdits: TextEdit[]): number {
+                            if (line < endLine) {
+                                const nextLine = document.lineAt(line + 1);
+                                if (results.formatNextLineRequest && results.formatNextLineRequest.requestLine(nextLine)) {
+                                    const nextResults = results.formatNextLineRequest.formatLine(nextLine);
+                                    if (nextResults) {
+                                        pushTextEdits(nextResults);
+                                        return tryFormatNextLine(document, ++line, endLine, nextResults, textEdits);
+                                    }
+                                }
+                            }
+
+                            return line;
+                        }
+
+                        i = tryFormatNextLine(this.document, i, range.end.line, results, textEdits);
+                        break;
+                    }
                 }
+            }
+
+            // If the range is only a portion of a block, go up one line until the start is found
+            if (!blockStartFound && (i -= 2) < -1) {
+                break;
             }
         }
 
@@ -155,7 +174,7 @@ export class Formatter {
         }
 
         // Empty line
-        if (/^\s*$/.test(line.text)) {
+        if (this.formatEmptyLines && /^\s*$/.test(line.text)) {
 
             /**
              * Removes all empty lines following an empty line.
