@@ -55,13 +55,17 @@ export function isEmptyOrComment(text: string): boolean {
 }
 
 /**
- * Finds a comment above a definition and returns its content.
+ * Finds a comment block above a definition and returns its content.
  * @param document A quest document.
  * @param definitionLine Line index of item whose summary is requested.
  */
 export function makeSummary(document: TextDocument, definitionLine: number): string {
-    const previousLine = document.lineAt(definitionLine - 1).text;
-    return /^\s*-+/.test(previousLine) ? previousLine.replace(/^\s*-+/, '').trim() : '';
+    let summary: string = '';
+    let text;
+    while (/^\s*-+/.test(text = document.lineAt(--definitionLine).text)) {
+        summary = text.replace(/^\s*-+\s*/, '') + ' ' + summary;
+    }
+    return summary.trim();
 }
 
 /**

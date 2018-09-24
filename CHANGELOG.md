@@ -15,6 +15,7 @@
 - Hover and highlighting for action `start quest ${1:questIndex} ${2:questIndex}`.
 - Quest references are now also seeked by index for **S000nnnn** family quests.
 - When a selection format is requested on a part of a block, formatter now seeks context in the previous lines to detect the start of the block.
+- Hovers now show a comment block located above a definition and not only a single comment line.
 
 ### Fixed
 - Added a few missing actions.
