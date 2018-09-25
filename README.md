@@ -18,21 +18,23 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 * Smart bracket matching
 * Show Hovers
     + Show informations for symbols
-    + Use comment above symbol as a summary
+    + Use comment block above symbol as a summary
 * Completion proposals
     + Keywords, symbol definitions and action/condition invocations
     + Symbols based on action signature
     + Constants from quest tables
+* Help with symbol and action/condition signatures
 * Go to definition/Peek definition/Find all references
     + Symbols in quest file
     + Seek other quests in workspace
 * Show all symbol and task definitions
 * Show all quests in workspace
-* CodeLenses with references and other details.
+* CodeLenses with references and other details
 * Rename symbols
     + Keep symbol variations (prefixes) in QRC block
 * Format source code
     + Auto indent centered messages and tasks
+    + Support format on type
 * Diagnostics and action suggestions
     + Find issues with symbol definitions and action/condition invocations
     + Suggest symbol variations in QRC block
