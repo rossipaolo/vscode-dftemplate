@@ -116,10 +116,14 @@ class PlacesTable extends Table {
 
     public readonly permanentLocations: string[] = [];
     public readonly localRemoteLocations: string[] = [];
+    public readonly locationTypes: string[] = [];
 
     protected set(data: string[][]) {
         data.forEach((place) => {
             this.getPlaceGroup(place[3]).push(place[0]);
+            if (place[1] === '2' && place[3] === '0') {
+                this.locationTypes.push(place[0]);
+            }
         });
     }
 
@@ -222,6 +226,8 @@ export class Tables {
                 return this.placesTable.localRemoteLocations;
             case ParameterTypes.permanentPlace:
                 return this.placesTable.permanentLocations;
+            case ParameterTypes.locationType:
+                return this.placesTable.locationTypes;
             case ParameterTypes.sound:
                 return this.soundsTable.sounds;
         }

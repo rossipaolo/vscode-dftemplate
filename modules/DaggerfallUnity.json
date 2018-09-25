@@ -2,9 +2,9 @@
     "displayName": "DaggerfallUnity",
     "conditions": [
         {
-            "summary": "When pc enters/exits.",
+            "summary": "Triggers when player enters/exits a certain location area.",
             "overloads": [
-                "when pc ${1|enters,exits|} ${2:ww}"
+                "when pc ${1|enters,exits|} ${2:locationType}"
             ]
         },
         {

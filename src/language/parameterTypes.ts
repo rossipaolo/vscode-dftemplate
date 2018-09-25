@@ -33,6 +33,7 @@ export abstract class ParameterTypes {
     public static readonly artifactItem = '${artifactItem}';
     public static readonly localRemotePlace = '${localRemotePlace}';
     public static readonly permanentPlace = '${permanentPlace}';
+    public static readonly locationType = '${locationType}';
     public static readonly sound = '${sound}';
 }
 
@@ -88,6 +89,8 @@ export function getParameterTypeDescription(parameterType: string): string | und
             return 'A kind of house, shop or dungeon in a town.';
         case ParameterTypes.permanentPlace:
             return 'The name of a location that appears the same for every **Daggerfall** incarnation.';
+        case ParameterTypes.locationType:
+            return 'A type of exterior location that appears on the automap, such as a settlement or dungeon.';
         case ParameterTypes.sound:
             return 'The name of a sound, such as a model creature noise or an environmental sound effect.';
     }
