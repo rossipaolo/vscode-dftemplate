@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.5.0
 
 ### Added
 - Action provider now proposes suggestions where an unknown expression could be a result of case mismatch or incorrect use of parameters.
