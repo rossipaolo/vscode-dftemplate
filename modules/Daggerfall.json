@@ -2,6 +2,12 @@
     "displayName": "Daggerfall",
     "conditions": [
         {
+            "summary": "Triggers when player readies a spell containing specific effects; this is any standard or custom spell matched by effects.",
+            "overloads": [
+                "cast ${1:spellName} spell do ${2:task}"
+            ]
+        },
+        {
             "summary": "Triggers when the player character clicks on an item.",
             "overloads": [
                 "clicked item ${1:_item_}",
@@ -208,6 +214,7 @@
             "summary": "Place an item directly into inventory without notifying the player of the transaction. `from` parameter is ignored.",
             "overloads": [
                 "get item ${1:_item_}",
+                "get item ${1:_item_} saying ${2:messageID}",
                 "get item ${1:_item_} from ${2:_person_}"
             ]
         },
@@ -328,9 +335,10 @@
             ]
         },
         {
-            "summary": "Reveals location on travelmap. This can be a remote dungeon or a location revelead in a province with a _magicNumber_, meaning the key to an entry in the Map Table.",
+            "summary": "Reveals location on travelmap. This can be a remote dungeon or a location revelead in a province with a _magicNumber_, meaning the key to an entry in the Map Table. With `readmap` an entry is added to the journal.",
             "overloads": [
                 "reveal ${1:_place_}",
+                "reveal ${1:_place_} readmap",
                 "reveal ${1:_place_} in province ${2:nn} at ${3:nn}"
             ]
         },
