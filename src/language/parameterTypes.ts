@@ -25,6 +25,7 @@ export abstract class ParameterTypes {
     public static readonly placeSymbol = '${_place_}';
     public static readonly task = '${task}';
     public static readonly disease = '${disease}';
+    public static readonly spell = '${spell}';
     public static readonly faction = '${faction}';
     public static readonly factionType = '${factionType}';
     public static readonly group = '${group}';
