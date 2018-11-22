@@ -4,7 +4,7 @@
         {
             "summary": "Triggers when player readies a spell containing specific effects; this is any standard or custom spell matched by effects.",
             "overloads": [
-                "cast ${1:spellName} spell do ${2:task}"
+                "cast ${1:spell} spell do ${2:task}"
             ]
         },
         {
@@ -128,7 +128,7 @@
         {
             "summary": "Magically enhances a foe by casting one of the standard spells; this action can be repeated any number of times with different spells.",
             "overloads": [
-                "cast ${1:spellName} spell on ${2:_foe_}"
+                "cast ${1:spell} spell on ${2:_foe_}"
             ]
         },
         {

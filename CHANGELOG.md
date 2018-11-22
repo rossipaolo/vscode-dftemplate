@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Completion proposals and diagnostics for spells (from _Quests-Spells_ table).
+
 ### Improved
 - Updated list of actions and conditions.
 
