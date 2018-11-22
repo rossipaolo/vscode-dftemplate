@@ -26,6 +26,7 @@ export abstract class ParameterTypes {
     public static readonly task = '${task}';
     public static readonly disease = '${disease}';
     public static readonly spell = '${spell}';
+    public static readonly effectKey = "${effectKey}";
     public static readonly faction = '${faction}';
     public static readonly factionType = '${factionType}';
     public static readonly group = '${group}';
@@ -74,6 +75,8 @@ export function getParameterTypeDescription(parameterType: string): string | und
             return 'The symbol of a task or variable.';
         case ParameterTypes.disease:
             return 'The name of a disease afflicted during a quest or through exposure to various elements.';
+        case ParameterTypes.effectKey:
+            return 'An unique text key to identify an effect.';
         case ParameterTypes.faction:
             return 'The name of one of the factions.';
         case ParameterTypes.factionType:

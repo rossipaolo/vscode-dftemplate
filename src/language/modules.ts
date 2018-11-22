@@ -28,6 +28,7 @@ export interface Module {
     displayName: string;
     conditions: Action[];
     actions: Action[];
+    effects: string[];
 }
 
 /**
@@ -112,6 +113,29 @@ export class Modules extends TablesManager {
         for (const module of this.modules) {
             yield* select(where(module.conditions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
             yield* select(where(module.actions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
+        }
+    }
+
+    /**
+     * Checks if an effect key is defined inside a module.
+     */
+    public effectKeyExists(effectKey: string): boolean {
+        for (const module of where(this.modules, x => x.effects !== undefined)) {
+            if (module.effects.indexOf(effectKey) !== -1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets all effect keys that start with the given prefix (case insensitive).
+     */
+    public *getEffectKeys(prefix: string): Iterable<string> {
+        prefix = prefix.toUpperCase();
+        for (const module of where(this.modules, x => x.effects !== undefined)) {
+            yield* where(module.effects, x => x.toUpperCase().startsWith(prefix));
         }
     }
 

@@ -4,6 +4,7 @@
 
 ### Added
 - Completion proposals and diagnostics for spells (from _Quests-Spells_ table).
+- Completion proposals and diagnostics for effect keys.
 
 ### Improved
 - Updated list of actions and conditions.

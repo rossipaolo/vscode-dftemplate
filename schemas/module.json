@@ -21,6 +21,13 @@
             "items": {
                 "$ref": "#/definitions/action"
             }
+        },
+        "effects": {
+            "type": "array",
+            "description": "Effect keys provided by this module; these are the text identificative for magic and other effects.",
+            "items": {
+                "type": "string"
+            }
         }
     },
     "definitions": {
