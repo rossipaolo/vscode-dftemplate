@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { Tables } from '../language/tables';
+import { Modules } from '../language/modules';
 import { Errors } from './common';
 import { ParameterTypes } from '../language/parameterTypes';
 
@@ -130,6 +131,11 @@ function doWordCheck(document: vscode.TextDocument, word: string, signatureItem:
         case ParameterTypes.task:
             if (!parser.findTaskDefinition(document, word)) {
                 return Errors.undefinedTask(range(), word);
+            }
+            break;
+        case ParameterTypes.effectKey:
+            if (!Modules.getInstance().effectKeyExists(word)) {
+                return Errors.undefinedAttribute(range(), word, signatureItem.replace('${', '').replace('}', ''));
             }
             break;
     }

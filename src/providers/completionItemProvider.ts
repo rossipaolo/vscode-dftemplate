@@ -95,6 +95,11 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                             }
                         }
                         break;
+                    case ParameterTypes.effectKey:
+                        for (const effectKey of Modules.getInstance().getEffectKeys(prefix)) {
+                            items.push(new vscode.CompletionItem(effectKey, vscode.CompletionItemKind.EnumMember));
+                        }
+                        break;
                     default:
                         TemplateCompletionItemProvider.doParamSuggestions(items, param);
                         break;
