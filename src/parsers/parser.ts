@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 
 import { TextDocument, Position, TextLine, Location } from 'vscode';
+import { TEMPLATE_LANGUAGE } from '../extension';
 
 export * from './symbols';
 export * from './messages';
@@ -196,14 +197,13 @@ export function findReferences(name: string, regex: RegExp, token?: vscode.Cance
  * Open all documents in the workspace.
  * @param callback A callback called for each document
  */
-function openAllDocuments(callback: (document: TextDocument) => void, token?: vscode.CancellationToken): Thenable<void> {
-    return vscode.workspace.findFiles('**/*.{txt,dftemplate}', undefined, undefined, token).then((uris) => {
-        uris.forEach((uri) => {
-            vscode.workspace.openTextDocument(uri).then((document) => {
-                callback(document);
-            });
-        });
-    });
+async function openAllDocuments(callback: (document: TextDocument) => void, token?: vscode.CancellationToken): Promise<void> {
+    const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
+    await Promise.all(uris.map(uri => vscode.workspace.openTextDocument(uri).then(doc => {
+        if (doc.languageId === TEMPLATE_LANGUAGE) {
+            callback(doc);
+        }
+    })));
 }
 
 export function getQuestBlocksRanges(document: TextDocument): { qrc: vscode.Range, qbn: vscode.Range } {

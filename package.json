@@ -41,9 +41,6 @@
                     "DfTemplate",
                     "dftemplate"
                 ],
-                "extensions": [
-                    ".dftemplate"
-                ],
                 "configuration": "./language-configuration.json"
             }
         ],
