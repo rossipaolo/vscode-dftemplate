@@ -9,6 +9,9 @@
 ### Improved
 - Updated list of actions and conditions.
 
+### Fixed
+- Fixed seek of references of quests and global variables in the workspace.
+
 ## 0.5.0
 
 ### Added
