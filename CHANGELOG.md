@@ -7,6 +7,7 @@
 - Completion proposals and diagnostics for effect keys.
 
 ### Improved
+- Modules dependencies are now only listed with their name. Module files, when not provided by the extension, are seeked in a folder named **_Modules_** in the workspace root directory.
 - Updated list of actions and conditions.
 
 ### Fixed
