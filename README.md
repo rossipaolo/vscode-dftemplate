@@ -5,11 +5,13 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 ## Quick start
 
 1. Install the Template extension for Visual Studio Code from **Extensions > drop-down > [Install from VSIX](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix)**.
-2. Open a quest file and select **dftemplate** from the language indicator.
-
-## Optional steps
-
-3. Open a folder or create a workspace to set a file association (**files.associations**) to **dftemplate** for all quest txt files.
+2. Open **Preferences > Settings > User Settings** and set **dftemplate.tablesPath** to point to _StreamingAssets/Tables_.
+3. Open the project folder or workspace, then from **Preferences > Settings > Workspace Settings** set files associations. For example, it may looks like this:
+    ```
+    "files.associations": {
+        "**/Quests/**/*.txt": "dftemplate"
+    }
+    ```
 
 ## Features
 
