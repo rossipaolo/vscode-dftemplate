@@ -72,6 +72,12 @@
                 }
             ]
         },
+        "jsonValidation": [
+            {
+                "fileMatch": "*.dfmodule.json",
+                "url": "./schemas/module.json"
+            }
+        ],
         "configurationDefaults": {
             "[dftemplate]": {
                 "editor.suggest.snippetsPreventQuickSuggestions": false
@@ -126,8 +132,8 @@
                 "dftemplate.modules": {
                     "type": "array",
                     "default": [
-                        "${extensionPath}/modules/Daggerfall.json",
-                        "${extensionPath}/modules/DaggerfallUnity.json"
+                        "${extensionPath}/modules/Daggerfall.dfmodule.json",
+                        "${extensionPath}/modules/DaggerfallUnity.dfmodule.json"
                     ],
                     "description": "Modules for Intellisense."
                 }
