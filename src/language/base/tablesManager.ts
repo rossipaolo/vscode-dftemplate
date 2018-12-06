@@ -76,12 +76,8 @@ export abstract class TablesManager {
         return new RegExp('^\\s*' + signature + '\\s*$');
     }
 
-    protected static parseFromJson(fullPath: string): Thenable<any> {
-        return vscode.workspace.openTextDocument(fullPath).then((document) => {
-            let obj = JSON.parse(document.getText());
-            if (obj) {
-                return obj;
-            }
-        }, () => console.log('Failed to parse ' + fullPath));
+    protected static async parseFromJson(fullPath: string): Promise<any> {
+        const document = await vscode.workspace.openTextDocument(fullPath);
+        return JSON.parse(document.getText());
     }
 }

@@ -132,10 +132,10 @@
                 "dftemplate.modules": {
                     "type": "array",
                     "default": [
-                        "${extensionPath}/modules/Daggerfall.dfmodule.json",
-                        "${extensionPath}/modules/DaggerfallUnity.dfmodule.json"
+                        "Daggerfall",
+                        "DaggerfallUnity"
                     ],
-                    "description": "Modules for Intellisense."
+                    "description": "A list of modules the project depends on, seeked from extension resources and a folder named 'Models' in the workspace root directory."
                 }
             }
         }

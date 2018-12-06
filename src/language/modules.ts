@@ -5,6 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 import * as parser from '../parsers/parser';
 
 import { ExtensionContext } from 'vscode';
@@ -156,22 +158,37 @@ export class Modules extends TablesManager {
         return overload.startsWith(word) || overload.split(' ').find(x => !x.startsWith('$')) === word;
     }
 
-    private static loadModules(paths: string[], context: ExtensionContext): Thenable<Module[]> {
-        var modules = [];
-        for (const path of paths) {
-            modules.push(Modules.loadModule(path, context));
-        }
-        return Promise.all(modules);
-    }
+    /**
+     * Loads the requested modules, seeked from the extension resources and a folder named _Modules_
+     * inside the root directory of the workspace.
+     * @param modules A list of module names without `.dfmodule.json` extension.
+     * @param context The extension context.
+     */
+    private static async loadModules(modules: string[], context: ExtensionContext): Promise<Module[]> {
+        return (await Promise.all(modules.map(async name => {
+            name = name + '.dfmodule.json';
 
-    private static loadModule(path: string, context: ExtensionContext): Thenable<Module> {
-        path = path.replace('${extensionPath}', context.extensionPath);
-        if (vscode.workspace.workspaceFolders) {
-            path = path.replace('${workspaceFolder}', vscode.workspace.workspaceFolders[0].uri.fsPath);
-        }
+            try {
 
-        return Modules.parseFromJson(path).then((obj) => {
-            return obj;
-        }, () => vscode.window.showErrorMessage('Failed to import module ' + path + '.'));
+                // Standard modules provided by this extension
+                let modulePath = path.join(context.extensionPath, 'modules', name);
+                if (fs.existsSync(modulePath)) {
+                    return await Modules.parseFromJson(modulePath);
+                }
+
+                // Modules folder inside the workspace
+                if (vscode.workspace.workspaceFolders) {
+                    modulePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'Modules', name);
+                    if (fs.existsSync(modulePath)) {
+                        return await Modules.parseFromJson(modulePath);
+                    }
+                }
+
+                vscode.window.showErrorMessage('Failed to find module ' + name + '.');
+            } catch (e) {
+                vscode.window.showErrorMessage('Failed to import module ' + name + ': ' + e);
+            }
+            
+        }))).filter((x): x is Module => !!x);
     }
 }
