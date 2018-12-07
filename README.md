@@ -50,8 +50,7 @@ Quest data tables are read from local installation of Daggerfall Unity to provid
 
 ### Modules
 
-Modules are json files that implement the [module schema](schemas/module.json) and provides signatures and documentation for actions and conditions.
-Standard actions are already included with this extension but new modules can be imported with setting named **dftemplate.modules**.
+Modules are json files that provides signatures and documentation for actions, conditions and other modular language data. Standard actions are already included with this extension but additional modules can be imported from a folder named **Modules** in the workspace root directory, when their names are added to **dftemplate.modules**. For example `"Test/Foo"` makes data available from `/Modules/Test/Foo.dfmodule.json`. New module files can be easily created following the associated json schema.
 
 -----------------------------------------------------------------------------------------------------------
 
