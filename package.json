@@ -107,7 +107,7 @@
                 "dftemplate.codeLens.enabled": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Specifies whether CodeLenses with references and other details should be show be shown."
+                    "description": "Specifies whether CodeLenses with references and other details should be shown."
                 },
                 "dftemplate.diagnostics.enabled": {
                     "type": "boolean",
