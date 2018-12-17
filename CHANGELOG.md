@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.6.0
 
 ### Added
 - Completion proposals and diagnostics for spells (from _Quests-Spells_ table).
