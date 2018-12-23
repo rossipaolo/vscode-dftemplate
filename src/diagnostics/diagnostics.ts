@@ -10,26 +10,15 @@ import * as parser from '../parsers/parser';
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from '../language/language';
 import { doSignatureChecks } from './signatureCheck';
-import { MessageBlock } from '../parsers/parser';
 import { qrcCheck } from './qrcCheck';
-import { qbnCheck } from './qbnCheck';
+import { qbnCheck, lateQbnCheck } from './qbnCheck';
 import { tableCheck } from './tableCheck';
-import { Errors } from './common';
+import { Errors, DiagnosticContext } from './common';
 
 enum QuestBlock {
     Preamble,
     QRC,
     QBN
-}
-
-export interface DiagnosticContext {
-    questName: vscode.Range | null;
-    qrcFound: boolean;
-    qbnFound: boolean;
-    messages: number[];
-    symbols: string[];
-    tasks: string[];
-    messageBlock: MessageBlock | null;
 }
 
 let timer: NodeJS.Timer | null = null;
@@ -105,15 +94,7 @@ function doDiagnostics(document: vscode.TextDocument) {
     const getBlockChecker = (block: any) =>
         block === QuestBlock.Preamble ? preambleCheck : (block === QuestBlock.QRC ? qrcCheck : qbnCheck);
 
-    const context: DiagnosticContext = {
-        questName: null,
-        qrcFound: false,
-        qbnFound: false,
-        messages: [],
-        symbols: [],
-        tasks: [],
-        messageBlock: null
-    };
+    const context = new DiagnosticContext();
 
     for (let index = 0; index < document.lineCount; index++) {
         const line = document.lineAt(index);
@@ -126,12 +107,12 @@ function doDiagnostics(document: vscode.TextDocument) {
         // Detect next block
         if (line.text.indexOf('QRC:') !== -1) {
             block = QuestBlock.QRC;
-            context.qrcFound = true;
+            context.qrc.found = true;
             continue;
         }
         else if (line.text.indexOf('QBN:') !== -1) {
             block = QuestBlock.QBN;
-            context.qbnFound = true;
+            context.qbn.found = true;
             continue;
         }
 
@@ -143,6 +124,10 @@ function doDiagnostics(document: vscode.TextDocument) {
 
     // Do diagnostics for quest logic
     for (const diagnostic of logicCheck(context)) {
+        diagnostics.push(diagnostic);
+    }
+
+    for (const diagnostic of lateQbnCheck(document, context)) {
         diagnostics.push(diagnostic);
     }
 
@@ -162,7 +147,7 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
         // Check signature
         const result = Language.getInstance().findKeyword(word);
         if (result) {
-            for (const diagnostic of doSignatureChecks(document, result.signature, line)) {
+            for (const diagnostic of doSignatureChecks(context, document, result.signature, line)) {
                 diagnostic.source = TEMPLATE_LANGUAGE;
                 yield diagnostic;
             }
@@ -180,10 +165,10 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
 
 function* logicCheck(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
     if (context.questName) {
-        if (!context.qrcFound) {
+        if (!context.qrc.found) {
             yield Errors.blockMissing(context.questName, 'QRC');
         }
-        if (!context.qbnFound) {
+        if (!context.qbn.found) {
             yield Errors.blockMissing(context.questName, 'QBN');
         }
     }

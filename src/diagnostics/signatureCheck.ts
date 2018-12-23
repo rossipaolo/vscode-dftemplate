@@ -6,10 +6,11 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
+import * as common from './common';
 
 import { Tables } from '../language/tables';
 import { Modules } from '../language/modules';
-import { Errors } from './common';
+import { Errors, DiagnosticContext } from './common';
 import { ParameterTypes } from '../language/parameterTypes';
 
 export interface SignatureWord {
@@ -24,13 +25,15 @@ export interface SignatureWord {
 * @param line A quest line that is checked with the signature.
 * @returns Diagnostics for the signature invocation.
 */
-export function* doSignatureChecks(document: vscode.TextDocument, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
-    const lineItems = line.text.trim().split(' ');
+export function* doSignatureChecks(context: DiagnosticContext, document: vscode.TextDocument, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+    const lineText = line.text.trim();
+    context.qbn.actions.add(lineText); 
+    const lineItems = lineText.split(' ');
     let signatureItems = signature.replace(/\${\d:/g, '${').split(' ');
     signatureItems = doParams(signatureItems, lineItems);
     for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
         const word = lineItems[i];
-        const diagnostic = doWordCheck(document, word, signatureItems[i], () => {
+        const diagnostic = doWordCheck(context, document, word, signatureItems[i], () => {
             const wordPosition = findWordPosition(line.text, i);
             return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + word.length);
         });
@@ -47,11 +50,11 @@ export function* doSignatureChecks(document: vscode.TextDocument, signature: str
 * @param line A quest line that is checked with the signature.
 * @returns Diagnostics for the signature words.
 */
-export function* doWordsCheck(document: vscode.TextDocument, signatureWords: SignatureWord[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+export function* doWordsCheck(context: DiagnosticContext, document: vscode.TextDocument, signatureWords: SignatureWord[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
     for (const signatureWord of signatureWords) {
         const result = line.text.match(signatureWord.regex);
         if (result) {
-            const diagnostic = doWordCheck(document, result[1], signatureWord.signature, () => {
+            const diagnostic = doWordCheck(context, document, result[1], signatureWord.signature, () => {
                 const wordPosition = line.text.indexOf(result[1]);
                 return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + result[1].length);
             });
@@ -69,7 +72,7 @@ export function* doWordsCheck(document: vscode.TextDocument, signatureWords: Sig
 * @param signatureItem A word in a signature that corresponds to `word`.
 * @param range Gets range of word.
 */
-function doWordCheck(document: vscode.TextDocument, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
+function doWordCheck(context: DiagnosticContext, document: vscode.TextDocument, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     switch (signatureItem) {
         case ParameterTypes.naturalNumber:
             if (isNaN(Number(word))) {
@@ -93,12 +96,13 @@ function doWordCheck(document: vscode.TextDocument, word: string, signatureItem:
             break;
         case ParameterTypes.message:
             if (!isNaN(Number(word))) {
-                if (!parser.findMessageByIndex(document, word)) {
+                if (context.qrc.messages.indexOf(Number(word)) === -1) {
                     return Errors.undefinedMessage(range(), word);
                 }
             }
             else {
-                if (!parser.findMessageByName(document, word)) {
+                const id = Tables.getInstance().staticMessagesTable.messages.get(word);
+                if (!id || context.qrc.messages.indexOf(id) === -1) {
                     return Errors.undefinedMessage(range(), word);
                 }
             }
@@ -114,22 +118,23 @@ function doWordCheck(document: vscode.TextDocument, word: string, signatureItem:
             }
             break;
         case ParameterTypes.symbol:
-            if (!parser.findSymbolDefinition(document, word)) {
+            context.qbn.referencedSymbols.add(parser.getBaseSymbol(word));
+            if (!common.getSymbolDefinition(context, document, word)) {
                 return Errors.undefinedSymbol(range(), word);
             }
             break;
         case ParameterTypes.itemSymbol:
-            return checkType(document, word, parser.Types.Item, range);
+            return checkType(context, document, word, parser.Types.Item, range);
         case ParameterTypes.personSymbol:
-            return checkType(document, word, parser.Types.Person, range);
+            return checkType(context, document, word, parser.Types.Person, range);
         case ParameterTypes.placeSymbol:
-            return checkType(document, word, parser.Types.Place, range);
+            return checkType(context, document, word, parser.Types.Place, range);
         case ParameterTypes.clockSymbol:
-            return checkType(document, word, parser.Types.Clock, range);
+            return checkType(context, document, word, parser.Types.Clock, range);
         case ParameterTypes.foeSymbol:
-            return checkType(document, word, parser.Types.Foe, range);
+            return checkType(context, document, word, parser.Types.Foe, range);
         case ParameterTypes.task:
-            if (!parser.findTaskDefinition(document, word)) {
+            if (!common.getTaskDefinition(context, document, word)) {
                 return Errors.undefinedTask(range(), word);
             }
             break;
@@ -164,8 +169,9 @@ function doParams(signatureItems: string[], lineItems: string[]): string[] {
  * @param symbol A symbol referenced inside an invocation.
  * @param type The type of the symbol as requested by signature.
  */
-function checkType(document: vscode.TextDocument, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
-    const definition = parser.findSymbolDefinition(document, symbol);
+function checkType(context: DiagnosticContext, document: vscode.TextDocument, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
+    context.qbn.referencedSymbols.add(parser.getBaseSymbol(symbol));
+    const definition = common.getSymbolDefinition(context, document, symbol);
     if (!definition) {
         return Errors.undefinedSymbol(range(), symbol);
     }

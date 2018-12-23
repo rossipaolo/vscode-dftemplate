@@ -6,13 +6,12 @@
 
 import * as parser from '../parsers/parser';
 
-import { Diagnostic, TextLine, TextDocument } from "vscode";
-import { Errors, Warnings, Hints, wordRange } from './common';
+import { Diagnostic, TextLine, TextDocument, Location } from "vscode";
+import { Errors, Warnings, Hints, wordRange, DiagnosticContext } from './common';
 import { Language } from '../language/language';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { doSignatureChecks, doWordsCheck } from './signatureCheck';
 import { Modules } from '../language/modules';
-import { DiagnosticContext } from './diagnostics';
 import { TaskType } from '../parsers/parser';
 
 /**
@@ -35,37 +34,23 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
             yield Errors.invalidDefinition(parser.trimRange(line), symbol, type);
         }
         else if (definition.matches) {
-            for (const diagnostic of doWordsCheck(document, definition.matches, line)) {
+            for (const diagnostic of doWordsCheck(context, document, definition.matches, line)) {
                 diagnostic.source = TEMPLATE_LANGUAGE;
                 yield diagnostic;
             }
         }
 
         // Duplicated definition
-        if (context.symbols.indexOf(symbol) !== - 1) {
-            yield Errors.duplicatedDefinition(wordRange(line, symbol), symbol);
-        }
-        else {
-            context.symbols.push(symbol);
-        }
-
-        // Unused
-        if (parser.findSymbolReferences(document, symbol, false)[Symbol.iterator]().next().value === undefined) {
-            yield Warnings.unusedDeclarationSymbol(wordRange(line, symbol), symbol);
-        }
-
-        // Naming convention violation
-        if (!parser.symbolFollowsNamingConventions(symbol)) {
-            yield Hints.symbolNamingConventionViolation(wordRange(line, symbol));
-        }
-
-        if (type === parser.Types.Clock) {
-            if (!parser.findLine(document, new RegExp('start timer ' + symbol))) {
-                yield Warnings.unstartedClock(wordRange(line, symbol), symbol);
+        const symbolDefinition = context.qbn.symbols.get(symbol);
+        if (symbolDefinition) {
+            if (symbolDefinition.location.range.start.line !== line.lineNumber) {
+                yield Errors.duplicatedDefinition(wordRange(line, symbol), symbol);
             }
-            if (!parser.findTaskDefinition(document, symbol)) {
-                yield Warnings.unlinkedClock(wordRange(line, symbol), symbol);
-            }
+        } else {
+            context.qbn.symbols.set(symbol, {
+                location: new Location(document.uri, wordRange(line, symbol)),
+                type: type
+            });
         }
 
         return;
@@ -78,7 +63,7 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
         if (task.type === TaskType.PersistUntil) {
 
             // until performed is associated to undefined task
-            if (context.tasks.indexOf(task.symbol) === - 1) {
+            if (!context.qbn.tasks.has(task.symbol)) {
                 yield Errors.undefinedUntilPerformed(wordRange(line, task.symbol), task.symbol);
             }
 
@@ -86,11 +71,14 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
         }
 
         // Duplicated definition
-        if (context.tasks.indexOf(task.symbol) !== - 1) {
-            yield Errors.duplicatedDefinition(wordRange(line, task.symbol), task.symbol);
+        const taskDefinition = context.qbn.tasks.get(task.symbol);
+        if (taskDefinition) {
+            if (taskDefinition.lineNumber !== line.lineNumber) {
+                yield Errors.duplicatedDefinition(wordRange(line, task.symbol), task.symbol);
+            }
         }
         else {
-            context.tasks.push(task.symbol);
+            context.qbn.tasks.set(task.symbol, line);
         }
 
         // Unused
@@ -112,7 +100,7 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
     if (actionResult) {
 
         // Check action signature
-        for (const diagnostic of doSignatureChecks(document, actionResult.action.overloads[actionResult.overload], line)) {
+        for (const diagnostic of doSignatureChecks(context, document, actionResult.action.overloads[actionResult.overload], line)) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }
@@ -121,6 +109,39 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
 
         // Undefined action
         yield Errors.undefinedExpression(parser.trimRange(line), 'QBN');
+    }
+}
+
+export function* lateQbnCheck(document: TextDocument, context: DiagnosticContext): Iterable<Diagnostic> {
+
+    for (const symbol of context.qbn.symbols) {
+
+        const symbolName = symbol[0];
+        const symbolContext = symbol[1];
+        if (!symbolContext) {
+            continue;
+        }
+
+        // Unused
+        if (!context.qbn.referencedSymbols.has(symbolName) &&
+            parser.findSymbolReferences(document, symbolName, false)[Symbol.iterator]().next().value === undefined) { // non standard inside message blocks
+            yield Warnings.unusedDeclarationSymbol(symbolContext.location.range, symbolName);
+        }
+
+        // Clock
+        if (symbolContext.type === parser.Types.Clock) {
+            if (!context.qbn.actions.has('start timer ' + symbolName)) {
+                yield Warnings.unstartedClock(symbolContext.location.range, symbolName);
+            }
+            if (!context.qbn.tasks.get(symbolName)) {
+                yield Warnings.unlinkedClock(symbolContext.location.range, symbolName);
+            }
+        }
+
+        // Naming convention violation
+        if (!parser.symbolFollowsNamingConventions(symbolName)) {
+            yield Hints.symbolNamingConventionViolation(symbolContext.location.range);
+        }
     }
 }
 

@@ -5,6 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from '../parsers/parser';
 
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
@@ -90,9 +91,47 @@ export const Hints = {
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
 
+class QrcContext {
+    public found: boolean = false;
+    public readonly messages: number[] = [];
+    public messageBlock: parser.MessageBlock | null = null;
+}
+
+class QbnContext {
+    public found: boolean = false;
+    public readonly symbols = new Map<string, parser.Symbol | null>();
+    public readonly referencedSymbols = new Set<string>();
+    public readonly tasks = new Map<string, vscode.TextLine | null>();
+    public readonly actions = new Set<string>();
+}
+
+export class DiagnosticContext {
+    public questName: vscode.Range | null = null;
+    public readonly qrc = new QrcContext();
+    public readonly qbn = new QbnContext();
+}
+
 export function wordRange(line: vscode.TextLine, word: string): Range {
     const index = line.text.indexOf(word);
     return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
+}
+
+export function getSymbolDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): parser.Symbol | null {
+    let definition = context.qbn.symbols.get(symbol);
+    if (definition === undefined) {
+        context.qbn.symbols.set(symbol, definition = parser.findSymbolDefinition(document, symbol) || null);
+    }
+
+    return definition;
+}
+
+export function getTaskDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): vscode.TextLine | null {
+    let definition = context.qbn.tasks.get(symbol);
+    if (definition === undefined) {
+        context.qbn.tasks.set(symbol, definition = parser.findTaskDefinition(document, symbol) || null);
+    }
+
+    return definition;
 }
 
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity): vscode.Diagnostic {
