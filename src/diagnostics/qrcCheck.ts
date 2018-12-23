@@ -5,11 +5,11 @@
 'use strict';
 
 import * as parser from '../parsers/parser';
+import * as common from './common';
 
 import { Diagnostic, TextLine, TextDocument } from "vscode";
-import { Errors, Warnings, Hints, wordRange } from './common';
+import { Errors, Warnings, Hints, wordRange, DiagnosticContext } from './common';
 import { Tables } from '../language/tables';
-import { DiagnosticContext } from './diagnostics';
 import { MessageBlock } from '../parsers/parser';
 
 /**
@@ -21,8 +21,8 @@ import { MessageBlock } from '../parsers/parser';
 export function* qrcCheck(document: TextDocument, line: TextLine, context: DiagnosticContext): Iterable<Diagnostic> {
 
     // Inside a message block
-    if (context.messageBlock && context.messageBlock.isInside(line.lineNumber)) {
-        return yield* messageBlockCheck(document, line);
+    if (context.qrc.messageBlock && context.qrc.messageBlock.isInside(line.lineNumber)) {
+        return yield* messageBlockCheck(context, document, line);
     }
 
     // Static message definition 
@@ -34,10 +34,10 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
         }
         else {
 
-            yield* messageCommonCheck(context.messages, id, line);
+            yield* messageCommonCheck(context.qrc.messages, id, line);
         }
 
-        context.messageBlock = new MessageBlock(document, line.lineNumber);
+        context.qrc.messageBlock = new MessageBlock(document, line.lineNumber);
         return;
     }
 
@@ -46,7 +46,7 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
     if (messageID) {
         const id = Number(messageID);
 
-        yield* messageCommonCheck(context.messages, id, line);
+        yield* messageCommonCheck(context.qrc.messages, id, line);
 
         // Static message
         for (const message of Tables.getInstance().staticMessagesTable.messages) {
@@ -61,13 +61,13 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
             yield Warnings.unusedDeclarationMessage(wordRange(line, messageID), messageID);
         }
 
-        context.messageBlock = new MessageBlock(document, line.lineNumber);
+        context.qrc.messageBlock = new MessageBlock(document, line.lineNumber);
         return;
     }
 
     // Undefined expression in qrc block
-    if (context.messageBlock) {
-        context.messageBlock = null;
+    if (context.qrc.messageBlock) {
+        context.qrc.messageBlock = null;
     }
     yield Errors.undefinedExpression(parser.trimRange(line), 'QRC');
 }
@@ -75,13 +75,15 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
 /**
  * Do diagnostics for a line in a message block.
  */
-function* messageBlockCheck(document: TextDocument, line: TextLine): Iterable<Diagnostic> {
+function* messageBlockCheck(context: DiagnosticContext, document: TextDocument, line: TextLine): Iterable<Diagnostic> {
 
     // Symbol occurrences
     const symbols = parser.findAllSymbolsInALine(line.text);
     if (symbols) {
         for (const symbol of symbols) {
-            const definition = parser.findSymbolDefinition(document, symbol);
+            const baseSymbol = parser.getBaseSymbol(symbol);
+            context.qbn.referencedSymbols.add(baseSymbol);
+            const definition = common.getSymbolDefinition(context, document, baseSymbol);
             if (!definition) {
                 yield Errors.undefinedSymbol(wordRange(line, symbol), symbol);
             }

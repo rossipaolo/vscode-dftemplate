@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+### Improved
+- Improved performance of diagnostics.
+
 ## 0.6.0
 
 ### Added
