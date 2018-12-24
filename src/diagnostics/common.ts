@@ -39,8 +39,9 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Integer number must have a sign.', DiagnosticSeverity.Error),
     duplicatedMessageNumber: (range: Range, id: number) =>
         makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error),
-    duplicatedDefinition: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error),
+    duplicatedDefinition: (range: Range, name: string, otherDefinitions?: vscode.Location[]) =>
+        makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error,
+            otherDefinitions ? { locations: otherDefinitions, label: 'symbol definition' } : undefined),
     invalidDefinition: (range: Range, symbol: string, type: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Invalid definition for ' + symbol + ' (' + type + ').', DiagnosticSeverity.Error),
     invalidStaticMessageDefinition: (range: Range, id: number, name: string) =>
@@ -99,9 +100,9 @@ class QrcContext {
 
 class QbnContext {
     public found: boolean = false;
-    public readonly symbols = new Map<string, parser.Symbol | null>();
+    public readonly symbols = new Map<string, parser.Symbol | parser.Symbol[] | null>();
     public readonly referencedSymbols = new Set<string>();
-    public readonly tasks = new Map<string, vscode.TextLine | null>();
+    public readonly tasks = new Map<string, vscode.TextLine | vscode.TextLine[] | null>();
     public readonly actions = new Set<string>();
 }
 
@@ -122,7 +123,7 @@ export function getSymbolDefinition(context: DiagnosticContext, document: vscode
         context.qbn.symbols.set(symbol, definition = parser.findSymbolDefinition(document, symbol) || null);
     }
 
-    return definition;
+    return Array.isArray(definition) ? definition[0] : definition;
 }
 
 export function getTaskDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): vscode.TextLine | null {
@@ -131,14 +132,18 @@ export function getTaskDefinition(context: DiagnosticContext, document: vscode.T
         context.qbn.tasks.set(symbol, definition = parser.findTaskDefinition(document, symbol) || null);
     }
 
-    return definition;
+    return Array.isArray(definition) ? definition[0] : definition;
 }
 
-function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity): vscode.Diagnostic {
+function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity, relatedInformation?: { locations: vscode.Location[], label: string }): vscode.Diagnostic {
     const diagnostic = new vscode.Diagnostic(range, label, severity);
     diagnostic.code = code;
     if (code === DiagnosticCode.UnusedDeclarationMessage || code === DiagnosticCode.UnusedDeclarationSymbol || code === DiagnosticCode.UnusedDeclarationTask) {
         diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
+    
+    }
+    if (relatedInformation) {
+        diagnostic.relatedInformation = relatedInformation.locations.map(x => new vscode.DiagnosticRelatedInformation(x, relatedInformation.label));
     }
     diagnostic.source = TEMPLATE_LANGUAGE;
     return diagnostic;

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- When a symbol is incorrectly defined multiple times, diagnostics show the locations in the hover box.
+
 ### Improved
 - Improved performance of diagnostics.
 
