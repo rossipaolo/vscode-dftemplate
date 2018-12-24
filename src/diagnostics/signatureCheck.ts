@@ -105,12 +105,13 @@ function doWordCheck(context: DiagnosticContext, document: vscode.TextDocument, 
             }
             break;
         case ParameterTypes.messageName:
-            if (!parser.findMessageByName(document, word)) {
+            const id = Tables.getInstance().staticMessagesTable.messages.get(word);
+            if (!id || context.qrc.messages.indexOf(Number(word)) === -1) {
                 return Errors.undefinedMessage(range(), word);
             }
             break;
         case ParameterTypes.messageID:
-            if (!parser.findMessageByIndex(document, word)) {
+            if (context.qrc.messages.indexOf(Number(word)) === -1) {
                 return Errors.undefinedMessage(range(), word);
             }
             break;
