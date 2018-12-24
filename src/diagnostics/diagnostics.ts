@@ -9,7 +9,7 @@ import * as parser from '../parsers/parser';
 
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from '../language/language';
-import { doSignatureChecks } from './signatureCheck';
+import { analyseActionSignature } from './signatureCheck';
 import { qrcCheck } from './qrcCheck';
 import { qbnCheck, analyseQbn as analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
@@ -165,7 +165,7 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
 
 function* analysePreamble(context: DiagnosticContext, document: vscode.TextDocument): Iterable<vscode.Diagnostic> {
     for (const action of context.preamble.actions) {
-        for (const diagnostic of doSignatureChecks(context, document, action.signature, action.line)) {
+        for (const diagnostic of analyseActionSignature(context, action.signature, action.line)) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }
