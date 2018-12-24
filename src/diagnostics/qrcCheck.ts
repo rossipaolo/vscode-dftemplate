@@ -83,12 +83,12 @@ function* messageBlockCheck(context: DiagnosticContext, document: TextDocument, 
         for (const symbol of symbols) {
             const baseSymbol = parser.getBaseSymbol(symbol);
             context.qbn.referencedSymbols.add(baseSymbol);
-            const definition = common.getSymbolDefinition(context, document, baseSymbol);
-            if (!definition) {
+            const symbolContext = common.getSymbolDefinition(context, document, baseSymbol);
+            if (!symbolContext) {
                 yield Errors.undefinedSymbol(wordRange(line, symbol), symbol);
             }
-            else if (!parser.isSupportedSymbolVariation(symbol, definition.type)) {
-                yield Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, definition.type);
+            else if (!parser.isSupportedSymbolVariation(symbol, symbolContext.definition.type)) {
+                yield Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolContext.definition.type);
             }
             else {
                 yield Hints.SymbolVariation(wordRange(line, symbol));

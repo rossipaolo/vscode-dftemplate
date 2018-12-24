@@ -11,7 +11,7 @@ import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from '../language/language';
 import { doSignatureChecks } from './signatureCheck';
 import { qrcCheck } from './qrcCheck';
-import { qbnCheck, lateQbnCheck } from './qbnCheck';
+import { qbnCheck, analyseQbn as analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
 import { Errors, DiagnosticContext } from './common';
 
@@ -122,12 +122,11 @@ function doDiagnostics(document: vscode.TextDocument) {
         }
     }
 
-    // Do diagnostics for quest logic
-    for (const diagnostic of logicCheck(context)) {
-        diagnostics.push(diagnostic);
-    }
-
-    for (const diagnostic of lateQbnCheck(document, context)) {
+    // Do analysis
+    for (const diagnostic of [
+        ...analysePreamble(context, document),
+        ...analyseQbn(document, context),
+        ...analyselogic(context)]) {
         diagnostics.push(diagnostic);
     }
 
@@ -147,10 +146,11 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
         // Check signature
         const result = Language.getInstance().findKeyword(word);
         if (result) {
-            for (const diagnostic of doSignatureChecks(context, document, result.signature, line)) {
-                diagnostic.source = TEMPLATE_LANGUAGE;
-                yield diagnostic;
-            }
+
+            context.preamble.actions.push({
+                line: line,
+                signature: result.signature
+            });
 
             if (!context.questName && /^\s*Quest:/.test(line.text)) {
                 context.questName = line.range;
@@ -163,7 +163,16 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
     }
 }
 
-function* logicCheck(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
+function* analysePreamble(context: DiagnosticContext, document: vscode.TextDocument): Iterable<vscode.Diagnostic> {
+    for (const action of context.preamble.actions) {
+        for (const diagnostic of doSignatureChecks(context, document, action.signature, action.line)) {
+            diagnostic.source = TEMPLATE_LANGUAGE;
+            yield diagnostic;
+        }
+    }
+}
+
+function* analyselogic(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
     if (context.questName) {
         if (!context.qrc.found) {
             yield Errors.blockMissing(context.questName, 'QRC');
