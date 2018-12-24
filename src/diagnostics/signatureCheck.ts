@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
-import * as common from './common';
 
 import { Tables } from '../language/tables';
 import { Modules } from '../language/modules';
@@ -117,20 +116,20 @@ function doWordCheck(context: DiagnosticContext, document: vscode.TextDocument, 
             break;
         case ParameterTypes.symbol:
             context.qbn.referencedSymbols.add(parser.getBaseSymbol(word));
-            if (!common.getSymbolDefinition(context, document, word)) {
+            if (!context.qbn.symbols.has(word)) {
                 return Errors.undefinedSymbol(range(), word);
             }
             break;
         case ParameterTypes.itemSymbol:
-            return checkType(context, document, word, parser.Types.Item, range);
+            return checkType(context, word, parser.Types.Item, range);
         case ParameterTypes.personSymbol:
-            return checkType(context, document, word, parser.Types.Person, range);
+            return checkType(context, word, parser.Types.Person, range);
         case ParameterTypes.placeSymbol:
-            return checkType(context, document, word, parser.Types.Place, range);
+            return checkType(context, word, parser.Types.Place, range);
         case ParameterTypes.clockSymbol:
-            return checkType(context, document, word, parser.Types.Clock, range);
+            return checkType(context, word, parser.Types.Clock, range);
         case ParameterTypes.foeSymbol:
-            return checkType(context, document, word, parser.Types.Foe, range);
+            return checkType(context, word, parser.Types.Foe, range);
         case ParameterTypes.task:
             if (!context.qbn.tasks.has(word)) {
                 return Errors.undefinedTask(range(), word);
@@ -167,13 +166,13 @@ function doParams(signatureItems: string[], lineItems: string[]): string[] {
  * @param symbol A symbol referenced inside an invocation.
  * @param type The type of the symbol as requested by signature.
  */
-function checkType(context: DiagnosticContext, document: vscode.TextDocument, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
+function checkType(context: DiagnosticContext, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     context.qbn.referencedSymbols.add(parser.getBaseSymbol(symbol));
-    const symbolContext = common.getSymbolDefinition(context, document, symbol);
+    const symbolContext = context.qbn.symbols.get(symbol);
     if (!symbolContext) {
         return Errors.undefinedSymbol(range(), symbol);
     }
-    else if (symbolContext.definition.type !== type) {
+    else if ((Array.isArray(symbolContext) ? symbolContext[0] : symbolContext).definition.type !== type) {
         return Errors.incorrectSymbolType(range(), symbol, type);
     }
 }
