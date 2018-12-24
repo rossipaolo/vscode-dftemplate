@@ -19,18 +19,17 @@ export interface SignatureWord {
 
 /**
 * Detects issues with a signature.
-* @param document A quest document.
 * @param signature A snippet with standard syntax.
 * @param line A quest line that is checked with the signature.
 * @returns Diagnostics for the signature invocation.
 */
-export function* doSignatureChecks(context: DiagnosticContext, document: vscode.TextDocument, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+export function* analyseActionSignature(context: DiagnosticContext, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
     const lineItems = line.text.trim().split(' ');
     let signatureItems = signature.replace(/\${\d:/g, '${').split(' ');
     signatureItems = doParams(signatureItems, lineItems);
     for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
         const word = lineItems[i];
-        const diagnostic = doWordCheck(context, document, word, signatureItems[i], () => {
+        const diagnostic = analyseSignatureItem(context, word, signatureItems[i], () => {
             const wordPosition = findWordPosition(line.text, i);
             return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + word.length);
         });
@@ -42,16 +41,15 @@ export function* doSignatureChecks(context: DiagnosticContext, document: vscode.
 
 /**
 * Detects issues with individual words in a signature.
-* @param document A quest document.
 * @param signatureWords Individual match words with standard syntax.
 * @param line A quest line that is checked with the signature.
 * @returns Diagnostics for the signature words.
 */
-export function* doWordsCheck(context: DiagnosticContext, document: vscode.TextDocument, signatureWords: SignatureWord[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+export function* analyseSymbolSignature(context: DiagnosticContext, signatureWords: SignatureWord[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
     for (const signatureWord of signatureWords) {
         const result = line.text.match(signatureWord.regex);
         if (result) {
-            const diagnostic = doWordCheck(context, document, result[1], signatureWord.signature, () => {
+            const diagnostic = analyseSignatureItem(context, result[1], signatureWord.signature, () => {
                 const wordPosition = line.text.indexOf(result[1]);
                 return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + result[1].length);
             });
@@ -69,7 +67,7 @@ export function* doWordsCheck(context: DiagnosticContext, document: vscode.TextD
 * @param signatureItem A word in a signature that corresponds to `word`.
 * @param range Gets range of word.
 */
-function doWordCheck(context: DiagnosticContext, document: vscode.TextDocument, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
+function analyseSignatureItem(context: DiagnosticContext, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     switch (signatureItem) {
         case ParameterTypes.naturalNumber:
             if (isNaN(Number(word))) {

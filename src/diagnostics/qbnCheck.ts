@@ -10,12 +10,12 @@ import { Diagnostic, TextLine, TextDocument, Location } from "vscode";
 import { Errors, Warnings, Hints, wordRange, DiagnosticContext, TaskDefinitionContext, SymbolDefinitionContext } from './common';
 import { Language } from '../language/language';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { doSignatureChecks, doWordsCheck } from './signatureCheck';
+import { analyseActionSignature, analyseSymbolSignature } from './signatureCheck';
 import { Modules } from '../language/modules';
 import { TaskType } from '../parsers/parser';
 
 /**
- * Do diagnostics for a line in a QBN block.
+ * Parses a line in a QBN block and build its diagnostic context.
  *  * @param document A quest document.
  * @param line A line in QBN block.
  * @param context Context data for current diagnostics operation. 
@@ -104,6 +104,11 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
     }
 }
 
+/**
+ * Analyses the QBN section of a quest.
+ * @param document The current open document.
+ * @param context Diagnostic context for the current document.
+ */
 export function* analyseQbn(document: TextDocument, context: DiagnosticContext): Iterable<Diagnostic> {
 
     for (const symbolCtx of context.qbn.symbols) {
@@ -121,7 +126,7 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
 
         function* checkSignature(symbol: SymbolDefinitionContext): Iterable<Diagnostic>  {
             if (symbol.words) {
-                for (const diagnostic of doWordsCheck(context, document, symbol.words, document.lineAt(symbol.definition.location.range.start.line))) {
+                for (const diagnostic of analyseSymbolSignature(context, symbol.words, document.lineAt(symbol.definition.location.range.start.line))) {
                     diagnostic.source = TEMPLATE_LANGUAGE;
                     yield diagnostic;
                 }
@@ -203,7 +208,7 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
     }
 
     for (const action of context.qbn.actions) {
-        for (const diagnostic of doSignatureChecks(context, document, action[1].signature, action[1].line)) {
+        for (const diagnostic of analyseActionSignature(context, action[1].signature, action[1].line)) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }
