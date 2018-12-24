@@ -40,17 +40,27 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
             }
         }
 
-        // Duplicated definition
+        // Add symbol definition
         const symbolDefinition = context.qbn.symbols.get(symbol);
-        if (symbolDefinition) {
-            if (symbolDefinition.location.range.start.line !== line.lineNumber) {
-                yield Errors.duplicatedDefinition(wordRange(line, symbol), symbol);
-            }
-        } else {
+        if (!symbolDefinition) {
             context.qbn.symbols.set(symbol, {
                 location: new Location(document.uri, wordRange(line, symbol)),
                 type: type
             });
+        } else if (!Array.isArray(symbolDefinition)) {
+            if (symbolDefinition.location.range.start.line !== line.lineNumber) {
+                context.qbn.symbols.set(symbol, [symbolDefinition, {
+                    location: new Location(document.uri, wordRange(line, symbol)),
+                    type: type
+                }]);
+            }       
+        } else {
+            if (!symbolDefinition.find(x => x.location.range.start.line === line.lineNumber)) {
+                symbolDefinition.push({
+                    location: new Location(document.uri, wordRange(line, symbol)),
+                    type: type
+                });
+            }        
         }
 
         return;
@@ -70,15 +80,18 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
             return;
         }
 
-        // Duplicated definition
+        // Add symbol definition
         const taskDefinition = context.qbn.tasks.get(task.symbol);
-        if (taskDefinition) {
-            if (taskDefinition.lineNumber !== line.lineNumber) {
-                yield Errors.duplicatedDefinition(wordRange(line, task.symbol), task.symbol);
-            }
-        }
-        else {
+        if (!taskDefinition) {
             context.qbn.tasks.set(task.symbol, line);
+        } else if (!Array.isArray(taskDefinition)) {
+            if (taskDefinition.lineNumber !== line.lineNumber) {
+                context.qbn.tasks.set(task.symbol, [taskDefinition, line]);
+            }       
+        } else {
+            if (!taskDefinition.find(x => x.lineNumber === line.lineNumber)) {
+                taskDefinition.push(line);
+            }        
         }
 
         // Unused
@@ -117,9 +130,17 @@ export function* lateQbnCheck(document: TextDocument, context: DiagnosticContext
     for (const symbol of context.qbn.symbols) {
 
         const symbolName = symbol[0];
-        const symbolContext = symbol[1];
+        const symbolContext = Array.isArray(symbol[1]) ? symbol[1][0] : symbol[1];
         if (!symbolContext) {
             continue;
+        }
+
+        // Duplicated definition
+        if (Array.isArray(symbol[1])) {
+            const allLocations = symbol[1].map(x => x.location);
+            for (const definition of symbol[1] as parser.Symbol[]) {
+                yield Errors.duplicatedDefinition(definition.location.range, symbolName, allLocations);
+            }
         }
 
         // Unused
@@ -141,6 +162,23 @@ export function* lateQbnCheck(document: TextDocument, context: DiagnosticContext
         // Naming convention violation
         if (!parser.symbolFollowsNamingConventions(symbolName)) {
             yield Hints.symbolNamingConventionViolation(symbolContext.location.range);
+        }
+    }
+
+    for (const task of context.qbn.tasks) {
+        
+        const taskName = task[0];
+        const taskContext = Array.isArray(task[1]) ? task[1][0] : task[1];
+        if (!taskContext) {
+            continue;
+        }
+
+        // Duplicated definition
+        if (Array.isArray(task[1])) {
+            const allLocations = task[1].map(x => new Location(document.uri, x.range));
+            for (const definition of task[1] as TextLine[]) {
+                yield Errors.duplicatedDefinition(definition.range, taskName, allLocations);
+            }
         }
     }
 }
