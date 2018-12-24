@@ -124,7 +124,7 @@ class QbnContext {
     public found: boolean = false;
     public readonly symbols = new Map<string, SymbolDefinitionContext | SymbolDefinitionContext[] | null>();
     public readonly referencedSymbols = new Set<string>();
-    public readonly tasks = new Map<string, TaskDefinitionContext | TaskDefinitionContext[] | null>();
+    public readonly tasks = new Map<string, TaskDefinitionContext | TaskDefinitionContext[]>();
     public readonly actions = new Map<string, ActionContext>();
 }
 
@@ -146,17 +146,6 @@ export function getSymbolDefinition(context: DiagnosticContext, document: vscode
         const definition = parser.findSymbolDefinition(document, symbol);
         definitionContext = definition ? { isValid: undefined, definition: definition, words: undefined } : null;
         context.qbn.symbols.set(symbol, definitionContext = definitionContext);
-    }
-
-    return Array.isArray(definitionContext) ? definitionContext[0] : definitionContext;
-}
-
-export function getTaskDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): TaskDefinitionContext | null {
-    let definitionContext = context.qbn.tasks.get(symbol);
-    if (definitionContext === undefined) {
-        const line = parser.findTaskDefinition(document, symbol);
-        definitionContext = line ? { definition: undefined, range: wordRange(line, symbol) } : null;
-        context.qbn.tasks.set(symbol, definitionContext);
     }
 
     return Array.isArray(definitionContext) ? definitionContext[0] : definitionContext;

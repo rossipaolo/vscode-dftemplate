@@ -132,7 +132,7 @@ function doWordCheck(context: DiagnosticContext, document: vscode.TextDocument, 
         case ParameterTypes.foeSymbol:
             return checkType(context, document, word, parser.Types.Foe, range);
         case ParameterTypes.task:
-            if (!common.getTaskDefinition(context, document, word)) {
+            if (!context.qbn.tasks.has(word)) {
                 return Errors.undefinedTask(range(), word);
             }
             break;
