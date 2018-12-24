@@ -70,24 +70,18 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
             return;
         }
 
-        // Add symbol definition
-        const taskDefinitionContext = {
+        // Add task definition
+        const newTaskDefinition = {
             range: wordRange(line, task.symbol),
             definition: task
         };
         const taskDefinition = context.qbn.tasks.get(task.symbol);
         if (!taskDefinition) {
-            context.qbn.tasks.set(task.symbol, taskDefinitionContext);
+            context.qbn.tasks.set(task.symbol, newTaskDefinition);
         } else if (!Array.isArray(taskDefinition)) {
-            if (taskDefinition.range.start.line !== line.lineNumber) {
-                context.qbn.tasks.set(task.symbol, [taskDefinition, taskDefinitionContext]);
-            } else if (!taskDefinition.definition) {
-                taskDefinition.definition = task;
-            }
+            context.qbn.tasks.set(task.symbol, [taskDefinition, newTaskDefinition]);
         } else {
-            if (!taskDefinition.find(x => x.range.start.line === line.lineNumber)) {
-                taskDefinition.push(taskDefinitionContext);
-            }
+            taskDefinition.push(newTaskDefinition);
         }
 
         return;
