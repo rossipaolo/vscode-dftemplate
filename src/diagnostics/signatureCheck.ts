@@ -26,9 +26,7 @@ export interface SignatureWord {
 * @returns Diagnostics for the signature invocation.
 */
 export function* doSignatureChecks(context: DiagnosticContext, document: vscode.TextDocument, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
-    const lineText = line.text.trim();
-    context.qbn.actions.add(lineText); 
-    const lineItems = lineText.split(' ');
+    const lineItems = line.text.trim().split(' ');
     let signatureItems = signature.replace(/\${\d:/g, '${').split(' ');
     signatureItems = doParams(signatureItems, lineItems);
     for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
@@ -171,11 +169,11 @@ function doParams(signatureItems: string[], lineItems: string[]): string[] {
  */
 function checkType(context: DiagnosticContext, document: vscode.TextDocument, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     context.qbn.referencedSymbols.add(parser.getBaseSymbol(symbol));
-    const definition = common.getSymbolDefinition(context, document, symbol);
-    if (!definition) {
+    const symbolContext = common.getSymbolDefinition(context, document, symbol);
+    if (!symbolContext) {
         return Errors.undefinedSymbol(range(), symbol);
     }
-    else if (definition.type !== type) {
+    else if (symbolContext.definition.type !== type) {
         return Errors.incorrectSymbolType(range(), symbol, type);
     }
 }

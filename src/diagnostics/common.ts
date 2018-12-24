@@ -9,6 +9,8 @@ import * as parser from '../parsers/parser';
 
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
+import { TaskDefinition } from '../parsers/parser';
+import { SignatureWord } from './signatureCheck';
 
 /**
  * Identifier code for a diagnostic item.
@@ -92,6 +94,26 @@ export const Hints = {
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
 
+export interface SymbolDefinitionContext {
+    definition: parser.Symbol;
+    isValid: boolean | undefined;
+    words: SignatureWord[] | undefined | null;
+}
+
+export interface TaskDefinitionContext {
+    range: vscode.Range;
+    definition: TaskDefinition | undefined;
+}
+
+export interface ActionContext {
+    line: vscode.TextLine;
+    signature: string;
+}
+
+class PreambleContext {
+    public readonly actions: ActionContext[] = [];
+}
+
 class QrcContext {
     public found: boolean = false;
     public readonly messages: number[] = [];
@@ -100,14 +122,15 @@ class QrcContext {
 
 class QbnContext {
     public found: boolean = false;
-    public readonly symbols = new Map<string, parser.Symbol | parser.Symbol[] | null>();
+    public readonly symbols = new Map<string, SymbolDefinitionContext | SymbolDefinitionContext[] | null>();
     public readonly referencedSymbols = new Set<string>();
-    public readonly tasks = new Map<string, vscode.TextLine | vscode.TextLine[] | null>();
-    public readonly actions = new Set<string>();
+    public readonly tasks = new Map<string, TaskDefinitionContext | TaskDefinitionContext[] | null>();
+    public readonly actions = new Map<string, ActionContext>();
 }
 
 export class DiagnosticContext {
     public questName: vscode.Range | null = null;
+    public readonly preamble = new PreambleContext();
     public readonly qrc = new QrcContext();
     public readonly qbn = new QbnContext();
 }
@@ -117,22 +140,26 @@ export function wordRange(line: vscode.TextLine, word: string): Range {
     return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
 }
 
-export function getSymbolDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): parser.Symbol | null {
-    let definition = context.qbn.symbols.get(symbol);
-    if (definition === undefined) {
-        context.qbn.symbols.set(symbol, definition = parser.findSymbolDefinition(document, symbol) || null);
+export function getSymbolDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): SymbolDefinitionContext | null {
+    let definitionContext = context.qbn.symbols.get(symbol);
+    if (definitionContext === undefined) {
+        const definition = parser.findSymbolDefinition(document, symbol);
+        definitionContext = definition ? { isValid: undefined, definition: definition, words: undefined } : null;
+        context.qbn.symbols.set(symbol, definitionContext = definitionContext);
     }
 
-    return Array.isArray(definition) ? definition[0] : definition;
+    return Array.isArray(definitionContext) ? definitionContext[0] : definitionContext;
 }
 
-export function getTaskDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): vscode.TextLine | null {
-    let definition = context.qbn.tasks.get(symbol);
-    if (definition === undefined) {
-        context.qbn.tasks.set(symbol, definition = parser.findTaskDefinition(document, symbol) || null);
+export function getTaskDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): TaskDefinitionContext | null {
+    let definitionContext = context.qbn.tasks.get(symbol);
+    if (definitionContext === undefined) {
+        const line = parser.findTaskDefinition(document, symbol);
+        definitionContext = line ? { definition: undefined, range: wordRange(line, symbol) } : null;
+        context.qbn.tasks.set(symbol, definitionContext);
     }
 
-    return Array.isArray(definition) ? definition[0] : definition;
+    return Array.isArray(definitionContext) ? definitionContext[0] : definitionContext;
 }
 
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity, relatedInformation?: { locations: vscode.Location[], label: string }): vscode.Diagnostic {
