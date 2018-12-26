@@ -11,7 +11,7 @@ import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from '../language/language';
 import { analyseActionSignature } from './signatureCheck';
 import { qrcCheck } from './qrcCheck';
-import { qbnCheck, analyseQbn as analyseQbn } from './qbnCheck';
+import { parseQbn, analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
 import { Errors, DiagnosticContext } from './common';
 
@@ -91,10 +91,7 @@ function doDiagnostics(document: vscode.TextDocument) {
     const diagnostics: vscode.Diagnostic[] = [];
     let block = QuestBlock.Preamble;
 
-    const getBlockChecker = (block: any) =>
-        block === QuestBlock.Preamble ? preambleCheck : (block === QuestBlock.QRC ? qrcCheck : qbnCheck);
-
-    const context = new DiagnosticContext();
+    const context = new DiagnosticContext(document);
 
     for (let index = 0; index < document.lineCount; index++) {
         const line = document.lineAt(index);
@@ -116,16 +113,26 @@ function doDiagnostics(document: vscode.TextDocument) {
             continue;
         }
 
-        // Do diagnostics for current block
-        for (const diagnostic of getBlockChecker(block)(document, line, context)) {
-            diagnostics.push(diagnostic);
+        // Parse current block
+        switch (block) {
+            case QuestBlock.Preamble:
+                parsePreamble(line, context);
+                break;
+            case QuestBlock.QBN:
+                parseQbn(line, context);
+                break;
+            default:
+                for (const diagnostic of qrcCheck(document, line, context)) {
+                    diagnostics.push(diagnostic);
+                }
+                break;
         }
     }
 
     // Do analysis
     for (const diagnostic of [
-        ...analysePreamble(context, document),
-        ...analyseQbn(document, context),
+        ...analysePreamble(context),
+        ...analyseQbn(context),
         ...analyselogic(context)]) {
         diagnostics.push(diagnostic);
     }
@@ -134,16 +141,15 @@ function doDiagnostics(document: vscode.TextDocument) {
 }
 
 /**
- * Do diagnostics for a line in the preamble.
- * @param document A quest document.
+ * Parses a line in the Preamble and build its diagnostic context.
  * @param line A line in the preamble.
  * @param context Context data for current diagnostics operation. 
  */
-function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, context: DiagnosticContext): Iterable<vscode.Diagnostic> {
+function parsePreamble(line: vscode.TextLine, context: DiagnosticContext): void {
+    
+    // Keyword use
     const word = parser.getFirstWord(line.text);
     if (word) {
-
-        // Check signature
         const result = Language.getInstance().findKeyword(word);
         if (result) {
 
@@ -155,20 +161,29 @@ function* preambleCheck(document: vscode.TextDocument, line: vscode.TextLine, co
             if (!context.questName && /^\s*Quest:/.test(line.text)) {
                 context.questName = line.range;
             }
-            
-        }
-        else {
-            yield Errors.undefinedExpression(parser.trimRange(line), 'Preamble');   
+
+            return;
         }
     }
+
+    context.preamble.failedParse.push(line);
 }
 
-function* analysePreamble(context: DiagnosticContext, document: vscode.TextDocument): Iterable<vscode.Diagnostic> {
+/**
+ * Analyses the Preamble of a quest.
+ * @param document The current open document.
+ * @param context Diagnostic context for the current document.
+ */
+function* analysePreamble(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
     for (const action of context.preamble.actions) {
         for (const diagnostic of analyseActionSignature(context, action.signature, action.line)) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }
+    }
+
+    for (const line of context.preamble.failedParse) {
+        yield Errors.undefinedExpression(parser.trimRange(line), 'Preamble');
     }
 }
 
