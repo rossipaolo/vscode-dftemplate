@@ -16,11 +16,10 @@ import { TaskType } from '../parsers/parser';
 
 /**
  * Parses a line in a QBN block and build its diagnostic context.
- *  * @param document A quest document.
  * @param line A line in QBN block.
  * @param context Context data for current diagnostics operation. 
  */
-export function* qbnCheck(document: TextDocument, line: TextLine, context: DiagnosticContext): Iterable<Diagnostic> {
+export function parseQbn(line: TextLine, context: DiagnosticContext): void {
 
     // Symbol definition
     const symbol = parser.getSymbolFromLine(line);
@@ -29,10 +28,9 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
         const type = text.substring(0, text.indexOf(' '));
         const definition = Language.getInstance().findDefinition(type, text);
 
-        // Add symbol definition
         const symbolDefinitionContext = {
             definition: {
-                location: new Location(document.uri, wordRange(line, symbol)),
+                location: new Location(context.document.uri, wordRange(line, symbol)),
                 type: type
             },
             isValid: !definition,
@@ -60,28 +58,22 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
     const task = parser.parseTaskDefinition(line.text);
     if (task) {
 
-        if (task.type === TaskType.PersistUntil) {
-
-            // until performed is associated to undefined task
-            if (!context.qbn.tasks.has(task.symbol)) {
-                yield Errors.undefinedUntilPerformed(wordRange(line, task.symbol), task.symbol);
-            }
-
-            return;
-        }
-
-        // Add task definition
         const newTaskDefinition = {
             range: wordRange(line, task.symbol),
             definition: task
         };
-        const taskDefinition = context.qbn.tasks.get(task.symbol);
-        if (!taskDefinition) {
-            context.qbn.tasks.set(task.symbol, newTaskDefinition);
-        } else if (!Array.isArray(taskDefinition)) {
-            context.qbn.tasks.set(task.symbol, [taskDefinition, newTaskDefinition]);
+
+        if (task.type === TaskType.PersistUntil) {
+            context.qbn.persistUntilTasks.push(newTaskDefinition);
         } else {
-            taskDefinition.push(newTaskDefinition);
+            const taskDefinition = context.qbn.tasks.get(task.symbol);
+            if (!taskDefinition) {
+                context.qbn.tasks.set(task.symbol, newTaskDefinition);
+            } else if (!Array.isArray(taskDefinition)) {
+                context.qbn.tasks.set(task.symbol, [taskDefinition, newTaskDefinition]);
+            } else {
+                taskDefinition.push(newTaskDefinition);
+            }
         }
 
         return;
@@ -90,18 +82,15 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
     // Action invocation
     const actionResult = Modules.getInstance().findAction(line.text);
     if (actionResult) {
-
-        // Check action signature
         context.qbn.actions.set(line.text.trim(), {
             line: line,
             signature: actionResult.action.overloads[actionResult.overload]
         });
-    }
-    else {
 
-        // Undefined action
-        yield Errors.undefinedExpression(parser.trimRange(line), 'QBN');
+        return;
     }
+
+    context.qbn.failedParse.push(line);
 }
 
 /**
@@ -109,7 +98,7 @@ export function* qbnCheck(document: TextDocument, line: TextLine, context: Diagn
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
  */
-export function* analyseQbn(document: TextDocument, context: DiagnosticContext): Iterable<Diagnostic> {
+export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
 
     for (const symbolCtx of context.qbn.symbols) {
 
@@ -124,9 +113,9 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
             continue;
         }
 
-        function* checkSignature(symbol: SymbolDefinitionContext): Iterable<Diagnostic>  {
+        function* checkSignature(symbol: SymbolDefinitionContext): Iterable<Diagnostic> {
             if (symbol.words) {
-                for (const diagnostic of analyseSymbolSignature(context, symbol.words, document.lineAt(symbol.definition.location.range.start.line))) {
+                for (const diagnostic of analyseSymbolSignature(context, symbol.words, context.document.lineAt(symbol.definition.location.range.start.line))) {
                     diagnostic.source = TEMPLATE_LANGUAGE;
                     yield diagnostic;
                 }
@@ -135,7 +124,7 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
 
         // Invalid signature or parameters
         if (symbolContext.isValid) {
-            const lineRange = parser.trimRange(document.lineAt(symbolContext.definition.location.range.start.line));
+            const lineRange = parser.trimRange(context.document.lineAt(symbolContext.definition.location.range.start.line));
             yield Errors.invalidDefinition(lineRange, symbolName, symbolContext.definition.type);
         }
 
@@ -155,7 +144,7 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
 
         // Unused
         if (!context.qbn.referencedSymbols.has(symbolName) &&
-            parser.findSymbolReferences(document, symbolName, false)[Symbol.iterator]().next().value === undefined) { // non standard inside message blocks
+            parser.findSymbolReferences(context.document, symbolName, false)[Symbol.iterator]().next().value === undefined) { // non standard inside message blocks
             yield Warnings.unusedDeclarationSymbol(symbolContext.definition.location.range, symbolName);
         }
 
@@ -176,7 +165,7 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
     }
 
     for (const task of context.qbn.tasks) {
-        
+
         const taskName = task[0];
         const taskContext = Array.isArray(task[1]) ? task[1][0] : task[1];
         if (!taskContext) {
@@ -185,20 +174,17 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
 
         // Duplicated definition
         if (Array.isArray(task[1])) {
-            const allLocations = task[1].map(x => new Location(document.uri, x.range));
+            const allLocations = task[1].map(x => new Location(context.document.uri, x.range));
             for (const definition of task[1] as TaskDefinitionContext[]) {
                 yield Errors.duplicatedDefinition(definition.range, taskName, allLocations);
             }
         }
 
+        // Unused
         const definition = taskContext.definition;
-        if (definition) {
-            
-            // Unused
-            if (!parser.isConditionalTask(document, taskContext.range.start.line) && !hasAnotherOccurrence(document, taskContext.range.start.line, definition.symbol)) {
-                const name = definition.type === TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
-                yield Warnings.unusedDeclarationSymbol(taskContext.range, name);
-            }
+        if (!parser.isConditionalTask(context.document, taskContext.range.start.line) && !hasAnotherOccurrence(context.document, taskContext.range.start.line, definition.symbol)) {
+            const name = definition.type === TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
+            yield Warnings.unusedDeclarationSymbol(taskContext.range, name);
         }
 
         // Naming convention violation
@@ -207,11 +193,23 @@ export function* analyseQbn(document: TextDocument, context: DiagnosticContext):
         }
     }
 
+    for (const task of context.qbn.persistUntilTasks) {
+
+        // until performed is associated to undefined task
+        if (!context.qbn.tasks.has(task.definition.symbol)) {
+            yield Errors.undefinedUntilPerformed(task.range, task.definition.symbol);
+        }
+    }
+
     for (const action of context.qbn.actions) {
         for (const diagnostic of analyseActionSignature(context, action[1].signature, action[1].line)) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }
+    }
+
+    for (const line of context.qbn.failedParse) {
+        yield Errors.undefinedExpression(parser.trimRange(line), 'QBN');
     }
 }
 

@@ -102,7 +102,7 @@ export interface SymbolDefinitionContext {
 
 export interface TaskDefinitionContext {
     range: vscode.Range;
-    definition: TaskDefinition | undefined;
+    definition: TaskDefinition;
 }
 
 export interface ActionContext {
@@ -110,21 +110,25 @@ export interface ActionContext {
     signature: string;
 }
 
-class PreambleContext {
+abstract class BlockContext {
+    public found: boolean = false;
+    public readonly failedParse: vscode.TextLine[] = [];
+}
+
+class PreambleContext extends BlockContext {
     public readonly actions: ActionContext[] = [];
 }
 
-class QrcContext {
-    public found: boolean = false;
+class QrcContext extends BlockContext {
     public readonly messages: number[] = [];
     public messageBlock: parser.MessageBlock | null = null;
 }
 
-class QbnContext {
-    public found: boolean = false;
+class QbnContext extends BlockContext {
     public readonly symbols = new Map<string, SymbolDefinitionContext | SymbolDefinitionContext[] | null>();
     public readonly referencedSymbols = new Set<string>();
     public readonly tasks = new Map<string, TaskDefinitionContext | TaskDefinitionContext[]>();
+    public readonly persistUntilTasks: TaskDefinitionContext[] = [];
     public readonly actions = new Map<string, ActionContext>();
 }
 
@@ -133,6 +137,9 @@ export class DiagnosticContext {
     public readonly preamble = new PreambleContext();
     public readonly qrc = new QrcContext();
     public readonly qbn = new QbnContext();
+
+    public constructor(public readonly document: vscode.TextDocument) {
+    }
 }
 
 export function wordRange(line: vscode.TextLine, word: string): Range {
