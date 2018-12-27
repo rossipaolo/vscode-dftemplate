@@ -9,12 +9,26 @@ import * as parser from '../parsers/parser';
 
 import { Tables } from '../language/tables';
 import { Modules } from '../language/modules';
-import { Errors, DiagnosticContext } from './common';
+import { Errors, DiagnosticContext, ActionContext } from './common';
 import { ParameterTypes } from '../language/parameterTypes';
 
 export interface SignatureWord {
     regex: string;
     signature: string;
+}
+
+export interface ActionSignature {
+    type: string;
+    value: string;
+}
+
+export function parseSignature(signature: string, invocation: string): ActionSignature[] {
+    const values = invocation.trim().split(' ');
+    const types = doParams(signature.replace(/\${\d:/g, '${').split(' '), values);
+
+    return values.map((value, index) => {
+        return { type: types[index], value: value };
+    });
 }
 
 /**
@@ -23,15 +37,12 @@ export interface SignatureWord {
 * @param line A quest line that is checked with the signature.
 * @returns Diagnostics for the signature invocation.
 */
-export function* analyseActionSignature(context: DiagnosticContext, signature: string, line: vscode.TextLine): Iterable<vscode.Diagnostic> {
-    const lineItems = line.text.trim().split(' ');
-    let signatureItems = signature.replace(/\${\d:/g, '${').split(' ');
-    signatureItems = doParams(signatureItems, lineItems);
-    for (let i = 0; i < signatureItems.length && lineItems.length; i++) {
-        const word = lineItems[i];
-        const diagnostic = analyseSignatureItem(context, word, signatureItems[i], () => {
-            const wordPosition = findWordPosition(line.text, i);
-            return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + word.length);
+export function* analyseActionSignature(context: DiagnosticContext, action: ActionContext): Iterable<vscode.Diagnostic> {
+    for (let i = 0; i < action.signature.length; i++) {
+        const parameter = action.signature[i];
+        const diagnostic = analyseSignatureItem(context, parameter.value, parameter.type, () => {
+            const wordPosition = findWordPosition(action.line.text, i);
+            return new vscode.Range(action.line.lineNumber, wordPosition, action.line.lineNumber, wordPosition + parameter.value.length);
         });
         if (diagnostic) {
             yield diagnostic;
@@ -91,25 +102,25 @@ function analyseSignatureItem(context: DiagnosticContext, word: string, signatur
             break;
         case ParameterTypes.message:
             if (!isNaN(Number(word))) {
-                if (context.qrc.messages.indexOf(Number(word)) === -1) {
+                if (!context.qrc.messages.find(x => x.id === Number(word))) {
                     return Errors.undefinedMessage(range(), word);
                 }
             }
             else {
                 const id = Tables.getInstance().staticMessagesTable.messages.get(word);
-                if (!id || context.qrc.messages.indexOf(id) === -1) {
+                if (!id || !context.qrc.messages.find(x => x.id === id)) {
                     return Errors.undefinedMessage(range(), word);
                 }
             }
             break;
         case ParameterTypes.messageName:
             const id = Tables.getInstance().staticMessagesTable.messages.get(word);
-            if (!id || context.qrc.messages.indexOf(Number(word)) === -1) {
+            if (!id || !context.qrc.messages.find(x => x.id === Number(word))) {
                 return Errors.undefinedMessage(range(), word);
             }
             break;
         case ParameterTypes.messageID:
-            if (context.qrc.messages.indexOf(Number(word)) === -1) {
+            if (!context.qrc.messages.find(x => x.id === Number(word))) {
                 return Errors.undefinedMessage(range(), word);
             }
             break;

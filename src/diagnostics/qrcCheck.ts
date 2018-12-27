@@ -7,10 +7,11 @@
 import * as parser from '../parsers/parser';
 import * as common from './common';
 
-import { Diagnostic, TextLine, TextDocument } from "vscode";
+import { Diagnostic, TextLine, TextDocument, Location } from "vscode";
 import { Errors, Warnings, Hints, wordRange, DiagnosticContext } from './common';
 import { Tables } from '../language/tables';
 import { MessageBlock } from '../parsers/parser';
+import { ParameterTypes } from '../language/parameterTypes';
 
 /**
  * Do diagnostics for a line in a QRC block.
@@ -28,15 +29,7 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
     // Static message definition 
     const staticMessage = parser.getStaticMessage(line.text);
     if (staticMessage) {
-        const id = Tables.getInstance().staticMessagesTable.messages.get(staticMessage.name);
-        if (!id || staticMessage.id !== id) {
-            yield Errors.invalidStaticMessageDefinition(line.range, staticMessage.id, staticMessage.name);
-        }
-        else {
-
-            yield* messageCommonCheck(context.qrc.messages, id, line);
-        }
-
+        addMessageDefinition(context.qrc.messages, staticMessage.id, line, staticMessage.name);
         context.qrc.messageBlock = new MessageBlock(document, line.lineNumber);
         return;
     }
@@ -44,23 +37,7 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
     // Additional message definition
     const messageID = parser.getMessageIDFromLine(line);
     if (messageID) {
-        const id = Number(messageID);
-
-        yield* messageCommonCheck(context.qrc.messages, id, line);
-
-        // Static message
-        for (const message of Tables.getInstance().staticMessagesTable.messages) {
-            if (message["1"] === id) {
-                yield Hints.useAliasForStaticMessage(wordRange(line, messageID), messageID);
-                break;
-            }
-        }
-
-        // Unused
-        if (parser.findMessageReferences(document, messageID, false)[Symbol.iterator]().next().value === undefined) {
-            yield Warnings.unusedDeclarationMessage(wordRange(line, messageID), messageID);
-        }
-
+        addMessageDefinition(context.qrc.messages, Number(messageID), line);
         context.qrc.messageBlock = new MessageBlock(document, line.lineNumber);
         return;
     }
@@ -69,7 +46,58 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
     if (context.qrc.messageBlock) {
         context.qrc.messageBlock = null;
     }
-    yield Errors.undefinedExpression(parser.trimRange(line), 'QRC');
+    context.qrc.failedParse.push(line);
+}
+
+/**
+ * Analyses the QRC section of a quest.
+ * @param document The current open document.
+ * @param context Diagnostic context for the current document.
+ */
+export function* analyseQrc(context: DiagnosticContext): Iterable<Diagnostic> {
+    
+    for (let index = 0; index < context.qrc.messages.length; index++) {
+        const message = context.qrc.messages[index];
+
+        // Unused
+        if (!message.alias && !messageHasReferences(context, message.id)) {
+            yield Warnings.unusedDeclarationMessage(message.range, String(message.id));
+        }
+
+        // Incorrect position
+        if (index > 0 && message.id < context.qrc.messages[index - 1].id) {
+            const previous = context.qrc.messages[index - 1];
+            yield Hints.incorrectMessagePosition(message.range, message.id, previous.id, new Location(context.document.uri, previous.range));
+        }
+
+        // Duplicated definition
+        if (message.otherRanges) {
+            const allLocations = [message.range, ...message.otherRanges].map(x => new Location(context.document.uri, x));
+            yield Errors.duplicatedMessageNumber(message.range, message.id, allLocations);
+            for (const range of message.otherRanges) {
+                yield Errors.duplicatedMessageNumber(range, message.id, allLocations);
+            }
+        }
+
+        // Check or suggest alias
+        if (message.alias) {
+            const id = Tables.getInstance().staticMessagesTable.messages.get(message.alias);
+            if (!id || message.id !== id) {
+                yield Errors.invalidStaticMessageDefinition(message.range, message.id, message.alias);
+            }
+        } else {
+            for (const staticMessage of Tables.getInstance().staticMessagesTable.messages) {
+                if (staticMessage["1"] === message.id) {
+                    yield Hints.useAliasForStaticMessage(message.range, message.id);
+                    break;
+                }
+            }
+        }
+    }
+
+    for (const line of context.qbn.failedParse) {
+        yield Errors.undefinedExpression(parser.trimRange(line), 'QRC');
+    }
 }
 
 /**
@@ -97,21 +125,48 @@ function* messageBlockCheck(context: DiagnosticContext, document: TextDocument, 
     }
 }
 
-/**
- * Do diagnostics for message definitions which are valid for both static and additional messages.
- */
-function* messageCommonCheck(messages: number[], id: number, line: TextLine): Iterable<Diagnostic> {
+function addMessageDefinition(messages: common.MessageContext[], id: number, line: TextLine, alias?: string): void {
+    const message = messages.find(x => x.id === id);
+    if (!message) {
+        messages.push({
+            id: id,
+            alias: alias,
+            range: wordRange(line, String(id)),
+            otherRanges: undefined
+        });
+    } else {
+        const otherRanges = message.otherRanges || (message.otherRanges = []);
+        otherRanges.push(wordRange(line, String(id)));
+    }
+}
 
-    // Incorrect position
-    if (id < messages[messages.length - 1]) {
-        yield Hints.incorrectMessagePosition(wordRange(line, String(id)), id, messages[messages.length - 1]);
+function messageHasReferences(context: DiagnosticContext, messageID: number): boolean {
+
+    function findParameter(callback: (parameter: {type: string, value: string}) => boolean): boolean {
+        for (const action of context.qbn.actions) {
+            if (action[1].signature.find(x => callback(x))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    // Duplicated definition
-    if (messages.indexOf(id) !== -1) {
-        yield Errors.duplicatedMessageNumber(wordRange(line, String(id)), id);
+    // ID in actions signatures
+    if (findParameter(parameter => (parameter.type === ParameterTypes.messageID || parameter.type === ParameterTypes.message) && parameter.value === String(messageID))) {
+        return true;
     }
-    else {
-        messages.push(id);
+
+    // Alias in actions signatures
+    for (const message of Tables.getInstance().staticMessagesTable.messages) {
+        if (message[1] === messageID) {
+            if (findParameter(parameter => (parameter.type === ParameterTypes.messageName || parameter.type === ParameterTypes.message) && parameter.value === message[0])) {
+                return true;
+            }
+        }
     }
+
+    // TODO: check symbols signatures
+    // Just call parser for now.
+    return parser.findMessageReferences(context.document, String(messageID), false)[Symbol.iterator]().next().value === undefined;
 }
