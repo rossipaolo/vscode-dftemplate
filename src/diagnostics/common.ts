@@ -10,7 +10,7 @@ import * as parser from '../parsers/parser';
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { TaskDefinition } from '../parsers/parser';
-import { SignatureWord } from './signatureCheck';
+import { SignatureWord, ActionSignature } from './signatureCheck';
 
 /**
  * Identifier code for a diagnostic item.
@@ -39,8 +39,9 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Natural number doesn\'t accept a sign.', DiagnosticSeverity.Error),
     numberIsNotInteger: (range: Range, word: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Integer number must have a sign.', DiagnosticSeverity.Error),
-    duplicatedMessageNumber: (range: Range, id: number) =>
-        makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error),
+    duplicatedMessageNumber: (range: Range, id: number, otherDefinitions: vscode.Location[]) =>
+        makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error,
+        { locations: otherDefinitions, label: 'message definition' }),
     duplicatedDefinition: (range: Range, name: string, otherDefinitions?: vscode.Location[]) =>
         makeDiagnostic(range, DiagnosticCode.DuplicatedDefinition, name + ' is already defined.', DiagnosticSeverity.Error,
             otherDefinitions ? { locations: otherDefinitions, label: 'symbol definition' } : undefined),
@@ -86,10 +87,11 @@ export const Warnings = {
 export const Hints = {
     symbolNamingConventionViolation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.SymbolNamingConvention, 'Violation of naming convention: use _symbol_.', DiagnosticSeverity.Hint),
-    useAliasForStaticMessage: (range: Range, messageID: string) =>
+    useAliasForStaticMessage: (range: Range, messageID: number) =>
         makeDiagnostic(range, DiagnosticCode.UseAliasForStaticMessage, 'Use text alias for static message ' + messageID + '.', DiagnosticSeverity.Hint),
-    incorrectMessagePosition: (range: Range, current: number, previous: number) =>
-        makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint),
+    incorrectMessagePosition: (range: Range, current: number, previous: number, previousLocation: vscode.Location) =>
+        makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint,
+            { locations: [previousLocation], label: 'message ' + previous }),
     SymbolVariation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
@@ -107,7 +109,14 @@ export interface TaskDefinitionContext {
 
 export interface ActionContext {
     line: vscode.TextLine;
-    signature: string;
+    signature: ActionSignature[];
+}
+
+export interface MessageContext {
+    id: number;
+    alias: string | undefined;
+    range: vscode.Range;
+    otherRanges: vscode.Range[] | undefined;
 }
 
 abstract class BlockContext {
@@ -120,7 +129,7 @@ class PreambleContext extends BlockContext {
 }
 
 class QrcContext extends BlockContext {
-    public readonly messages: number[] = [];
+    public readonly messages: MessageContext[] = [];
     public messageBlock: parser.MessageBlock | null = null;
 }
 

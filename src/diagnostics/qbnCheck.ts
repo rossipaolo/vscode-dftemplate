@@ -10,7 +10,7 @@ import { Diagnostic, TextLine, TextDocument, Location } from "vscode";
 import { Errors, Warnings, Hints, wordRange, DiagnosticContext, TaskDefinitionContext, SymbolDefinitionContext } from './common';
 import { Language } from '../language/language';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { analyseActionSignature, analyseSymbolSignature } from './signatureCheck';
+import { analyseActionSignature, analyseSymbolSignature, parseSignature } from './signatureCheck';
 import { Modules } from '../language/modules';
 import { TaskType } from '../parsers/parser';
 
@@ -84,7 +84,7 @@ export function parseQbn(line: TextLine, context: DiagnosticContext): void {
     if (actionResult) {
         context.qbn.actions.set(line.text.trim(), {
             line: line,
-            signature: actionResult.action.overloads[actionResult.overload]
+            signature: parseSignature(actionResult.action.overloads[actionResult.overload], line.text)
         });
 
         return;
@@ -202,7 +202,7 @@ export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
     }
 
     for (const action of context.qbn.actions) {
-        for (const diagnostic of analyseActionSignature(context, action[1].signature, action[1].line)) {
+        for (const diagnostic of analyseActionSignature(context, action[1])) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }

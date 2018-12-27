@@ -9,8 +9,8 @@ import * as parser from '../parsers/parser';
 
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from '../language/language';
-import { analyseActionSignature } from './signatureCheck';
-import { qrcCheck } from './qrcCheck';
+import { analyseActionSignature, parseSignature } from './signatureCheck';
+import { qrcCheck, analyseQrc } from './qrcCheck';
 import { parseQbn, analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
 import { Errors, DiagnosticContext } from './common';
@@ -133,6 +133,7 @@ function doDiagnostics(document: vscode.TextDocument) {
     for (const diagnostic of [
         ...analysePreamble(context),
         ...analyseQbn(context),
+        ...analyseQrc(context),
         ...analyselogic(context)]) {
         diagnostics.push(diagnostic);
     }
@@ -155,7 +156,7 @@ function parsePreamble(line: vscode.TextLine, context: DiagnosticContext): void 
 
             context.preamble.actions.push({
                 line: line,
-                signature: result.signature
+                signature: parseSignature(result.signature, line.text)
             });
 
             if (!context.questName && /^\s*Quest:/.test(line.text)) {
@@ -176,7 +177,7 @@ function parsePreamble(line: vscode.TextLine, context: DiagnosticContext): void 
  */
 function* analysePreamble(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
     for (const action of context.preamble.actions) {
-        for (const diagnostic of analyseActionSignature(context, action.signature, action.line)) {
+        for (const diagnostic of analyseActionSignature(context, action)) {
             diagnostic.source = TEMPLATE_LANGUAGE;
             yield diagnostic;
         }
