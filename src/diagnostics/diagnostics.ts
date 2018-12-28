@@ -9,7 +9,7 @@ import * as parser from '../parsers/parser';
 
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { Language } from '../language/language';
-import { analyseActionSignature, parseSignature } from './signatureCheck';
+import { analyseActionSignature, parseActionSignature } from './signatureCheck';
 import { qrcCheck, analyseQrc } from './qrcCheck';
 import { parseQbn, analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
@@ -156,7 +156,7 @@ function parsePreamble(line: vscode.TextLine, context: DiagnosticContext): void 
 
             context.preamble.actions.push({
                 line: line,
-                signature: parseSignature(result.signature, line.text)
+                signature: parseActionSignature(result.signature, line.text)
             });
 
             if (!context.questName && /^\s*Quest:/.test(line.text)) {

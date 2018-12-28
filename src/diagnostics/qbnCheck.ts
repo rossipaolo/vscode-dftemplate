@@ -10,7 +10,7 @@ import { Diagnostic, TextLine, TextDocument, Location } from "vscode";
 import { Errors, Warnings, Hints, wordRange, DiagnosticContext, TaskDefinitionContext, SymbolDefinitionContext } from './common';
 import { Language } from '../language/language';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { analyseActionSignature, analyseSymbolSignature, parseSignature } from './signatureCheck';
+import { analyseActionSignature, analyseSymbolSignature, parseActionSignature, parseSymbolSignature } from './signatureCheck';
 import { Modules } from '../language/modules';
 import { TaskType } from '../parsers/parser';
 
@@ -34,7 +34,7 @@ export function parseQbn(line: TextLine, context: DiagnosticContext): void {
                 type: type
             },
             isValid: !definition,
-            words: definition ? definition.matches : null
+            signature: definition ? parseSymbolSignature(definition.matches, line.text) : null
         };
         const symbolDefinition = context.qbn.symbols.get(symbol);
         if (!symbolDefinition) {
@@ -84,7 +84,7 @@ export function parseQbn(line: TextLine, context: DiagnosticContext): void {
     if (actionResult) {
         context.qbn.actions.set(line.text.trim(), {
             line: line,
-            signature: parseSignature(actionResult.action.overloads[actionResult.overload], line.text)
+            signature: parseActionSignature(actionResult.action.overloads[actionResult.overload], line.text)
         });
 
         return;
@@ -114,8 +114,8 @@ export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
         }
 
         function* checkSignature(symbol: SymbolDefinitionContext): Iterable<Diagnostic> {
-            if (symbol.words) {
-                for (const diagnostic of analyseSymbolSignature(context, symbol.words, context.document.lineAt(symbol.definition.location.range.start.line))) {
+            if (symbol.signature) {
+                for (const diagnostic of analyseSymbolSignature(context, symbol.signature, context.document.lineAt(symbol.definition.location.range.start.line))) {
                     diagnostic.source = TEMPLATE_LANGUAGE;
                     yield diagnostic;
                 }

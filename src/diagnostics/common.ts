@@ -10,7 +10,7 @@ import * as parser from '../parsers/parser';
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { TaskDefinition } from '../parsers/parser';
-import { SignatureWord, ActionSignature } from './signatureCheck';
+import { SignatureWord, Parameter } from './signatureCheck';
 
 /**
  * Identifier code for a diagnostic item.
@@ -99,7 +99,7 @@ export const Hints = {
 export interface SymbolDefinitionContext {
     definition: parser.Symbol;
     isValid: boolean | undefined;
-    words: SignatureWord[] | undefined | null;
+    signature: Parameter[] | undefined | null;
 }
 
 export interface TaskDefinitionContext {
@@ -109,7 +109,7 @@ export interface TaskDefinitionContext {
 
 export interface ActionContext {
     line: vscode.TextLine;
-    signature: ActionSignature[];
+    signature: Parameter[];
 }
 
 export interface MessageContext {
@@ -160,7 +160,7 @@ export function getSymbolDefinition(context: DiagnosticContext, document: vscode
     let definitionContext = context.qbn.symbols.get(symbol);
     if (definitionContext === undefined) {
         const definition = parser.findSymbolDefinition(document, symbol);
-        definitionContext = definition ? { isValid: undefined, definition: definition, words: undefined } : null;
+        definitionContext = definition ? { isValid: undefined, definition: definition, signature: undefined } : null;
         context.qbn.symbols.set(symbol, definitionContext = definitionContext);
     }
 
