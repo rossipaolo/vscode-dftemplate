@@ -9,7 +9,7 @@ import * as parser from '../parsers/parser';
 
 import { Tables } from '../language/tables';
 import { Modules } from '../language/modules';
-import { Errors, DiagnosticContext, ActionContext } from './common';
+import { Errors, DiagnosticContext } from './common';
 import { ParameterTypes } from '../language/parameterTypes';
 
 export interface SignatureWord {
@@ -53,25 +53,6 @@ export function parseActionSignature(signature: string, invocation: string): Par
 }
 
 /**
-* Analyses an action invocation.
-* @param context Context data for current diagnostics operation.
-* @param action The action to analyse.
-* @returns Diagnostics for the signature invocation.
-*/
-export function* analyseActionSignature(context: DiagnosticContext, action: ActionContext): Iterable<vscode.Diagnostic> {
-    for (let i = 0; i < action.signature.length; i++) {
-        const parameter = action.signature[i];
-        const diagnostic = analyseParameter(context, parameter, () => {
-            const wordPosition = findWordPosition(action.line.text, i);
-            return new vscode.Range(action.line.lineNumber, wordPosition, action.line.lineNumber, wordPosition + parameter.value.length);
-        });
-        if (diagnostic) {
-            yield diagnostic;
-        }
-    }
-}
-
-/**
  * Parses a symbol definition and build its parameters array.
  * @param signature RegExp that matches parameters.
  * @param invocation The line of text that defines the symbol.
@@ -91,19 +72,23 @@ export function parseSymbolSignature(signature: SignatureWord[], invocation: str
 }
 
 /**
-* Analyses a symbol definition.
+* Analyses the definition of a symbol or action.
 * @param context Context data for current diagnostics operation.
-* @param signature Paramters of the symbol definition.
 * @param line The line where the definition is found.
+* @param signature Parameters of the symbol definition.
+* @param areOrdered Are the parameters ordered?
 * @returns Diagnostics for the signature words.
 */
-export function* analyseSymbolSignature(context: DiagnosticContext, signature: Parameter[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
-    
-    for (const parameter of signature) {
+export function* analyseSignature(context: DiagnosticContext, line: vscode.TextLine, signature: Parameter[], areOrdered: boolean): Iterable<vscode.Diagnostic> {
+
+    for (let index = 0; index < signature.length; index++) {
+        const parameter = signature[index];
+
         const diagnostic = analyseParameter(context, parameter, () => {
-            const wordPosition = line.text.indexOf(parameter.value);
+            const wordPosition = areOrdered ? findWordPosition(line.text, index) : line.text.indexOf(parameter.value);
             return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + parameter.value.length);
         });
+
         if (diagnostic) {
             yield diagnostic;
         }
@@ -164,7 +149,6 @@ function analyseParameter(context: DiagnosticContext, parameter: Parameter, rang
             }
             break;
         case ParameterTypes.symbol:
-            context.qbn.referencedSymbols.add(parser.getBaseSymbol(parameter.value));
             if (!context.qbn.symbols.has(parameter.value)) {
                 return Errors.undefinedSymbol(range(), parameter.value);
             }
@@ -204,12 +188,11 @@ function analyseParameter(context: DiagnosticContext, parameter: Parameter, rang
  * @param type The type of the symbol as requested by signature.
  */
 function checkType(context: DiagnosticContext, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
-    context.qbn.referencedSymbols.add(parser.getBaseSymbol(symbol));
     const symbolContext = context.qbn.symbols.get(symbol);
     if (!symbolContext) {
         return Errors.undefinedSymbol(range(), symbol);
     }
-    else if ((Array.isArray(symbolContext) ? symbolContext[0] : symbolContext).definition.type !== type) {
+    else if ((Array.isArray(symbolContext) ? symbolContext[0] : symbolContext).type !== type) {
         return Errors.incorrectSymbolType(range(), symbol, type);
     }
 }
