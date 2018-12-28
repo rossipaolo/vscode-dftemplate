@@ -72,6 +72,15 @@ export function isDerivedSymbol(base: string, derived: string): boolean {
 }
 
 /**
+ * Makes a regexp that matches all occurrences of a symbol.
+ * @param symbol An occurence of a symbol.
+ */
+export function makeSymbolRegex(symbol: string): RegExp {
+    const name = getSymbolName(symbol);
+    return new RegExp(name !== symbol ? '(_{1,3}|={1,2})' + name + '_' : name, 'g');
+}
+
+/**
  * Checks if the symbol variation has a defined value for its type.
  * @param symbolOccurrence An occurence of a symbol.
  * @param type The type of the symbol.
@@ -172,8 +181,7 @@ export function* findAllSymbolDefinitions(document: TextDocument): Iterable<{ li
 */
 export function* findSymbolReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true, innerRange: boolean = false): Iterable<Range> {
 
-    const name = getSymbolName(symbol);
-    const regex = new RegExp(name !== symbol ? '(_{1,3}|={1,2})' + name + '_' : name, 'g');
+    const regex = makeSymbolRegex(symbol);
 
     function firstNonPrefixChar(symbol: string): number {
         return (symbol[0] === '_' || symbol[0] === '=') ?

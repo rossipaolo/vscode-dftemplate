@@ -10,7 +10,7 @@ import * as parser from '../parsers/parser';
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { TaskDefinition } from '../parsers/parser';
-import { SignatureWord, Parameter } from './signatureCheck';
+import { Parameter } from './signatureCheck';
 
 /**
  * Identifier code for a diagnostic item.
@@ -96,13 +96,14 @@ export const Hints = {
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
 
-export interface SymbolDefinitionContext {
-    definition: parser.Symbol;
-    isValid: boolean | undefined;
-    signature: Parameter[] | undefined | null;
+export interface SymbolContext {
+    type: string;
+    signature: Parameter[] | null;
+    range: Range;
+    line: vscode.TextLine;
 }
 
-export interface TaskDefinitionContext {
+export interface TaskContext {
     range: vscode.Range;
     definition: TaskDefinition;
 }
@@ -125,29 +126,33 @@ abstract class BlockContext {
 }
 
 class PreambleContext extends BlockContext {
+    public questName: vscode.Range | null = null;
     public readonly actions: ActionContext[] = [];
 }
 
 class QrcContext extends BlockContext {
     public readonly messages: MessageContext[] = [];
+    public readonly messageBlocks: vscode.TextLine[] = [];
     public messageBlock: parser.MessageBlock | null = null;
 }
 
 class QbnContext extends BlockContext {
-    public readonly symbols = new Map<string, SymbolDefinitionContext | SymbolDefinitionContext[] | null>();
-    public readonly referencedSymbols = new Set<string>();
-    public readonly tasks = new Map<string, TaskDefinitionContext | TaskDefinitionContext[]>();
-    public readonly persistUntilTasks: TaskDefinitionContext[] = [];
+    public readonly symbols = new Map<string, SymbolContext | SymbolContext[]>();
+    public readonly tasks = new Map<string, TaskContext | TaskContext[]>();
+    public readonly persistUntilTasks: TaskContext[] = [];
     public readonly actions = new Map<string, ActionContext>();
 }
 
 export class DiagnosticContext {
-    public questName: vscode.Range | null = null;
     public readonly preamble = new PreambleContext();
     public readonly qrc = new QrcContext();
     public readonly qbn = new QbnContext();
 
     public constructor(public readonly document: vscode.TextDocument) {
+    }
+
+    public getLocation(range: Range): vscode.Location {
+        return new vscode.Location(this.document.uri, range);
     }
 }
 
@@ -156,15 +161,34 @@ export function wordRange(line: vscode.TextLine, word: string): Range {
     return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
 }
 
-export function getSymbolDefinition(context: DiagnosticContext, document: vscode.TextDocument, symbol: string): SymbolDefinitionContext | null {
-    let definitionContext = context.qbn.symbols.get(symbol);
-    if (definitionContext === undefined) {
-        const definition = parser.findSymbolDefinition(document, symbol);
-        definitionContext = definition ? { isValid: undefined, definition: definition, signature: undefined } : null;
-        context.qbn.symbols.set(symbol, definitionContext = definitionContext);
+/**
+* Checks if any symbol or action invocations has a parameter that matches `filter`.
+* @param context Diagnostic context for the current document.
+* @param filter A callback that filters the parameters.
+* @param symbols Seek inside symbols definitions?
+* @param actions Seek inside actions invocations?
+*/
+export function findParameter(context: DiagnosticContext, filter: (parameter: Parameter) => boolean, symbols: boolean = true, actions: boolean = true): boolean {
+    if (actions) {
+        for (const action of context.qbn.actions) {
+            if (action[1].signature.find(x => filter(x))) {
+                return true;
+            }
+        }
     }
 
-    return Array.isArray(definitionContext) ? definitionContext[0] : definitionContext;
+    if (symbols) {
+        for (const symbol of context.qbn.symbols.values()) {
+            if (symbol) {
+                const signature = Array.isArray(symbol) ? symbol[0].signature : symbol.signature;
+                if (signature && signature.find(x => filter(x))) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity, relatedInformation?: { locations: vscode.Location[], label: string }): vscode.Diagnostic {

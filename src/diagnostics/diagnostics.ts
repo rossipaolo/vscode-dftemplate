@@ -8,9 +8,8 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
-import { Language } from '../language/language';
-import { analyseActionSignature, parseActionSignature } from './signatureCheck';
-import { qrcCheck, analyseQrc } from './qrcCheck';
+import { parsePreamble, analysePreamble } from './preambleCheck';
+import { parseQrc, analyseQrc } from './qrcCheck';
 import { parseQbn, analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
 import { Errors, DiagnosticContext } from './common';
@@ -87,10 +86,8 @@ function doDiagnostics(document: vscode.TextDocument) {
     if (parser.isQuestTable(document)) {   
         return Array.from(tableCheck(document));
     }
-    
-    const diagnostics: vscode.Diagnostic[] = [];
-    let block = QuestBlock.Preamble;
 
+    let block = QuestBlock.Preamble;
     const context = new DiagnosticContext(document);
 
     for (let index = 0; index < document.lineCount; index++) {
@@ -118,83 +115,27 @@ function doDiagnostics(document: vscode.TextDocument) {
             case QuestBlock.Preamble:
                 parsePreamble(line, context);
                 break;
+            case QuestBlock.QRC:
+                parseQrc(line, context);
+                break;
             case QuestBlock.QBN:
                 parseQbn(line, context);
-                break;
-            default:
-                for (const diagnostic of qrcCheck(document, line, context)) {
-                    diagnostics.push(diagnostic);
-                }
                 break;
         }
     }
 
     // Do analysis
-    for (const diagnostic of [
+    return [
         ...analysePreamble(context),
-        ...analyseQbn(context),
-        ...analyseQrc(context),
-        ...analyselogic(context)]) {
-        diagnostics.push(diagnostic);
-    }
-
-    return diagnostics;
+        ...(context.qrc.found ? analyseQrc(context) : failedAnalysis(context, 'QRC')),
+        ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN'))
+    ];
 }
 
-/**
- * Parses a line in the Preamble and build its diagnostic context.
- * @param line A line in the preamble.
- * @param context Context data for current diagnostics operation. 
- */
-function parsePreamble(line: vscode.TextLine, context: DiagnosticContext): void {
-    
-    // Keyword use
-    const word = parser.getFirstWord(line.text);
-    if (word) {
-        const result = Language.getInstance().findKeyword(word);
-        if (result) {
-
-            context.preamble.actions.push({
-                line: line,
-                signature: parseActionSignature(result.signature, line.text)
-            });
-
-            if (!context.questName && /^\s*Quest:/.test(line.text)) {
-                context.questName = line.range;
-            }
-
-            return;
-        }
+function* failedAnalysis(context: DiagnosticContext, name: string): Iterable<vscode.Diagnostic> {
+    if (context.preamble.questName) {
+        yield Errors.blockMissing(context.preamble.questName, name);
     }
 
-    context.preamble.failedParse.push(line);
-}
-
-/**
- * Analyses the Preamble of a quest.
- * @param document The current open document.
- * @param context Diagnostic context for the current document.
- */
-function* analysePreamble(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
-    for (const action of context.preamble.actions) {
-        for (const diagnostic of analyseActionSignature(context, action)) {
-            diagnostic.source = TEMPLATE_LANGUAGE;
-            yield diagnostic;
-        }
-    }
-
-    for (const line of context.preamble.failedParse) {
-        yield Errors.undefinedExpression(parser.trimRange(line), 'Preamble');
-    }
-}
-
-function* analyselogic(context: DiagnosticContext): Iterable<vscode.Diagnostic> {
-    if (context.questName) {
-        if (!context.qrc.found) {
-            yield Errors.blockMissing(context.questName, 'QRC');
-        }
-        if (!context.qbn.found) {
-            yield Errors.blockMissing(context.questName, 'QBN');
-        }
-    }
+    return;
 }

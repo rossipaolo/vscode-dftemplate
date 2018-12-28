@@ -7,31 +7,31 @@
 import * as parser from '../parsers/parser';
 import * as common from './common';
 
-import { Diagnostic, TextLine, TextDocument, Location } from "vscode";
-import { Errors, Warnings, Hints, wordRange, DiagnosticContext } from './common';
+import { Diagnostic, TextLine } from "vscode";
+import { Errors, Warnings, Hints, wordRange, DiagnosticContext, findParameter } from './common';
 import { Tables } from '../language/tables';
 import { MessageBlock } from '../parsers/parser';
 import { ParameterTypes } from '../language/parameterTypes';
-import { Parameter } from './signatureCheck';
 
 /**
- * Do diagnostics for a line in a QRC block.
+ * Parses a line in a QRC block and builds its diagnostic context.
  * @param document A quest document.
  * @param line A line in QRC block.
  * @param context Context data for current diagnostics operation. 
  */
-export function* qrcCheck(document: TextDocument, line: TextLine, context: DiagnosticContext): Iterable<Diagnostic> {
+export function parseQrc(line: TextLine, context: DiagnosticContext): void {
 
     // Inside a message block
     if (context.qrc.messageBlock && context.qrc.messageBlock.isInside(line.lineNumber)) {
-        return yield* messageBlockCheck(context, document, line);
+        context.qrc.messageBlocks.push(line);
+        return;
     }
 
     // Static message definition 
     const staticMessage = parser.getStaticMessage(line.text);
     if (staticMessage) {
         addMessageDefinition(context.qrc.messages, staticMessage.id, line, staticMessage.name);
-        context.qrc.messageBlock = new MessageBlock(document, line.lineNumber);
+        context.qrc.messageBlock = new MessageBlock(context.document, line.lineNumber);
         return;
     }
 
@@ -39,7 +39,7 @@ export function* qrcCheck(document: TextDocument, line: TextLine, context: Diagn
     const messageID = parser.getMessageIDFromLine(line);
     if (messageID) {
         addMessageDefinition(context.qrc.messages, Number(messageID), line);
-        context.qrc.messageBlock = new MessageBlock(document, line.lineNumber);
+        context.qrc.messageBlock = new MessageBlock(context.document, line.lineNumber);
         return;
     }
 
@@ -68,12 +68,12 @@ export function* analyseQrc(context: DiagnosticContext): Iterable<Diagnostic> {
         // Incorrect position
         if (index > 0 && message.id < context.qrc.messages[index - 1].id) {
             const previous = context.qrc.messages[index - 1];
-            yield Hints.incorrectMessagePosition(message.range, message.id, previous.id, new Location(context.document.uri, previous.range));
+            yield Hints.incorrectMessagePosition(message.range, message.id, previous.id, context.getLocation(previous.range));
         }
 
         // Duplicated definition
         if (message.otherRanges) {
-            const allLocations = [message.range, ...message.otherRanges].map(x => new Location(context.document.uri, x));
+            const allLocations = [message.range, ...message.otherRanges].map(x => context.getLocation(x));
             yield Errors.duplicatedMessageNumber(message.range, message.id, allLocations);
             for (const range of message.otherRanges) {
                 yield Errors.duplicatedMessageNumber(range, message.id, allLocations);
@@ -96,33 +96,29 @@ export function* analyseQrc(context: DiagnosticContext): Iterable<Diagnostic> {
         }
     }
 
-    for (const line of context.qbn.failedParse) {
-        yield Errors.undefinedExpression(parser.trimRange(line), 'QRC');
-    }
-}
-
-/**
- * Do diagnostics for a line in a message block.
- */
-function* messageBlockCheck(context: DiagnosticContext, document: TextDocument, line: TextLine): Iterable<Diagnostic> {
-
-    // Symbol occurrences
-    const symbols = parser.findAllSymbolsInALine(line.text);
-    if (symbols) {
-        for (const symbol of symbols) {
-            const baseSymbol = parser.getBaseSymbol(symbol);
-            context.qbn.referencedSymbols.add(baseSymbol);
-            const symbolContext = common.getSymbolDefinition(context, document, baseSymbol);
-            if (!symbolContext) {
-                yield Errors.undefinedSymbol(wordRange(line, symbol), symbol);
-            }
-            else if (!parser.isSupportedSymbolVariation(symbol, symbolContext.definition.type)) {
-                yield Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolContext.definition.type);
-            }
-            else {
-                yield Hints.SymbolVariation(wordRange(line, symbol));
+    // Symbols inside message blocks
+    for (const line of context.qrc.messageBlocks) {
+        const symbols = parser.findAllSymbolsInALine(line.text);
+        if (symbols) {
+            for (const symbol of symbols) {
+                let symbolDefinition = context.qbn.symbols.get(parser.getBaseSymbol(symbol));
+                if (!symbolDefinition) {
+                    yield Errors.undefinedSymbol(wordRange(line, symbol), symbol);
+                } else {       
+                    if (Array.isArray(symbolDefinition)) {
+                        symbolDefinition = symbolDefinition[0];
+                    }
+                    
+                    yield !parser.isSupportedSymbolVariation(symbol, symbolDefinition.type) ?
+                        Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolDefinition.type) :
+                        Hints.SymbolVariation(wordRange(line, symbol));
+                }
             }
         }
+    }
+
+    for (const line of context.qrc.failedParse) {
+        yield Errors.undefinedExpression(parser.trimRange(line), 'QRC');
     }
 }
 
@@ -142,39 +138,15 @@ function addMessageDefinition(messages: common.MessageContext[], id: number, lin
 }
 
 function messageHasReferences(context: DiagnosticContext, messageID: number): boolean {
-
-    /**
-     * Checks if any symbol or action invocations has a parameter that matches `filter`.
-     * @param filter A callback that filters the parameters.
-     */
-    function findParameter(filter: (parameter: Parameter) => boolean): boolean {
-        for (const action of context.qbn.actions) {
-            if (action[1].signature.find(x => filter(x))) {
-                return true;
-            }
-        }
-
-        for (const symbol of context.qbn.symbols.values()) {
-            if (symbol) {
-                const signature = Array.isArray(symbol) ? symbol[0].signature : symbol.signature;
-                if (signature && signature.find(x => filter(x))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     // Numeric ID
-    if (findParameter(parameter => (parameter.type === ParameterTypes.messageID || parameter.type === ParameterTypes.message) && parameter.value === String(messageID))) {
+    if (findParameter(context, parameter => (parameter.type === ParameterTypes.messageID || parameter.type === ParameterTypes.message) && parameter.value === String(messageID))) {
         return true;
     }
 
     // Text Alias
     for (const message of Tables.getInstance().staticMessagesTable.messages) {
         if (message[1] === messageID) {
-            if (findParameter(parameter => (parameter.type === ParameterTypes.messageName || parameter.type === ParameterTypes.message) && parameter.value === message[0])) {
+            if (findParameter(context, parameter => (parameter.type === ParameterTypes.messageName || parameter.type === ParameterTypes.message) && parameter.value === message[0])) {
                 return true;
             }
         }
