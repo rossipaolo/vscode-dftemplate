@@ -12,6 +12,7 @@ import { Errors, Warnings, Hints, wordRange, DiagnosticContext } from './common'
 import { Tables } from '../language/tables';
 import { MessageBlock } from '../parsers/parser';
 import { ParameterTypes } from '../language/parameterTypes';
+import { Parameter } from './signatureCheck';
 
 /**
  * Do diagnostics for a line in a QRC block.
@@ -142,22 +143,35 @@ function addMessageDefinition(messages: common.MessageContext[], id: number, lin
 
 function messageHasReferences(context: DiagnosticContext, messageID: number): boolean {
 
-    function findParameter(callback: (parameter: {type: string, value: string}) => boolean): boolean {
+    /**
+     * Checks if any symbol or action invocations has a parameter that matches `filter`.
+     * @param filter A callback that filters the parameters.
+     */
+    function findParameter(filter: (parameter: Parameter) => boolean): boolean {
         for (const action of context.qbn.actions) {
-            if (action[1].signature.find(x => callback(x))) {
+            if (action[1].signature.find(x => filter(x))) {
                 return true;
+            }
+        }
+
+        for (const symbol of context.qbn.symbols.values()) {
+            if (symbol) {
+                const signature = Array.isArray(symbol) ? symbol[0].signature : symbol.signature;
+                if (signature && signature.find(x => filter(x))) {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    // ID in actions signatures
+    // Numeric ID
     if (findParameter(parameter => (parameter.type === ParameterTypes.messageID || parameter.type === ParameterTypes.message) && parameter.value === String(messageID))) {
         return true;
     }
 
-    // Alias in actions signatures
+    // Text Alias
     for (const message of Tables.getInstance().staticMessagesTable.messages) {
         if (message[1] === messageID) {
             if (findParameter(parameter => (parameter.type === ParameterTypes.messageName || parameter.type === ParameterTypes.message) && parameter.value === message[0])) {
@@ -166,7 +180,5 @@ function messageHasReferences(context: DiagnosticContext, messageID: number): bo
         }
     }
 
-    // TODO: check symbols signatures
-    // Just call parser for now.
-    return parser.findMessageReferences(context.document, String(messageID), false)[Symbol.iterator]().next().value === undefined;
+    return false;
 }

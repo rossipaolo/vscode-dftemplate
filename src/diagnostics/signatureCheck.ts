@@ -17,12 +17,33 @@ export interface SignatureWord {
     signature: string;
 }
 
-export interface ActionSignature {
+/**
+ * A parameter in a symbol or action signature.
+ */
+export interface Parameter {
     type: string;
     value: string;
 }
 
-export function parseSignature(signature: string, invocation: string): ActionSignature[] {
+/**
+ * Parses an action invocation and build its parameters array.
+ * @param signature The signature of the action.
+ * @param invocation The line of text that invokes the action.
+ */
+export function parseActionSignature(signature: string, invocation: string): Parameter[] {
+    
+    function doParams(signatureItems: string[], lineItems: string[]): string[] {
+        if (signatureItems[signatureItems.length - 1].indexOf('${...') !== -1) {
+            const last = signatureItems[signatureItems.length - 1].replace('${...', '${');
+            signatureItems[signatureItems.length - 1] = last;
+            if (lineItems.length > signatureItems.length) {
+                signatureItems = signatureItems.concat(Array(lineItems.length - signatureItems.length).fill(last));
+            }
+        }
+    
+        return signatureItems;
+    }
+    
     const values = invocation.trim().split(' ');
     const types = doParams(signature.replace(/\${\d:/g, '${').split(' '), values);
 
@@ -32,15 +53,15 @@ export function parseSignature(signature: string, invocation: string): ActionSig
 }
 
 /**
-* Detects issues with a signature.
-* @param signature A snippet with standard syntax.
-* @param line A quest line that is checked with the signature.
+* Analyses an action invocation.
+* @param context Context data for current diagnostics operation.
+* @param action The action to analyse.
 * @returns Diagnostics for the signature invocation.
 */
 export function* analyseActionSignature(context: DiagnosticContext, action: ActionContext): Iterable<vscode.Diagnostic> {
     for (let i = 0; i < action.signature.length; i++) {
         const parameter = action.signature[i];
-        const diagnostic = analyseSignatureItem(context, parameter.value, parameter.type, () => {
+        const diagnostic = analyseParameter(context, parameter, () => {
             const wordPosition = findWordPosition(action.line.text, i);
             return new vscode.Range(action.line.lineNumber, wordPosition, action.line.lineNumber, wordPosition + parameter.value.length);
         });
@@ -51,123 +72,129 @@ export function* analyseActionSignature(context: DiagnosticContext, action: Acti
 }
 
 /**
-* Detects issues with individual words in a signature.
-* @param signatureWords Individual match words with standard syntax.
-* @param line A quest line that is checked with the signature.
+ * Parses a symbol definition and build its parameters array.
+ * @param signature RegExp that matches parameters.
+ * @param invocation The line of text that defines the symbol.
+ */
+export function parseSymbolSignature(signature: SignatureWord[], invocation: string): Parameter[] {    
+    return signature ? signature.reduce<Parameter[]>((parameters, word) => {
+        const match = invocation.match(word.regex);
+        if (match) {
+            parameters.push({
+                type: word.signature,
+                value: match[1]
+            });
+        }
+
+        return parameters;
+    }, []) : [];
+}
+
+/**
+* Analyses a symbol definition.
+* @param context Context data for current diagnostics operation.
+* @param signature Paramters of the symbol definition.
+* @param line The line where the definition is found.
 * @returns Diagnostics for the signature words.
 */
-export function* analyseSymbolSignature(context: DiagnosticContext, signatureWords: SignatureWord[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
-    for (const signatureWord of signatureWords) {
-        const result = line.text.match(signatureWord.regex);
-        if (result) {
-            const diagnostic = analyseSignatureItem(context, result[1], signatureWord.signature, () => {
-                const wordPosition = line.text.indexOf(result[1]);
-                return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + result[1].length);
-            });
-            if (diagnostic) {
-                yield diagnostic;
-            }
+export function* analyseSymbolSignature(context: DiagnosticContext, signature: Parameter[], line: vscode.TextLine): Iterable<vscode.Diagnostic> {
+    
+    for (const parameter of signature) {
+        const diagnostic = analyseParameter(context, parameter, () => {
+            const wordPosition = line.text.indexOf(parameter.value);
+            return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + parameter.value.length);
+        });
+        if (diagnostic) {
+            yield diagnostic;
         }
     }
 }
 
 /**
-* Gets an error message for a word in a line. Undefined if there are no issues.
+* Analyses a parameter in a symbol or action signature.
 * @param document A quest document.
-* @param word A word inside an invocation.
-* @param signatureItem A word in a signature that corresponds to `word`.
+* @param parameter The parameter to analyse.
 * @param range Gets range of word.
+* @returns An error message for the parameter, undefined if there are no issues.
 */
-function analyseSignatureItem(context: DiagnosticContext, word: string, signatureItem: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
-    switch (signatureItem) {
+function analyseParameter(context: DiagnosticContext, parameter: Parameter, range: () => vscode.Range): vscode.Diagnostic | undefined {
+    switch (parameter.type) {
         case ParameterTypes.naturalNumber:
-            if (isNaN(Number(word))) {
-                return Errors.notANumber(range(), word);
-            } else if (word.startsWith('+') || word.startsWith('-')) {
-                return Errors.numberIsNotNatural(range(), word);
+            if (isNaN(Number(parameter.value))) {
+                return Errors.notANumber(range(), parameter.value);
+            } else if (parameter.value.startsWith('+') || parameter.value.startsWith('-')) {
+                return Errors.numberIsNotNatural(range(), parameter.value);
             }
             break;
         case ParameterTypes.integerNumber:
-            if (isNaN(Number(word))) {
-                return Errors.notANumber(range(), word);
-            } else if (!word.startsWith('+') && !word.startsWith('-')) {
-                return Errors.numberIsNotInteger(range(), word);
+            if (isNaN(Number(parameter.value))) {
+                return Errors.notANumber(range(), parameter.value);
+            } else if (!parameter.value.startsWith('+') && !parameter.value.startsWith('-')) {
+                return Errors.numberIsNotInteger(range(), parameter.value);
             }
             break;
         case ParameterTypes.time:
-            const time = word.split(':');
+            const time = parameter.value.split(':');
             if (Number(time[0]) > 23 || Number(time[1]) > 59) {
-                return Errors.incorrectTime(range(), word);
+                return Errors.incorrectTime(range(), parameter.value);
             }
             break;
         case ParameterTypes.message:
-            if (!isNaN(Number(word))) {
-                if (!context.qrc.messages.find(x => x.id === Number(word))) {
-                    return Errors.undefinedMessage(range(), word);
+            if (!isNaN(Number(parameter.value))) {
+                if (!context.qrc.messages.find(x => x.id === Number(parameter.value))) {
+                    return Errors.undefinedMessage(range(), parameter.value);
                 }
             }
             else {
-                const id = Tables.getInstance().staticMessagesTable.messages.get(word);
+                const id = Tables.getInstance().staticMessagesTable.messages.get(parameter.value);
                 if (!id || !context.qrc.messages.find(x => x.id === id)) {
-                    return Errors.undefinedMessage(range(), word);
+                    return Errors.undefinedMessage(range(), parameter.value);
                 }
             }
             break;
         case ParameterTypes.messageName:
-            const id = Tables.getInstance().staticMessagesTable.messages.get(word);
-            if (!id || !context.qrc.messages.find(x => x.id === Number(word))) {
-                return Errors.undefinedMessage(range(), word);
+            const id = Tables.getInstance().staticMessagesTable.messages.get(parameter.value);
+            if (!id || !context.qrc.messages.find(x => x.id === Number(parameter.value))) {
+                return Errors.undefinedMessage(range(), parameter.value);
             }
             break;
         case ParameterTypes.messageID:
-            if (!context.qrc.messages.find(x => x.id === Number(word))) {
-                return Errors.undefinedMessage(range(), word);
+            if (!context.qrc.messages.find(x => x.id === Number(parameter.value))) {
+                return Errors.undefinedMessage(range(), parameter.value);
             }
             break;
         case ParameterTypes.symbol:
-            context.qbn.referencedSymbols.add(parser.getBaseSymbol(word));
-            if (!context.qbn.symbols.has(word)) {
-                return Errors.undefinedSymbol(range(), word);
+            context.qbn.referencedSymbols.add(parser.getBaseSymbol(parameter.value));
+            if (!context.qbn.symbols.has(parameter.value)) {
+                return Errors.undefinedSymbol(range(), parameter.value);
             }
             break;
         case ParameterTypes.itemSymbol:
-            return checkType(context, word, parser.Types.Item, range);
+            return checkType(context, parameter.value, parser.Types.Item, range);
         case ParameterTypes.personSymbol:
-            return checkType(context, word, parser.Types.Person, range);
+            return checkType(context, parameter.value, parser.Types.Person, range);
         case ParameterTypes.placeSymbol:
-            return checkType(context, word, parser.Types.Place, range);
+            return checkType(context, parameter.value, parser.Types.Place, range);
         case ParameterTypes.clockSymbol:
-            return checkType(context, word, parser.Types.Clock, range);
+            return checkType(context, parameter.value, parser.Types.Clock, range);
         case ParameterTypes.foeSymbol:
-            return checkType(context, word, parser.Types.Foe, range);
+            return checkType(context, parameter.value, parser.Types.Foe, range);
         case ParameterTypes.task:
-            if (!context.qbn.tasks.has(word)) {
-                return Errors.undefinedTask(range(), word);
+            if (!context.qbn.tasks.has(parameter.value)) {
+                return Errors.undefinedTask(range(), parameter.value);
             }
             break;
         case ParameterTypes.effectKey:
-            if (!Modules.getInstance().effectKeyExists(word)) {
-                return Errors.undefinedAttribute(range(), word, signatureItem.replace('${', '').replace('}', ''));
+            if (!Modules.getInstance().effectKeyExists(parameter.value)) {
+                return Errors.undefinedAttribute(range(), parameter.value, parameter.type.replace('${', '').replace('}', ''));
             }
             break;
     }
 
-    const attributes = Tables.getInstance().getValues(signatureItem);
-    if (attributes && attributes.indexOf(word) === -1) {
-        return Errors.undefinedAttribute(range(), word, signatureItem.replace('${', '').replace('}', ''));
+    const attributes = Tables.getInstance().getValues(parameter.type);
+    if (attributes && attributes.indexOf(parameter.value) === -1) {
+        return Errors.undefinedAttribute(range(), parameter.value, parameter.type.replace('${', '').replace('}', ''));
     }
-}
-
-function doParams(signatureItems: string[], lineItems: string[]): string[] {
-    if (signatureItems[signatureItems.length - 1].indexOf('${...') !== -1) {
-        const last = signatureItems[signatureItems.length - 1].replace('${...', '${');
-        signatureItems[signatureItems.length - 1] = last;
-        if (lineItems.length > signatureItems.length) {
-            signatureItems = signatureItems.concat(Array(lineItems.length - signatureItems.length).fill(last));
-        }
-    }
-
-    return signatureItems;
 }
 
 /**
