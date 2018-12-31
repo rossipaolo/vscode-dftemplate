@@ -15,12 +15,6 @@ import { tableCheck } from './tableCheck';
 import { Errors } from './common';
 import { Quest } from '../language/quest';
 
-enum QuestBlock {
-    Preamble,
-    QRC,
-    QBN
-}
-
 let timer: NodeJS.Timer | null = null;
 
 /**
@@ -83,54 +77,21 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
  * Makes diagostics for the given document.
  */
 function doDiagnostics(document: vscode.TextDocument) {
-    
-    if (parser.isQuestTable(document)) {   
+
+    if (parser.isQuestTable(document)) {
+        
+        // Analyse table
         return Array.from(tableCheck(document));
+    } else {
+        
+        // Analyse quest
+        const context = new Quest(document);
+        return [
+            ...analysePreamble(context),
+            ...(context.qrc.found ? analyseQrc(context) : failedAnalysis(context, 'QRC')),
+            ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN'))
+        ];
     }
-
-    let block = QuestBlock.Preamble;
-    const context = new Quest(document);
-
-    for (let index = 0; index < document.lineCount; index++) {
-        const line = document.lineAt(index);
-
-        // Skip comments and empty lines
-        if (parser.isEmptyOrComment(line.text)) {
-            continue;
-        }
-
-        // Detect next block
-        if (line.text.indexOf('QRC:') !== -1) {
-            block = QuestBlock.QRC;
-            context.qrc.found = true;
-            continue;
-        }
-        else if (line.text.indexOf('QBN:') !== -1) {
-            block = QuestBlock.QBN;
-            context.qbn.found = true;
-            continue;
-        }
-
-        // Parse current block
-        switch (block) {
-            case QuestBlock.Preamble:
-                context.preamble.parse(line);
-                break;
-            case QuestBlock.QRC:
-                context.qrc.parse(context.document, line);
-                break;
-            case QuestBlock.QBN:
-                context.qbn.parse(line);
-                break;
-        }
-    }
-
-    // Do analysis
-    return [
-        ...analysePreamble(context),
-        ...(context.qrc.found ? analyseQrc(context) : failedAnalysis(context, 'QRC')),
-        ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN'))
-    ];
 }
 
 function* failedAnalysis(context: Quest, name: string): Iterable<vscode.Diagnostic> {
