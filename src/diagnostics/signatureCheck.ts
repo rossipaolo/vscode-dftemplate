@@ -9,8 +9,9 @@ import * as parser from '../parsers/parser';
 
 import { Tables } from '../language/tables';
 import { Modules } from '../language/modules';
-import { Errors, DiagnosticContext } from './common';
+import { Errors } from './common';
 import { ParameterTypes } from '../language/parameterTypes';
+import { Quest } from '../language/quest';
 
 export interface SignatureWord {
     regex: string;
@@ -26,52 +27,6 @@ export interface Parameter {
 }
 
 /**
- * Parses an action invocation and build its parameters array.
- * @param signature The signature of the action.
- * @param invocation The line of text that invokes the action.
- */
-export function parseActionSignature(signature: string, invocation: string): Parameter[] {
-    
-    function doParams(signatureItems: string[], lineItems: string[]): string[] {
-        if (signatureItems[signatureItems.length - 1].indexOf('${...') !== -1) {
-            const last = signatureItems[signatureItems.length - 1].replace('${...', '${');
-            signatureItems[signatureItems.length - 1] = last;
-            if (lineItems.length > signatureItems.length) {
-                signatureItems = signatureItems.concat(Array(lineItems.length - signatureItems.length).fill(last));
-            }
-        }
-    
-        return signatureItems;
-    }
-    
-    const values = invocation.trim().split(' ');
-    const types = doParams(signature.replace(/\${\d:/g, '${').split(' '), values);
-
-    return values.map((value, index) => {
-        return { type: types[index], value: value };
-    });
-}
-
-/**
- * Parses a symbol definition and build its parameters array.
- * @param signature RegExp that matches parameters.
- * @param invocation The line of text that defines the symbol.
- */
-export function parseSymbolSignature(signature: SignatureWord[], invocation: string): Parameter[] {    
-    return signature ? signature.reduce<Parameter[]>((parameters, word) => {
-        const match = invocation.match(word.regex);
-        if (match) {
-            parameters.push({
-                type: word.signature,
-                value: match[1]
-            });
-        }
-
-        return parameters;
-    }, []) : [];
-}
-
-/**
 * Analyses the definition of a symbol or action.
 * @param context Context data for current diagnostics operation.
 * @param line The line where the definition is found.
@@ -79,7 +34,7 @@ export function parseSymbolSignature(signature: SignatureWord[], invocation: str
 * @param areOrdered Are the parameters ordered?
 * @returns Diagnostics for the signature words.
 */
-export function* analyseSignature(context: DiagnosticContext, line: vscode.TextLine, signature: Parameter[], areOrdered: boolean): Iterable<vscode.Diagnostic> {
+export function* analyseSignature(context: Quest, line: vscode.TextLine, signature: Parameter[], areOrdered: boolean): Iterable<vscode.Diagnostic> {
 
     for (let index = 0; index < signature.length; index++) {
         const parameter = signature[index];
@@ -102,7 +57,7 @@ export function* analyseSignature(context: DiagnosticContext, line: vscode.TextL
 * @param range Gets range of word.
 * @returns An error message for the parameter, undefined if there are no issues.
 */
-function analyseParameter(context: DiagnosticContext, parameter: Parameter, range: () => vscode.Range): vscode.Diagnostic | undefined {
+function analyseParameter(context: Quest, parameter: Parameter, range: () => vscode.Range): vscode.Diagnostic | undefined {
     switch (parameter.type) {
         case ParameterTypes.naturalNumber:
             if (isNaN(Number(parameter.value))) {
@@ -187,7 +142,7 @@ function analyseParameter(context: DiagnosticContext, parameter: Parameter, rang
  * @param symbol A symbol referenced inside an invocation.
  * @param type The type of the symbol as requested by signature.
  */
-function checkType(context: DiagnosticContext, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
+function checkType(context: Quest, symbol: string, type: string, range: () => vscode.Range): vscode.Diagnostic | undefined {
     const symbolContext = context.qbn.symbols.get(symbol);
     if (!symbolContext) {
         return Errors.undefinedSymbol(range(), symbol);
