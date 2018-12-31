@@ -5,57 +5,18 @@
 'use strict';
 
 import * as parser from '../parsers/parser';
-import * as common from './common';
-
-import { Diagnostic, TextLine } from "vscode";
-import { Errors, Warnings, Hints, wordRange, DiagnosticContext, findParameter } from './common';
+import { Diagnostic, } from "vscode";
+import { Errors, Warnings, Hints, wordRange, findParameter } from './common';
 import { Tables } from '../language/tables';
-import { MessageBlock } from '../parsers/parser';
 import { ParameterTypes } from '../language/parameterTypes';
-
-/**
- * Parses a line in a QRC block and builds its diagnostic context.
- * @param document A quest document.
- * @param line A line in QRC block.
- * @param context Context data for current diagnostics operation. 
- */
-export function parseQrc(line: TextLine, context: DiagnosticContext): void {
-
-    // Inside a message block
-    if (context.qrc.messageBlock && context.qrc.messageBlock.isInside(line.lineNumber)) {
-        context.qrc.messageBlocks.push(line);
-        return;
-    }
-
-    // Static message definition 
-    const staticMessage = parser.getStaticMessage(line.text);
-    if (staticMessage) {
-        addMessageDefinition(context.qrc.messages, staticMessage.id, line, staticMessage.name);
-        context.qrc.messageBlock = new MessageBlock(context.document, line.lineNumber);
-        return;
-    }
-
-    // Additional message definition
-    const messageID = parser.getMessageIDFromLine(line);
-    if (messageID) {
-        addMessageDefinition(context.qrc.messages, Number(messageID), line);
-        context.qrc.messageBlock = new MessageBlock(context.document, line.lineNumber);
-        return;
-    }
-
-    // Undefined expression in qrc block
-    if (context.qrc.messageBlock) {
-        context.qrc.messageBlock = null;
-    }
-    context.qrc.failedParse.push(line);
-}
+import { Quest } from '../language/quest';
 
 /**
  * Analyses the QRC section of a quest.
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
  */
-export function* analyseQrc(context: DiagnosticContext): Iterable<Diagnostic> {
+export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
     
     for (let index = 0; index < context.qrc.messages.length; index++) {
         const message = context.qrc.messages[index];
@@ -122,22 +83,7 @@ export function* analyseQrc(context: DiagnosticContext): Iterable<Diagnostic> {
     }
 }
 
-function addMessageDefinition(messages: common.MessageContext[], id: number, line: TextLine, alias?: string): void {
-    const message = messages.find(x => x.id === id);
-    if (!message) {
-        messages.push({
-            id: id,
-            alias: alias,
-            range: wordRange(line, String(id)),
-            otherRanges: undefined
-        });
-    } else {
-        const otherRanges = message.otherRanges || (message.otherRanges = []);
-        otherRanges.push(wordRange(line, String(id)));
-    }
-}
-
-function messageHasReferences(context: DiagnosticContext, messageID: number): boolean {
+function messageHasReferences(context: Quest, messageID: number): boolean {
     // Numeric ID
     if (findParameter(context, parameter => (parameter.type === ParameterTypes.messageID || parameter.type === ParameterTypes.message) && parameter.value === String(messageID))) {
         return true;

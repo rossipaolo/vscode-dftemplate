@@ -6,91 +6,20 @@
 
 import * as parser from '../parsers/parser';
 
-import { Diagnostic, TextLine } from "vscode";
-import { Errors, Warnings, Hints, wordRange, DiagnosticContext, TaskContext, SymbolContext, findParameter } from './common';
-import { Language } from '../language/language';
-import { analyseSignature, parseActionSignature, parseSymbolSignature } from './signatureCheck';
-import { Modules } from '../language/modules';
+import { Diagnostic } from "vscode";
+import { Errors, Warnings, Hints, findParameter } from './common';
+import { analyseSignature } from './signatureCheck';
 import { TaskType } from '../parsers/parser';
 import { ParameterTypes } from '../language/parameterTypes';
-
-/**
- * Parses a line in a QBN block and build its diagnostic context.
- * @param line A line in QBN block.
- * @param context Context data for current diagnostics operation. 
- */
-export function parseQbn(line: TextLine, context: DiagnosticContext): void {
-
-    // Symbol definition
-    const symbol = parser.getSymbolFromLine(line);
-    if (symbol) {
-        const text = line.text.trim();
-        const type = text.substring(0, text.indexOf(' '));
-        const definition = Language.getInstance().findDefinition(type, text);
-
-        const symbolDefinitionContext = {
-            type: type,
-            signature: definition ? parseSymbolSignature(definition.matches, line.text) : null,
-            range: wordRange(line, symbol),
-            line: line
-        };
-        const symbolDefinition = context.qbn.symbols.get(symbol);
-        if (!symbolDefinition) {
-            context.qbn.symbols.set(symbol, symbolDefinitionContext);
-        } else if (!Array.isArray(symbolDefinition)) {
-            context.qbn.symbols.set(symbol, [symbolDefinition, symbolDefinitionContext]);
-        } else {
-            symbolDefinition.push(symbolDefinitionContext);
-        }
-
-        return;
-    }
-
-    // Task definition
-    const task = parser.parseTaskDefinition(line.text);
-    if (task) {
-
-        const newTaskDefinition = {
-            range: wordRange(line, task.symbol),
-            definition: task
-        };
-
-        if (task.type === TaskType.PersistUntil) {
-            context.qbn.persistUntilTasks.push(newTaskDefinition);
-        } else {
-            const taskDefinition = context.qbn.tasks.get(task.symbol);
-            if (!taskDefinition) {
-                context.qbn.tasks.set(task.symbol, newTaskDefinition);
-            } else if (!Array.isArray(taskDefinition)) {
-                context.qbn.tasks.set(task.symbol, [taskDefinition, newTaskDefinition]);
-            } else {
-                taskDefinition.push(newTaskDefinition);
-            }
-        }
-
-        return;
-    }
-
-    // Action invocation
-    const actionResult = Modules.getInstance().findAction(line.text);
-    if (actionResult) {
-        context.qbn.actions.set(line.text.trim(), {
-            line: line,
-            signature: parseActionSignature(actionResult.action.overloads[actionResult.overload], line.text)
-        });
-
-        return;
-    }
-
-    context.qbn.failedParse.push(line);
-}
+import { Quest } from '../language/quest';
+import { Symbol, Task } from '../language/common';
 
 /**
  * Analyses the QBN section of a quest.
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
  */
-export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
+export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
     for (const symbolCtx of context.qbn.symbols) {
         const symbol = symbolCtx[1];
@@ -100,7 +29,7 @@ export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
             continue;
         }
 
-        function* checkSignature(symbol: SymbolContext): Iterable<Diagnostic> {
+        function* checkSignature(symbol: Symbol): Iterable<Diagnostic> {
             if (symbol.signature) {
                 yield* analyseSignature(context, symbol.line, symbol.signature, false);
             }
@@ -158,7 +87,7 @@ export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
         // Duplicated definition
         if (Array.isArray(task[1])) {
             const allLocations = task[1].map(x => context.getLocation(x.range));
-            for (const definition of task[1] as TaskContext[]) {
+            for (const definition of task[1] as Task[]) {
                 yield Errors.duplicatedDefinition(definition.range, taskName, allLocations);
             }
         }
@@ -193,7 +122,7 @@ export function* analyseQbn(context: DiagnosticContext): Iterable<Diagnostic> {
     }
 }
 
-function symbolHasReferences(context: DiagnosticContext, symbol: string): boolean {
+function symbolHasReferences(context: Quest, symbol: string): boolean {
     const baseSymbol = parser.getBaseSymbol(symbol);
     for (const action of context.qbn.actions) {
         if (action[1].signature.find(x => x.value === baseSymbol)) {
@@ -209,7 +138,7 @@ function symbolHasReferences(context: DiagnosticContext, symbol: string): boolea
     return false;
 }
 
-function taskIsUsed(context: DiagnosticContext, taskName: string, taskContext: TaskContext): boolean {
+function taskIsUsed(context: Quest, taskName: string, taskContext: Task): boolean {
     // Started by trigger
     if (parser.isConditionalTask(context.document, taskContext.range.start.line)) {
         return true;

@@ -8,11 +8,12 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
-import { parsePreamble, analysePreamble } from './preambleCheck';
-import { parseQrc, analyseQrc } from './qrcCheck';
-import { parseQbn, analyseQbn } from './qbnCheck';
+import { analysePreamble } from './preambleCheck';
+import { analyseQrc } from './qrcCheck';
+import { analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
-import { Errors, DiagnosticContext } from './common';
+import { Errors } from './common';
+import { Quest } from '../language/quest';
 
 enum QuestBlock {
     Preamble,
@@ -88,7 +89,7 @@ function doDiagnostics(document: vscode.TextDocument) {
     }
 
     let block = QuestBlock.Preamble;
-    const context = new DiagnosticContext(document);
+    const context = new Quest(document);
 
     for (let index = 0; index < document.lineCount; index++) {
         const line = document.lineAt(index);
@@ -113,13 +114,13 @@ function doDiagnostics(document: vscode.TextDocument) {
         // Parse current block
         switch (block) {
             case QuestBlock.Preamble:
-                parsePreamble(line, context);
+                context.preamble.parse(line);
                 break;
             case QuestBlock.QRC:
-                parseQrc(line, context);
+                context.qrc.parse(context.document, line);
                 break;
             case QuestBlock.QBN:
-                parseQbn(line, context);
+                context.qbn.parse(line);
                 break;
         }
     }
@@ -132,9 +133,10 @@ function doDiagnostics(document: vscode.TextDocument) {
     ];
 }
 
-function* failedAnalysis(context: DiagnosticContext, name: string): Iterable<vscode.Diagnostic> {
-    if (context.preamble.questName) {
-        yield Errors.blockMissing(context.preamble.questName, name);
+function* failedAnalysis(context: Quest, name: string): Iterable<vscode.Diagnostic> {
+    const questName = context.preamble.questName;
+    if (questName) {
+        yield Errors.blockMissing(questName.line.range, name);
     }
 
     return;

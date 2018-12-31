@@ -5,12 +5,10 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
-
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { TaskDefinition } from '../parsers/parser';
 import { Parameter } from './signatureCheck';
+import { Quest } from '../language/quest';
 
 /**
  * Identifier code for a diagnostic item.
@@ -96,66 +94,6 @@ export const Hints = {
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
 
-export interface SymbolContext {
-    type: string;
-    signature: Parameter[] | null;
-    range: Range;
-    line: vscode.TextLine;
-}
-
-export interface TaskContext {
-    range: vscode.Range;
-    definition: TaskDefinition;
-}
-
-export interface ActionContext {
-    line: vscode.TextLine;
-    signature: Parameter[];
-}
-
-export interface MessageContext {
-    id: number;
-    alias: string | undefined;
-    range: vscode.Range;
-    otherRanges: vscode.Range[] | undefined;
-}
-
-abstract class BlockContext {
-    public found: boolean = false;
-    public readonly failedParse: vscode.TextLine[] = [];
-}
-
-class PreambleContext extends BlockContext {
-    public questName: vscode.Range | null = null;
-    public readonly actions: ActionContext[] = [];
-}
-
-class QrcContext extends BlockContext {
-    public readonly messages: MessageContext[] = [];
-    public readonly messageBlocks: vscode.TextLine[] = [];
-    public messageBlock: parser.MessageBlock | null = null;
-}
-
-class QbnContext extends BlockContext {
-    public readonly symbols = new Map<string, SymbolContext | SymbolContext[]>();
-    public readonly tasks = new Map<string, TaskContext | TaskContext[]>();
-    public readonly persistUntilTasks: TaskContext[] = [];
-    public readonly actions = new Map<string, ActionContext>();
-}
-
-export class DiagnosticContext {
-    public readonly preamble = new PreambleContext();
-    public readonly qrc = new QrcContext();
-    public readonly qbn = new QbnContext();
-
-    public constructor(public readonly document: vscode.TextDocument) {
-    }
-
-    public getLocation(range: Range): vscode.Location {
-        return new vscode.Location(this.document.uri, range);
-    }
-}
-
 export function wordRange(line: vscode.TextLine, word: string): Range {
     const index = line.text.indexOf(word);
     return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
@@ -168,7 +106,7 @@ export function wordRange(line: vscode.TextLine, word: string): Range {
 * @param symbols Seek inside symbols definitions?
 * @param actions Seek inside actions invocations?
 */
-export function findParameter(context: DiagnosticContext, filter: (parameter: Parameter) => boolean, symbols: boolean = true, actions: boolean = true): boolean {
+export function findParameter(context: Quest, filter: (parameter: Parameter) => boolean, symbols: boolean = true, actions: boolean = true): boolean {
     if (actions) {
         for (const action of context.qbn.actions) {
             if (action[1].signature.find(x => filter(x))) {
