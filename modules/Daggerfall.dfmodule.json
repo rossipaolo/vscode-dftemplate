@@ -457,6 +457,7 @@
         "Disease-WizardFever",
         "Disease-WoundRot",
         "Disease-YellowFever",
+        "Vampirism-Infection",
         "Chameleon-Normal",
         "Chameleon-True",
         "Invisibility-Normal",
@@ -516,6 +517,8 @@
         "Heal-Willpower",
         "Regenerate",
         "SpellAbsorption",
+        "Passive-Specials",
+        "Vampirism-Curse",
         "Detect-Enemy",
         "Detect-Magic",
         "Detect-Treasure",
@@ -524,6 +527,7 @@
         "Pacify-Animal",
         "Pacify-Undead",
         "Pacify-Humanoid",
-        "Pacify-Daedra"
+        "Pacify-Daedra",
+        "WaterWalking"
     ]
 }
