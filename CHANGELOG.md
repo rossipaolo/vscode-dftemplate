@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.7.0
 
 ### Added
 - When a symbol or message is incorrectly defined multiple times, diagnostics show the locations in the hover box.
