@@ -194,6 +194,16 @@ export function findReferences(name: string, regex: RegExp, token?: vscode.Cance
 }
 
 /**
+ * Opens and gets all documents in the workspace which are assigned the Template language id.
+ * @param token An optional cancellation token.
+ */
+export async function getAllDocuments(token?: vscode.CancellationToken): Promise<TextDocument[]> {
+    const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
+    const documents = await Promise.all(uris.map(uri => vscode.workspace.openTextDocument(uri)));
+    return documents.filter(document => document.languageId === TEMPLATE_LANGUAGE);
+}
+
+/**
  * Open all documents in the workspace.
  * @param callback A callback called for each document
  */
