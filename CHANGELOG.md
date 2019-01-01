@@ -7,6 +7,7 @@
 
 ### Improved
 - Improved performance of diagnostics.
+- Parsed quests are stored for accesses from both diagnostics and DocumentSymbolProvider.
 
 ## 0.6.0
 

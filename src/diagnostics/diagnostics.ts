@@ -85,7 +85,7 @@ function doDiagnostics(document: vscode.TextDocument) {
     } else {
         
         // Analyse quest
-        const context = new Quest(document);
+        const context = Quest.get(document);
         return [
             ...analysePreamble(context),
             ...(context.qrc.found ? analyseQrc(context) : failedAnalysis(context, 'QRC')),
