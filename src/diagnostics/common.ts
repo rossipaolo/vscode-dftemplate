@@ -108,8 +108,8 @@ export function wordRange(line: vscode.TextLine, word: string): Range {
 */
 export function findParameter(context: Quest, filter: (parameter: Parameter) => boolean, symbols: boolean = true, actions: boolean = true): boolean {
     if (actions) {
-        for (const action of context.qbn.actions) {
-            if (action[1].signature.find(x => filter(x))) {
+        for (const action of context.qbn.iterateActions()) {
+            if (action.signature.find(x => filter(x))) {
                 return true;
             }
         }

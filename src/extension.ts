@@ -85,6 +85,17 @@ export function* iterateAll<T>(...iterables: Iterable<T>[]): Iterable<T> {
 }
 
 /**
+ * Finds the first element that satisfies a specified condition.
+ */
+export function first<T>(iterable: Iterable<T>, predicate?: (item: T) => boolean): T | undefined {
+    for (const item of iterable) {
+        if (!predicate || predicate(item)) {
+            return item;
+        }
+    }
+}
+
+/**
  * Filters a sequence of values with a predicate.
  */
 export function* where<T>(iterable: Iterable<T>, predicate: (item: T) => boolean): Iterable<T> {
