@@ -25,6 +25,7 @@ import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvi
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { Tables } from './language/tables';
 import { setGlobalVariables } from './parsers/tasks';
+import { Quest } from './language/quest';
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
@@ -69,6 +70,8 @@ export function activate(context: ExtensionContext) {
             context.subscriptions.push(makeDiagnosticCollection(context));
         }
     }, (e) => vscode.window.showErrorMessage('Failed to load language data: ' + e));
+
+    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(document =>  Quest.delete(document)));
 }
 
 export function deactivate() {
