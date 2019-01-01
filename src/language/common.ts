@@ -6,7 +6,7 @@
 
 import { Parameter, SignatureWord } from "../diagnostics/signatureCheck";
 import { Range, TextLine } from "vscode";
-import { TaskDefinition } from "../parsers/parser";
+import { TaskDefinition, TaskType } from "../parsers/parser";
 
 /**
  * A symbol used by resources and tasks, and for text replacement inside messages.
@@ -14,6 +14,10 @@ import { TaskDefinition } from "../parsers/parser";
 export class Symbol {
 
     public signature: Parameter[] | null = null;
+
+    public get name() {
+        return this.line.text.trim().split(' ')[1];
+    }
 
     public constructor(
         public type: string,
@@ -41,9 +45,25 @@ export class Symbol {
  * A group of actions that can be executed, with a flag for its triggered state.
  * When the action list is empty, the task is used as a set/unset variable.
  */
-export interface Task {
-    range: Range;
-    definition: TaskDefinition;
+export class Task {
+
+    public readonly actions: Action[] = [];
+
+    public get isVariable(): boolean {
+        return this.definition.type === TaskType.Variable
+            || this.definition.type === TaskType.GlobalVarLink;
+    }
+
+    public get range(): Range {
+        return this.actions.length > 0 ?
+            this.symbolRange.union(this.actions[this.actions.length - 1].line.range) :
+            this.symbolRange;
+    }
+
+    public constructor(
+        public symbolRange: Range,
+        public definition: TaskDefinition) {
+    }
 }
 
 /**
@@ -80,18 +100,39 @@ export class Action {
 /**
  * A text block with a serial number. Can be used for popups, journal, letters, and rumours.
  */
-export interface Message {
-    id: number;
-    alias: string | undefined;
-    range: Range;
-    otherRanges: Range[] | undefined;
+export class Message {
+
+    public readonly textBlock: TextLine[] = [];    
+
+    public get blockRange(): Range {
+        return this.textBlock.length > 0 ?
+            this.range.union(this.textBlock[this.textBlock.length - 1].range) :
+            this.range;
+    }
+
+    public constructor(
+        public id: number,
+        public range: Range,
+        public alias?: string) {
+    }
 }
 
 /**
  * A block of a quest.
  */
 export abstract class QuestBlock {
-    public found: boolean = false;
+    public start: number | undefined;
+    public end: number | undefined;
     public readonly failedParse: TextLine[] = [];
+
+    public get found(): boolean {
+        return this.start !== undefined;
+    }
+
+    public get range(): Range | undefined {
+        if (this.start && this.end) {
+            return new Range(this.start, 0, this.end, 0);
+        }
+    }
 }
 

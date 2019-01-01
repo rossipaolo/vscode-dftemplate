@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
+import * as common from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
@@ -37,9 +38,9 @@ export class Quest {
     public readonly qbn = new Qbn();
 
     public constructor(public readonly document: vscode.TextDocument) {
-        
+
         let block = QuestBlock.Preamble;
-        this.preamble.found = true;
+        this.preamble.start = 0;
 
         for (let index = 0; index < this.document.lineCount; index++) {
             const line = this.document.lineAt(index);
@@ -52,12 +53,12 @@ export class Quest {
             // Detect next block
             if (line.text.indexOf('QRC:') !== -1) {
                 block = QuestBlock.QRC;
-                this.qrc.found = true;
+                this.qrc.start = line.lineNumber;
                 continue;
             }
             else if (line.text.indexOf('QBN:') !== -1) {
                 block = QuestBlock.QBN;
-                this.qbn.found = true;
+                this.qbn.start = line.lineNumber;
                 continue;
             }
     
@@ -74,9 +75,22 @@ export class Quest {
                     break;
             }
         }
+
+        this.preamble.end = this.qrc.start ? this.qrc.start - 1 : undefined;
+        this.qrc.end = this.qbn.start ? this.qbn.start - 1 : undefined;
+        this.qbn.end = this.document.lineCount - 1;
     }
 
-    public getLocation(range: vscode.Range): vscode.Location {
-        return new vscode.Location(this.document.uri, range);
+    /**
+     * Gets the location for a quest block.
+     * @param block A quest block or directly a range in the quest file.
+     */
+    public getLocation(block?: vscode.Range | common.QuestBlock): vscode.Location {   
+        if (!block) {
+            block = new vscode.Range(0, 0, this.document.lineCount, 0);
+        } else if (block instanceof common.QuestBlock) {
+            block = block.range || new vscode.Range(0, 0, 0, 0);
+        }
+        return new vscode.Location(this.document.uri, block);
     }
 }

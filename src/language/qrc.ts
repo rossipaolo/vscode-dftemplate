@@ -19,12 +19,8 @@ export class Qrc extends QuestBlock {
      * Messages definitions in this QRC block.
      */
     public readonly messages: Message[] = [];
-
-    /**
-     * Merged text lines from all messages.  
-     */
-    public readonly messageBlocks: TextLine[] = [];
     
+    private textBlock: TextLine[] | undefined;
     private messageBlock: parser.MessageBlock | null = null;
 
     /**
@@ -35,8 +31,8 @@ export class Qrc extends QuestBlock {
     public parse(document: TextDocument, line: TextLine): void {
 
         // Inside a message block
-        if (this.messageBlock && this.messageBlock.isInside(line.lineNumber)) {
-            this.messageBlocks.push(line);
+        if (this.textBlock && this.messageBlock && this.messageBlock.isInside(line.lineNumber)) {
+            this.textBlock.push(line);
             return;
         }
 
@@ -63,19 +59,19 @@ export class Qrc extends QuestBlock {
         this.failedParse.push(line);
     }
 
+    /**
+     * Iterates all text lines inside all message blocks.
+     */
+    public *iterateMessageLines(): Iterable<TextLine> {
+        for (const message of this.messages) {
+            yield* message.textBlock;
+        }
+    }
+
     private registerMessage(id: number, line: TextLine, alias?: string): void {
         const range = wordRange(line, String(id));
-        const message = this.messages.find(x => x.id === id);
-        if (!message) {
-            this.messages.push({
-                id: id,
-                alias: alias,
-                range: range,
-                otherRanges: undefined
-            });
-        } else {
-            const otherRanges = message.otherRanges || (message.otherRanges = []);
-            otherRanges.push(range);
-        }
+        const message = new Message(id, range, alias);
+        this.messages.push(message);
+        this.textBlock = message.textBlock;
     }
 }

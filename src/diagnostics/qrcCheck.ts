@@ -17,7 +17,7 @@ import { Quest } from '../language/quest';
  * @param context Diagnostic context for the current document.
  */
 export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
-    
+
     for (let index = 0; index < context.qrc.messages.length; index++) {
         const message = context.qrc.messages[index];
 
@@ -33,12 +33,10 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
         }
 
         // Duplicated definition
-        if (message.otherRanges) {
-            const allLocations = [message.range, ...message.otherRanges].map(x => context.getLocation(x));
+        const collisions = context.qrc.messages.filter(x => x.id === message.id);
+        if (collisions.length > 1) {
+            const allLocations = collisions.map(x => context.getLocation(x.range));
             yield Errors.duplicatedMessageNumber(message.range, message.id, allLocations);
-            for (const range of message.otherRanges) {
-                yield Errors.duplicatedMessageNumber(range, message.id, allLocations);
-            }
         }
 
         // Check or suggest alias
@@ -58,7 +56,7 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
     }
 
     // Symbols inside message blocks
-    for (const line of context.qrc.messageBlocks) {
+    for (const line of context.qrc.iterateMessageLines()) {
         const symbols = parser.findAllSymbolsInALine(line.text);
         if (symbols) {
             for (const symbol of symbols) {

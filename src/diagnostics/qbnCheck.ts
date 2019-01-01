@@ -13,6 +13,7 @@ import { TaskType } from '../parsers/parser';
 import { ParameterTypes } from '../language/parameterTypes';
 import { Quest } from '../language/quest';
 import { Symbol, Task } from '../language/common';
+import { first } from '../extension';
 
 /**
  * Analyses the QBN section of a quest.
@@ -62,7 +63,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
         // Clock
         if (symbolContext.type === parser.Types.Clock) {
-            if (!context.qbn.actions.has('start timer ' + symbolName)) {
+            if (!first(context.qbn.iterateActions(), x => x.line.text.indexOf('start timer ' + symbolName) !== -1)) {
                 yield Warnings.unstartedClock(symbolContext.range, symbolName);
             }
             if (!context.qbn.tasks.get(symbolName)) {
@@ -86,9 +87,9 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
         // Duplicated definition
         if (Array.isArray(task[1])) {
-            const allLocations = task[1].map(x => context.getLocation(x.range));
+            const allLocations = task[1].map(x => context.getLocation(x.symbolRange));
             for (const definition of task[1] as Task[]) {
-                yield Errors.duplicatedDefinition(definition.range, taskName, allLocations);
+                yield Errors.duplicatedDefinition(definition.symbolRange, taskName, allLocations);
             }
         }
 
@@ -96,12 +97,12 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         if (!taskIsUsed(context, taskName, taskContext)) {
             const definition = taskContext.definition;
             const name = definition.type === TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
-            yield Warnings.unusedDeclarationSymbol(taskContext.range, name);
+            yield Warnings.unusedDeclarationSymbol(taskContext.symbolRange, name);
         }
 
         // Naming convention violation
         if (!parser.symbolFollowsNamingConventions(taskName)) {
-            yield Hints.symbolNamingConventionViolation(taskContext.range);
+            yield Hints.symbolNamingConventionViolation(taskContext.symbolRange);
         }
     }
 
@@ -109,12 +110,12 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
         // until performed is associated to undefined task
         if (!context.qbn.tasks.has(task.definition.symbol)) {
-            yield Errors.undefinedUntilPerformed(task.range, task.definition.symbol);
+            yield Errors.undefinedUntilPerformed(task.symbolRange, task.definition.symbol);
         }
     }
 
-    for (const action of context.qbn.actions) {
-        yield* analyseSignature(context, action[1].line, action[1].signature, true);
+    for (const action of context.qbn.iterateActions()) {
+        yield* analyseSignature(context, action.line, action.signature, true);
     }
 
     for (const line of context.qbn.failedParse) {
@@ -124,14 +125,14 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
 function symbolHasReferences(context: Quest, symbol: string): boolean {
     const baseSymbol = parser.getBaseSymbol(symbol);
-    for (const action of context.qbn.actions) {
-        if (action[1].signature.find(x => x.value === baseSymbol)) {
+    for (const action of context.qbn.iterateActions()) {
+        if (action.signature.find(x => x.value === baseSymbol)) {
             return true;
         }
     }
 
     const regex = parser.makeSymbolRegex(symbol);
-    if (context.qrc.messageBlocks.find(x => regex.test(x.text))) {
+    if (first(context.qrc.iterateMessageLines(), x => regex.test(x.text))) {
         return true;
     }
 
@@ -140,7 +141,7 @@ function symbolHasReferences(context: Quest, symbol: string): boolean {
 
 function taskIsUsed(context: Quest, taskName: string, taskContext: Task): boolean {
     // Started by trigger
-    if (parser.isConditionalTask(context.document, taskContext.range.start.line)) {
+    if (parser.isConditionalTask(context.document, taskContext.symbolRange.start.line)) {
         return true;
     }
 
