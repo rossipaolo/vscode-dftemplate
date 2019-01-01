@@ -2,6 +2,12 @@
     "displayName": "DaggerfallUnity",
     "conditions": [
         {
+            "summary": "Triggers when player readies a spell containing a single specific effect.",
+            "overloads": [
+                "cast ${1:effectKey} effect do ${2:task}"
+            ]
+        },
+        {
             "summary": "Triggers when player enters/exits a certain location area.",
             "overloads": [
                 "when pc ${1|enters,exits|} ${2:locationType}"
