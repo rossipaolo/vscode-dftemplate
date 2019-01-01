@@ -88,6 +88,16 @@ export class Quest {
     }
 
     /**
+     * Gets the name of this quest.
+     */
+    public getName(): string | undefined {
+        const nameDirective = this.preamble.questName;
+        if (nameDirective && nameDirective.signature.length > 1) {
+            return nameDirective.signature[1].value;
+        }
+    }
+
+    /**
      * Gets the location for a quest block.
      * @param block A quest block or directly a range in the quest file.
      */
@@ -121,5 +131,14 @@ export class Quest {
         if (Quest.quests.has(document.uri.fsPath)) {
             Quest.quests.delete(document.uri.fsPath);
         }
+    }
+
+    /**
+     * Gets all quests in the current workspace.
+     * @param token An optional cancellation token.
+     */
+    public static async getAll(token?: vscode.CancellationToken): Promise<Quest[]> {
+        const documents = await parser.getAllDocuments(token);
+        return documents.map(document => Quest.get(document));
     }
 }

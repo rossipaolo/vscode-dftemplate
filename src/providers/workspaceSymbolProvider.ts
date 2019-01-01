@@ -5,26 +5,26 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import { Quest } from '../language/quest';
 
 export class TemplateWorkspaceSymbolProvider implements vscode.WorkspaceSymbolProvider {
 
-    public provideWorkspaceSymbols(query: string, token: vscode.CancellationToken): Thenable<vscode.SymbolInformation[]> {
+    public async provideWorkspaceSymbols(query: string, token: vscode.CancellationToken): Promise<vscode.SymbolInformation[]> {
 
         if (/^\s*$/.test(query)) {
             return Promise.reject();
         }
 
-        query = query.toLowerCase();
-        return new Promise((resolve, reject) => {
-            parser.findAllQuests(token).then((quests) => {
-                return resolve(quests.reduce((symbolInformations, quest) => {
-                    if (quest.pattern.toLowerCase().indexOf(query) !== -1) {
-                        symbolInformations.push(new vscode.SymbolInformation(quest.pattern, vscode.SymbolKind.Class, '', quest.location));
-                    }
-                    return symbolInformations;
-                }, new Array<vscode.SymbolInformation>()));
-            }, () => reject());
-        });
+        // Quests
+        query = query.toUpperCase();
+        const quests = await Quest.getAll(token);
+        return quests.reduce((symbols, quest) => {
+            const name = quest.getName();
+            if (name && name.toUpperCase().includes(query)) {
+                symbols.push(new vscode.SymbolInformation(name, vscode.SymbolKind.Class, '', quest.getLocation()));
+            }
+
+            return symbols;
+        }, new Array<vscode.SymbolInformation>());
     }
 }

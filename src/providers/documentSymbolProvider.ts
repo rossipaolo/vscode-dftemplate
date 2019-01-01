@@ -18,8 +18,7 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
             const symbols: SymbolInformation[] = [];
 
             const quest = Quest.get(document);
-            const questNameAction = quest.preamble.questName;
-            const questName = questNameAction ? questNameAction.signature[1].value : '<quest>';
+            const questName = quest.getName() || '<quest>';
 
             // Quest blocks
             symbols.push(

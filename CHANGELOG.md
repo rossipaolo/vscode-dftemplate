@@ -7,7 +7,7 @@
 
 ### Improved
 - Improved performance of diagnostics.
-- Parsed quests are stored for accesses from both diagnostics and DocumentSymbolProvider.
+- Parsed quests are stored for accesses from diagnostics, DocumentSymbolProvider and WorkspaceSymbolProvider.
 - Updated list of actions and effects.
 
 ## 0.6.0
