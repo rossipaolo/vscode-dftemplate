@@ -117,14 +117,14 @@ export function findAllQuests(token?: vscode.CancellationToken): Thenable<Quest[
 /**
  * Gets the name of a S000nnnn family quest from its index.
  */
-function questIndexToName(index: string): string {
+export function questIndexToName(index: string): string {
     return 'S' + '0'.repeat(7 - index.length) + index;
 }
 
 /**
  * Gets the index of a S000nnnn family quest from its name.
  */
-function questNameToIndex(name: string): string | undefined {
+export function questNameToIndex(name: string): string | undefined {
     const match = name.match(/S0+([^0]+[0-9]*)/);
     if (match) {
         return match[1];

@@ -20,27 +20,33 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
             const quest = Quest.get(document);
             const questName = quest.getName() || '<quest>';
 
-            // Quest blocks
+            // Quest
             symbols.push(
                 new SymbolInformation(
                     questName,
                     SymbolKind.Module,
                     '',
                     quest.getLocation()
-                ),
-                new SymbolInformation(
+                )
+            );
+
+            // Quest blocks
+            if (quest.qrc.range) {
+                symbols.push(new SymbolInformation(
                     'QRC',
                     SymbolKind.Class,
                     questName,
-                    quest.getLocation(quest.qrc)
-                ),
-                new SymbolInformation(
+                    quest.getLocation(quest.qrc.range)
+                ));
+            }
+            if (quest.qbn.range) {
+                symbols.push(new SymbolInformation(
                     'QBN',
                     SymbolKind.Class,
                     questName,
-                    quest.getLocation(quest.qbn)
-                )
-            );
+                    quest.getLocation(quest.qbn.range)
+                ));
+            }
 
             // Messages
             for (const message of quest.qrc.messages) {
@@ -58,7 +64,7 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
                     symbol.name,
                     SymbolKind.Field,
                     'QBN',
-                    quest.getLocation(symbol.range)
+                    quest.getLocation(symbol.blockRange)
                 ));
             }
 
@@ -68,7 +74,7 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
                     task.definition.symbol,
                     task.isVariable ? SymbolKind.Variable : SymbolKind.Method,
                     'QBN',
-                    quest.getLocation(task.range)
+                    quest.getLocation(task.blockRange)
                 ));
             }
 

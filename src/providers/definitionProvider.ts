@@ -8,37 +8,47 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { TextDocument, Position, Location } from 'vscode';
+import { Quest } from '../language/quest';
+import { getFirst } from '../language/common';
+import { questIndexToName } from '../parsers/parser';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
-    public provideDefinition(document: TextDocument, position: Position): Thenable<Location> {
-        return new Promise(function (resolve, reject) {
+    public provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Thenable<Location> {
+        return new Promise((resolve, reject) => {
             const word = parser.getWord(document, position);
             if (word) {
 
-                // Symbol
-                const symbolDefinition = parser.findSymbolDefinition(document, word);
-                if (symbolDefinition) {
-                    return resolve(symbolDefinition.location);
-                }
-
-                // Task
-                const taskDefinition = parser.findTaskDefinition(document, word);
-                if (taskDefinition) {
-                    return resolve(new Location(document.uri, new Position(taskDefinition.lineNumber, 0)));
-                }
-
-                // Message
-                const messageDefinition = parser.findMessageDefinition(document, word);
-                if (messageDefinition) {
-                    return resolve(new Location(document.uri, messageDefinition));
-                }
-
-                // Quest
                 if (parser.isQuestReference(document.lineAt(position.line).text)) {
-                    return parser.findQuestDefinition(word).then((quest) => {
-                        return resolve(quest.location);
-                    }, () => reject());
+
+                    // Quest
+                    return Quest.getAll(token).then(quests => {
+                        const questName = !isNaN(Number(word)) ? questIndexToName(word) : word;
+                        const found = quests.find(x => x.getName() === questName);
+                        return found ? resolve(found.getNameLocation()) : reject();
+                    });
+                } else {
+
+                    const quest = Quest.get(document);
+
+                    // Symbol
+                    const symbol = quest.qbn.symbols.get(word);
+                    if (symbol) {
+                        return resolve(quest.getLocation(getFirst(symbol).range));
+                    }
+
+                    // Task
+                    const task = quest.qbn.tasks.get(word);
+                    if (task) {
+                        return resolve(quest.getLocation(getFirst(task).range));
+                    }
+
+                    // Message
+                    const id = Number(word);
+                    const message = quest.qrc.messages.find(x => x.id === id || x.alias === word);
+                    if (message) {
+                        return resolve(quest.getLocation(message.range));
+                    }
                 }
             }
 
