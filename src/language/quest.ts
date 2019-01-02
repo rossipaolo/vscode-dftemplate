@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
-import * as common from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
@@ -98,16 +97,21 @@ export class Quest {
     }
 
     /**
-     * Gets the location for a quest block.
-     * @param block A quest block or directly a range in the quest file.
+     * Validates and converts a range to a location for this quest.
+     * @param range The range to convert; if omitted this is the range of the entire quest.
      */
-    public getLocation(block?: vscode.Range | common.QuestBlock): vscode.Location {   
-        if (!block) {
-            block = new vscode.Range(0, 0, this.document.lineCount, 0);
-        } else if (block instanceof common.QuestBlock) {
-            block = block.range || new vscode.Range(0, 0, 0, 0);
-        }
-        return new vscode.Location(this.document.uri, block);
+    public getLocation(range?: vscode.Range): vscode.Location {
+        range = range || new vscode.Range(0, 0, this.document.lineCount, 0);
+        return new vscode.Location(this.document.uri, this.document.validateRange(range));
+    }
+
+    /**
+     * Gets the location of the directive that declares this quest.
+     */
+    public getNameLocation(): vscode.Location {
+        const directive = this.preamble.questName;
+        const range = directive ? directive.getRange(1) : new vscode.Range(0, 0, 0, 0);
+        return new vscode.Location(this.document.uri, this.document.validateRange(range));
     }
 
     /**

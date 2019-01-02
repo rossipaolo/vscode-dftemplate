@@ -87,9 +87,9 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
         // Duplicated definition
         if (Array.isArray(task[1])) {
-            const allLocations = task[1].map(x => context.getLocation(x.symbolRange));
+            const allLocations = task[1].map(x => context.getLocation(x.range));
             for (const definition of task[1] as Task[]) {
-                yield Errors.duplicatedDefinition(definition.symbolRange, taskName, allLocations);
+                yield Errors.duplicatedDefinition(definition.range, taskName, allLocations);
             }
         }
 
@@ -97,12 +97,12 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         if (!taskIsUsed(context, taskName, taskContext)) {
             const definition = taskContext.definition;
             const name = definition.type === TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
-            yield Warnings.unusedDeclarationSymbol(taskContext.symbolRange, name);
+            yield Warnings.unusedDeclarationSymbol(taskContext.range, name);
         }
 
         // Naming convention violation
         if (!parser.symbolFollowsNamingConventions(taskName)) {
-            yield Hints.symbolNamingConventionViolation(taskContext.symbolRange);
+            yield Hints.symbolNamingConventionViolation(taskContext.range);
         }
     }
 
@@ -110,7 +110,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
         // until performed is associated to undefined task
         if (!context.qbn.tasks.has(task.definition.symbol)) {
-            yield Errors.undefinedUntilPerformed(task.symbolRange, task.definition.symbol);
+            yield Errors.undefinedUntilPerformed(task.range, task.definition.symbol);
         }
     }
 
@@ -141,7 +141,7 @@ function symbolHasReferences(context: Quest, symbol: string): boolean {
 
 function taskIsUsed(context: Quest, taskName: string, taskContext: Task): boolean {
     // Started by trigger
-    if (parser.isConditionalTask(context.document, taskContext.symbolRange.start.line)) {
+    if (parser.isConditionalTask(context.document, taskContext.range.start.line)) {
         return true;
     }
 

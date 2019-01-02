@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Improved
+- Use stored quest instances for the following providers:
+    - DefinitionProvider
+
 ## 0.7.0
 
 ### Added

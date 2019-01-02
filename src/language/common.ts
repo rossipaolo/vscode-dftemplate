@@ -7,16 +7,37 @@
 import { Parameter, SignatureWord } from "../diagnostics/signatureCheck";
 import { Range, TextLine } from "vscode";
 import { TaskDefinition, TaskType } from "../parsers/parser";
+import { wordRange } from "../diagnostics/common";
+
+/**
+ * A resource usable in a quest.
+ */
+export interface QuestResource {
+    
+    /**
+     * The range of the symbol declaration.
+     */
+    range: Range;
+
+    /**
+     * The range of the entire definition.
+     */
+    blockRange: Range;
+}
 
 /**
  * A symbol used by resources and tasks, and for text replacement inside messages.
  */
-export class Symbol {
+export class Symbol implements QuestResource {
 
     public signature: Parameter[] | null = null;
 
     public get name() {
         return this.line.text.trim().split(' ')[1];
+    }
+
+    public get blockRange() {
+        return this.line.range;
     }
 
     public constructor(
@@ -45,7 +66,7 @@ export class Symbol {
  * A group of actions that can be executed, with a flag for its triggered state.
  * When the action list is empty, the task is used as a set/unset variable.
  */
-export class Task {
+export class Task implements QuestResource {
 
     public readonly actions: Action[] = [];
 
@@ -54,14 +75,14 @@ export class Task {
             || this.definition.type === TaskType.GlobalVarLink;
     }
 
-    public get range(): Range {
+    public get blockRange(): Range {
         return this.actions.length > 0 ?
-            this.symbolRange.union(this.actions[this.actions.length - 1].line.range) :
-            this.symbolRange;
+            this.range.union(this.actions[this.actions.length - 1].line.range) :
+            this.range;
     }
 
     public constructor(
-        public symbolRange: Range,
+        public range: Range,
         public definition: TaskDefinition) {
     }
 }
@@ -95,12 +116,24 @@ export class Action {
             return { type: types[index], value: value };
         });
     }
+
+    /**
+     * Gets the range of this action or one of its parameters.
+     * @param index The index of a parameter.
+     */
+    public getRange(index?: number): Range {
+        if (index && this.signature.length > index) {
+            return wordRange(this.line, this.signature[index].value);
+        }
+
+        return this.line.range;
+    }
 }
 
 /**
  * A text block with a serial number. Can be used for popups, journal, letters, and rumours.
  */
-export class Message {
+export class Message implements QuestResource {
 
     public readonly textBlock: TextLine[] = [];    
 
@@ -136,3 +169,10 @@ export abstract class QuestBlock {
     }
 }
 
+/**
+ * Gets the single or first item.
+ * @param item An item or array of items.
+ */
+export function getFirst<T>(item: T | T[]): T {
+    return Array.isArray(item) ? item[0] : item;
+}
