@@ -12,6 +12,7 @@ import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
+import { QuestResourceCategory } from '../language/static/common';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
@@ -38,9 +39,9 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             if (line.text[position.character - 2] === '%') {
                 const items: CompletionItem[] = [];
                 for (const symbol of Language.getInstance().findSymbols('%' + prefix)) {
-                    let item = new vscode.CompletionItem(symbol.signature, vscode.CompletionItemKind.Property);
-                    item.detail = symbol.signature;
-                    item.documentation = symbol.summary;
+                    let item = new vscode.CompletionItem(symbol.details.signature, vscode.CompletionItemKind.Property);
+                    item.detail = symbol.details.signature;
+                    item.documentation = symbol.details.summary;
                     items.push(item);
                 }
                 return resolve(items);
@@ -142,11 +143,11 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
     private static findSignatures(prefix: string, items: vscode.CompletionItem[]) {
         // Language
         for (const languageItem of Language.getInstance().seekByPrefix(prefix)) {
-            let prettySignature = Language.prettySignature(languageItem.signature);
+            let prettySignature = Language.prettySignature(languageItem.details.signature);
             let item = new vscode.CompletionItem(prettySignature, TemplateCompletionItemProvider.getCompletionItemKind(languageItem.category));
-            item.insertText = new vscode.SnippetString(languageItem.signature);
+            item.insertText = new vscode.SnippetString(languageItem.details.signature);
             item.detail = prettySignature;
-            item.documentation = new vscode.MarkdownString(languageItem.summary);
+            item.documentation = new vscode.MarkdownString(languageItem.details.summary);
             item.command = TemplateCompletionItemProvider.signatureInfoCommand;
             items.push(item);
         }
@@ -155,7 +156,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         for (const result of Modules.getInstance().findActions(prefix)) {
             for (const overload of result.details.overloads) {
                 let signature = Modules.prettySignature(overload);
-                let item = new vscode.CompletionItem(signature, TemplateCompletionItemProvider.getCompletionItemKind(result.actionKind));
+                let item = new vscode.CompletionItem(signature, TemplateCompletionItemProvider.getCompletionItemKind(result.category));
                 item.insertText = new vscode.SnippetString(overload);
                 item.detail = result.moduleName + ' -> ' + signature;
                 item.documentation = new vscode.MarkdownString(result.details.summary);
@@ -166,7 +167,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
     }
 
     private static messageDefinition(document: TextDocument, position: Position): CompletionItem {
-        const item = new vscode.CompletionItem('Message: id', TemplateCompletionItemProvider.getCompletionItemKind(Language.ItemKind.Message));
+        const item = new vscode.CompletionItem('Message: id', TemplateCompletionItemProvider.getCompletionItemKind(QuestResourceCategory.Message));
         item.insertText = new vscode.SnippetString('Message:  ${1:' + parser.getMessageIdForPosition(document, position.line) + '}');
         item.detail = 'Message: id';
         item.documentation = 'An additional message block';
@@ -228,19 +229,19 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         return prefix;
     }
 
-    private static getCompletionItemKind(category: string): vscode.CompletionItemKind {
+    private static getCompletionItemKind(category: QuestResourceCategory): vscode.CompletionItemKind {
         switch (category) {
-            case Language.ItemKind.Keyword:
+            case QuestResourceCategory.Keyword:
                 return vscode.CompletionItemKind.Keyword;
-            case Language.ItemKind.Message:
+            case QuestResourceCategory.Message:
                 return vscode.CompletionItemKind.Struct;
-            case Language.ItemKind.Definition:
+            case QuestResourceCategory.Definition:
                 return vscode.CompletionItemKind.Constructor;
-            case Language.ItemKind.GlobalVar:
+            case QuestResourceCategory.GlobalVar:
                 return vscode.CompletionItemKind.Property;
-            case Modules.ActionKind.Action:
+            case QuestResourceCategory.Action:
                 return vscode.CompletionItemKind.Method;
-            case Modules.ActionKind.Condition:
+            case QuestResourceCategory.Condition:
                 return vscode.CompletionItemKind.Event;
             default:
                 return vscode.CompletionItemKind.Text;

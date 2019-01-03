@@ -13,11 +13,6 @@ import { Errors } from './common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 
-export interface SignatureWord {
-    regex: string;
-    signature: string;
-}
-
 /**
  * A parameter in a symbol or action signature.
  */

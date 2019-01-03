@@ -4,10 +4,11 @@
 
 'use strict';
 
-import { Parameter, SignatureWord } from "../diagnostics/signatureCheck";
+import { Parameter } from "../diagnostics/signatureCheck";
 import { Range, TextLine } from "vscode";
 import { TaskDefinition, TaskType } from "../parsers/parser";
 import { wordRange } from "../diagnostics/common";
+import { ParameterMatch } from "./static/common";
 
 /**
  * A resource usable in a quest.
@@ -50,7 +51,7 @@ export class Symbol implements QuestResource {
      * Parses the symbol definition and retrieve its parameters.
      * @param signature Regex that matches parameter.
      */
-    public parse(signature: SignatureWord[]): void {
+    public parse(signature: ParameterMatch[]): void {
         this.signature = signature ? signature.reduce<Parameter[]>((parameters, word) => {
             const match = this.line.text.match(word.regex);
             if (match) {

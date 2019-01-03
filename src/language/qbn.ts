@@ -94,7 +94,7 @@ export class Qbn extends QuestBlock {
         // Action invocation
         const actionResult = Modules.getInstance().findAction(line.text);
         if (actionResult) {
-            this.currentActionsBlock.push(new Action(line, actionResult.details.overloads[actionResult.overload]));
+            this.currentActionsBlock.push(new Action(line, actionResult.getSignature()));
             return;
         }
 
