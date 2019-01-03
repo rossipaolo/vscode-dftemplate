@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
-import { Language } from './language';
+import { Language } from './static/language';
 import { QuestBlock, Action } from './common';
 
 /**

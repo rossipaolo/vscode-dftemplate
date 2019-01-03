@@ -7,7 +7,7 @@
 import * as parser from '../parsers/parser';
 
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken } from 'vscode';
-import { Modules } from '../language/modules';
+import { Modules } from '../language/static/modules';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
 
@@ -52,7 +52,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                     const locations: Location[] = [];
                     for (const line of parser.filterLines(document, line => {
                         const actionReference = Modules.getInstance().findAction(line.text);
-                        return actionReference !== undefined && actionReference.action === actionResult.action;
+                        return actionReference !== undefined && actionReference.details === actionResult.details;
                     })) {
                         locations.push(new Location(document.uri, parser.trimRange(line)));
                     }

@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { getOptions, select, where } from '../extension';
+import { getOptions, select, where } from '../../extension';
 import { ParameterTypes } from './parameterTypes';
 
 abstract class Table {

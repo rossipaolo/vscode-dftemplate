@@ -5,12 +5,12 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { ActionResult } from '../modules';
+import { ActionInfo } from './common';
 
 /**
  * Manages tables with language data for intellisense features.
  */
-export abstract class TablesManager {
+export abstract class StaticData {
 
     /**
      * Convert a snippet string to a pretty signature definition.
@@ -44,8 +44,8 @@ export abstract class TablesManager {
      * @param index Index of the parameter.
      * @param parameters Parameters as signature words.
      */
-    public static actionHasParameterAtPosition(action: ActionResult, index: number, ...parameters: string[]): boolean {
-        return parameters.indexOf(action.action.overloads[action.overload].split(' ')[index].replace(/\$\{\d:/, '${')) !== -1;
+    public static actionHasParameterAtPosition(action: ActionInfo, index: number, ...parameters: string[]): boolean {
+        return parameters.indexOf(action.details.overloads[action.overload].split(' ')[index].replace(/\$\{\d:/, '${')) !== -1;
     }
 
     /**
@@ -53,12 +53,12 @@ export abstract class TablesManager {
      * @param action An action result.
      * @param index Index of the parameter. Can be a virtual index if marked as params.
      */
-    public static getParameterAtPosition(action: ActionResult, index: number): string | undefined {
-        const signatureWords = action.action.overloads[action.overload].split(' ');
+    public static getParameterAtPosition(action: ActionInfo, index: number): string | undefined {
+        const signatureWords = action.details.overloads[action.overload].split(' ');
         if (index > 0 && index < signatureWords.length) {
-            return TablesManager.formatParameter(signatureWords[index]);
+            return StaticData.formatParameter(signatureWords[index]);
         } else if (index >= signatureWords.length && /^\$\{\d:\.\.\./.test(signatureWords[signatureWords.length - 1])) {
-            return TablesManager.formatParameter(signatureWords[signatureWords.length - 1]);
+            return StaticData.formatParameter(signatureWords[signatureWords.length - 1]);
         }
     }
 

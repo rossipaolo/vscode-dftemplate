@@ -8,9 +8,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { ExtensionContext } from 'vscode';
-import { iterateAll, where, select, selectMany } from '../extension';
-import { TablesManager } from "./base/tablesManager";
-import { SignatureWord } from '../diagnostics/signatureCheck';
+import { iterateAll, where, select, selectMany } from '../../extension';
+import { StaticData } from "./staticData";
+import { SignatureWord } from '../../diagnostics/signatureCheck';
 import { Tables } from './tables';
 
 interface Parameter {
@@ -49,7 +49,7 @@ export interface LanguageItemResult extends LanguageItem {
 /**
  * Manages tables with base language data for intellisense features.
  */
-export class Language extends TablesManager {
+export class Language extends StaticData {
     private table: LanguageTable | null = null;
     private definitions: Map<string, Definition[]> | null = null;
 

@@ -7,10 +7,10 @@
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 import { DiagnosticCode } from '../diagnostics/common';
-import { Tables } from '../language/tables';
-import { Modules } from '../language/modules';
-import { Language } from '../language/language';
-import { TablesManager } from '../language/base/tablesManager';
+import { Tables } from '../language/static/tables';
+import { Modules } from '../language/static/modules';
+import { Language } from '../language/static/language';
+import { StaticData } from '../language/static/staticData';
 
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
@@ -85,7 +85,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                                 ...Language.getInstance().caseInsensitiveSeek(prefix),
                                 ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
                                 commands.push({
-                                    title: 'Change to \'' + TablesManager.prettySignature(signature) + '\'',
+                                    title: 'Change to \'' + StaticData.prettySignature(signature) + '\'',
                                     command: 'dftemplate.insertSnippetAtRange',
                                     arguments: [signature, diagnostic.range]
                                 });

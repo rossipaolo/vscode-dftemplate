@@ -7,10 +7,10 @@
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
-import { Tables } from '../language/tables';
-import { Modules } from '../language/modules';
+import { Tables } from '../language/static/tables';
+import { Modules } from '../language/static/modules';
 import { Errors } from './common';
-import { ParameterTypes } from '../language/parameterTypes';
+import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 
 export interface SignatureWord {

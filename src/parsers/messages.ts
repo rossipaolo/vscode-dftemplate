@@ -6,10 +6,10 @@
 
 import * as parser from './parser';
 import { TextDocument, TextLine, Range, Position } from "vscode";
-import { Language } from '../language/language';
-import { Modules } from '../language/modules';
-import { Tables } from '../language/tables';
-import { ParameterTypes } from '../language/parameterTypes';
+import { Language } from '../language/static/language';
+import { Modules } from '../language/static/modules';
+import { Tables } from '../language/static/tables';
+import { ParameterTypes } from '../language/static/parameterTypes';
 
 /**
  * Gets the index of the additional message defined in the given line.

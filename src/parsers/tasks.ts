@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from './parser';
 import { TextDocument, TextLine, Range, Location } from "vscode";
-import { Modules } from '../language/modules';
+import { Modules } from '../language/static/modules';
 
 export enum TaskType {
     /** Is started by a set or trigger: `_foo_ task:` */

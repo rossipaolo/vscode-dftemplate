@@ -8,9 +8,9 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { SignatureHelpProvider, TextDocument, Position, CancellationToken, SignatureHelp } from 'vscode';
-import { Modules } from '../language/modules';
-import { Language } from '../language/language';
-import { getParameterTypeDescription } from '../language/parameterTypes';
+import { Modules } from '../language/static/modules';
+import { Language } from '../language/static/language';
+import { ParameterTypes } from '../language/static/parameterTypes';
 
 export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
 
@@ -37,14 +37,14 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
             const actionResult = Modules.getInstance().findAction(text);
             if (actionResult) {
                 const signatureHelp = new SignatureHelp();
-                const summary = new vscode.MarkdownString(actionResult.action.summary);
-                signatureHelp.signatures = actionResult.action.overloads.map((signature, index) => {
+                const summary = new vscode.MarkdownString(actionResult.details.summary);
+                signatureHelp.signatures = actionResult.details.overloads.map((signature, index) => {
                     
                     const signatureInformation = new vscode.SignatureInformation(Modules.prettySignature(signature), summary);
                     const parameters = signature.split(' ');
                     signatureInformation.parameters = parameters.map(parameter => {
                         const parameterInformation = new vscode.ParameterInformation(Modules.prettySignature(parameter));
-                        parameterInformation.documentation = new vscode.MarkdownString(getParameterTypeDescription(Modules.formatParameter(parameter)));
+                        parameterInformation.documentation = new vscode.MarkdownString(ParameterTypes.getDescription(Modules.formatParameter(parameter)));
                         return parameterInformation;
                     });
                     
