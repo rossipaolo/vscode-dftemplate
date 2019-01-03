@@ -7,8 +7,8 @@
 import * as vscode from 'vscode';
 
 import { DocumentFilter, ExtensionContext } from 'vscode';
-import { Modules } from './language/modules';
-import { Language } from './language/language';
+import { Modules } from './language/static/modules';
+import { Language } from './language/static/language';
 import { makeDiagnosticCollection } from './diagnostics/diagnostics';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
@@ -23,7 +23,7 @@ import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
-import { Tables } from './language/tables';
+import { Tables } from './language/static/tables';
 import { setGlobalVariables } from './parsers/tasks';
 import { Quest } from './language/quest';
 

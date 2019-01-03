@@ -10,7 +10,7 @@ import { Diagnostic } from "vscode";
 import { Errors, Warnings, Hints, findParameter } from './common';
 import { analyseSignature } from './signatureCheck';
 import { TaskType } from '../parsers/parser';
-import { ParameterTypes } from '../language/parameterTypes';
+import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 import { Symbol, Task } from '../language/common';
 import { first } from '../extension';

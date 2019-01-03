@@ -7,36 +7,25 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as parser from '../parsers/parser';
+import * as parser from '../../parsers/parser';
 
 import { ExtensionContext } from 'vscode';
-import { TablesManager } from './base/tablesManager';
-import { BooleanExpression } from './booleanExpression';
-import { getOptions, select, where } from '../extension';
-
-interface Action {
-    summary: string;
-    overloads: string[];
-}
-
-export interface ActionResult {
-    moduleName: string;
-    actionKind: string;
-    action: Action;
-    overload: number;
-}
+import { StaticData } from './staticData';
+import { tryParseWhenTaskCondition } from './whenTask';
+import { getOptions, select, where } from '../../extension';
+import { ActionInfo, ActionDetails } from './common';
 
 export interface Module {
     displayName: string;
-    conditions: Action[];
-    actions: Action[];
+    conditions: ActionDetails[];
+    actions: ActionDetails[];
     effects: string[];
 }
 
 /**
  * Manage imported modules for intellisense.
  */
-export class Modules extends TablesManager {
+export class Modules extends StaticData {
 
     private modules: Module[] = [];
 
@@ -71,19 +60,17 @@ export class Modules extends TablesManager {
      * @param text All text that contains a call to action.
      * @param prefix Trigger word. If omitted, this is the first word of the string.
      */
-    public findAction(text: string, prefix?: string): ActionResult | undefined {
+    public findAction(text: string, prefix?: string): ActionInfo | undefined {
         if (prefix || (prefix = parser.getFirstWord(text))) {
             for (const result of this.findActions(prefix, true)) {
-                const overload = result.action.overloads.findIndex(x => text.match(Modules.makeRegexFromSignature(x)) !== null);
+                const overload = result.details.overloads.findIndex(x => text.match(Modules.makeRegexFromSignature(x)) !== null);
                 if (overload !== -1) {
                     result.overload = overload;
                     return result;
                 }
             }
 
-            if (BooleanExpression.match(prefix, text)) {
-                return BooleanExpression.makeResult(text);
-            }
+            return tryParseWhenTaskCondition(text);
         }
     }
 
@@ -92,14 +79,14 @@ export class Modules extends TablesManager {
      * @param prefix Start of signature.
      * @param allowParameterAsFirstWord Accepts an action if the first word is a paremeter.
      */
-    public *findActions(prefix: string, allowParameterAsFirstWord:boolean = false): Iterable<ActionResult> {
+    public *findActions(prefix: string, allowParameterAsFirstWord:boolean = false): Iterable<ActionInfo> {
         for (const module of this.modules) {
             for (const query of Modules.queries) {
                 const actions = query.fromModule(module);
                 if (actions) {
                     for (const action of actions) {
                         if (action.overloads[0].startsWith(prefix) || (allowParameterAsFirstWord && action.overloads[0].startsWith('$'))) {
-                            yield { moduleName: module.displayName, actionKind: query.kind, action: action, overload: 0 };
+                            yield { moduleName: module.displayName, actionKind: query.kind, details: action, overload: 0 };
                         }
                     }
                 }
@@ -153,8 +140,8 @@ export class Modules extends TablesManager {
      * Checks if a word is the name of an action. The name is the first word in signature
      * that is not a parameter. Multiple actions can have the same name.
      */
-    public static isActionName(actionResult: ActionResult, word: string) {
-        const overload = actionResult.action.overloads[actionResult.overload];
+    public static isActionName(actionResult: ActionInfo, word: string) {
+        const overload = actionResult.details.overloads[actionResult.overload];
         return overload.startsWith(word) || overload.split(' ').find(x => !x.startsWith('$')) === word;
     }
 

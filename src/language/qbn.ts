@@ -6,9 +6,9 @@
 
 import * as parser from '../parsers/parser';
 import { TextLine } from 'vscode';
-import { Language } from './language';
+import { Language } from './static/language';
 import { TaskType } from '../parsers/parser';
-import { Modules } from './modules';
+import { Modules } from './static/modules';
 import { Symbol, QuestBlock, Task, Action } from './common';
 import { wordRange } from '../diagnostics/common';
 
@@ -94,7 +94,7 @@ export class Qbn extends QuestBlock {
         // Action invocation
         const actionResult = Modules.getInstance().findAction(line.text);
         if (actionResult) {
-            this.currentActionsBlock.push(new Action(line, actionResult.action.overloads[actionResult.overload]));
+            this.currentActionsBlock.push(new Action(line, actionResult.details.overloads[actionResult.overload]));
             return;
         }
 

@@ -8,8 +8,8 @@ import * as parser from '../parsers/parser';
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
-import { Modules } from '../language/modules';
-import { Language } from '../language/language';
+import { Modules } from '../language/static/modules';
+import { Language } from '../language/static/language';
 
 class TemplateDocumentationParameter {
     public name = '';
@@ -108,17 +108,17 @@ export class TemplateHoverProvider implements HoverProvider {
                 if (result && Modules.isActionName(result, word)) {
                     const item = new TemplateDocumentationItem();
                     item.category = result.actionKind;
-                    let signature = result.moduleName + ' -> ' + result.action.overloads[result.overload];
-                    if (result.action.overloads.length > 1) {
+                    let signature = result.moduleName + ' -> ' + result.details.overloads[result.overload];
+                    if (result.details.overloads.length > 1) {
                         signature += '\n\nother overload(s):';
-                        for (let i = 0; i < result.action.overloads.length; i++) {
+                        for (let i = 0; i < result.details.overloads.length; i++) {
                             if (i !== result.overload) {
-                                signature += '\n' + result.action.overloads[i];
+                                signature += '\n' + result.details.overloads[i];
                             }
                         }
                     }
                     item.signature = Modules.prettySignature(signature);
-                    item.summary = result.action.summary;
+                    item.summary = result.details.summary;
                     return resolve(TemplateHoverProvider.makeHover(item));
                 }
             }

@@ -8,10 +8,10 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
-import { Modules } from '../language/modules';
-import { Language } from '../language/language';
-import { Tables } from '../language/tables';
-import { ParameterTypes } from '../language/parameterTypes';
+import { Modules } from '../language/static/modules';
+import { Language } from '../language/static/language';
+import { Tables } from '../language/static/tables';
+import { ParameterTypes } from '../language/static/parameterTypes';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
@@ -153,12 +153,12 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
         // Modules
         for (const result of Modules.getInstance().findActions(prefix)) {
-            for (const overload of result.action.overloads) {
+            for (const overload of result.details.overloads) {
                 let signature = Modules.prettySignature(overload);
                 let item = new vscode.CompletionItem(signature, TemplateCompletionItemProvider.getCompletionItemKind(result.actionKind));
                 item.insertText = new vscode.SnippetString(overload);
                 item.detail = result.moduleName + ' -> ' + signature;
-                item.documentation = new vscode.MarkdownString(result.action.summary);
+                item.documentation = new vscode.MarkdownString(result.details.summary);
                 item.command = TemplateCompletionItemProvider.signatureInfoCommand;
                 items.push(item);
             }

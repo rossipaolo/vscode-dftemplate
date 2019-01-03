@@ -6,7 +6,7 @@
 
 import * as parser from './parser';
 import { TextDocument, Location, Range, TextLine, Position } from "vscode";
-import { Language } from '../language/language';
+import { Language } from '../language/static/language';
 
 export interface Symbol {
     type: string;

@@ -7,8 +7,8 @@
 import * as parser from '../parsers/parser';
 import { Diagnostic, } from "vscode";
 import { Errors, Warnings, Hints, wordRange, findParameter } from './common';
-import { Tables } from '../language/tables';
-import { ParameterTypes } from '../language/parameterTypes';
+import { Tables } from '../language/static/tables';
+import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 
 /**
