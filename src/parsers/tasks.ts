@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as parser from './parser';
 import { TextDocument, TextLine, Range, Location } from "vscode";
 import { Modules } from '../language/static/modules';
+import { QuestResourceCategory } from '../language/static/common';
 
 export enum TaskType {
     /** Is started by a set or trigger: `_foo_ task:` */
@@ -142,7 +143,7 @@ export function isConditionalTask(document: TextDocument, lineNumber: number): b
         const space = text.indexOf(' ');
         if (space > 0) {
             const action = Modules.getInstance().findAction(text, text.substring(0, space));
-            if (action && action.actionKind === Modules.ActionKind.Condition) {
+            if (action && action.category === QuestResourceCategory.Condition) {
                 return true;
             }
         }

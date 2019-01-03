@@ -13,9 +13,9 @@ import { ExtensionContext } from 'vscode';
 import { StaticData } from './staticData';
 import { tryParseWhenTaskCondition } from './whenTask';
 import { getOptions, select, where } from '../../extension';
-import { ActionInfo, ActionDetails } from './common';
+import { QuestResourceCategory, ActionDetails, ActionInfo } from './common';
 
-export interface Module {
+interface Module {
     displayName: string;
     conditions: ActionDetails[];
     actions: ActionDetails[];
@@ -31,14 +31,9 @@ export class Modules extends StaticData {
 
     private static instance: Modules | null;
 
-    public static readonly ActionKind = {
-        Condition: 'condition',
-        Action: 'action'
-    };
-
     private static queries = [
-        { fromModule: (module: Module) => module.conditions, kind: Modules.ActionKind.Condition },
-        { fromModule: (module: Module) => module.actions, kind: Modules.ActionKind.Action }
+        { fromModule: (module: Module) => module.conditions, kind: QuestResourceCategory.Condition },
+        { fromModule: (module: Module) => module.actions, kind: QuestResourceCategory.Action }
     ];
 
     /**
@@ -86,7 +81,7 @@ export class Modules extends StaticData {
                 if (actions) {
                     for (const action of actions) {
                         if (action.overloads[0].startsWith(prefix) || (allowParameterAsFirstWord && action.overloads[0].startsWith('$'))) {
-                            yield { moduleName: module.displayName, actionKind: query.kind, details: action, overload: 0 };
+                            yield new ActionInfo(module.displayName, query.kind, action);
                         }
                     }
                 }
@@ -141,7 +136,7 @@ export class Modules extends StaticData {
      * that is not a parameter. Multiple actions can have the same name.
      */
     public static isActionName(actionResult: ActionInfo, word: string) {
-        const overload = actionResult.details.overloads[actionResult.overload];
+        const overload = actionResult.getSignature();
         return overload.startsWith(word) || overload.split(' ').find(x => !x.startsWith('$')) === word;
     }
 

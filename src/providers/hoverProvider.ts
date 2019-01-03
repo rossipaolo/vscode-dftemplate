@@ -10,6 +10,7 @@ import { HoverProvider, Hover, TextDocument, Position, MarkdownString, Cancellat
 import { EOL } from 'os';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
+import { QuestResourceCategory } from '../language/static/common';
 
 class TemplateDocumentationParameter {
     public name = '';
@@ -88,8 +89,11 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
                 const languageItem = Language.getInstance().seekByName(word);
                 if (languageItem) {
-                    languageItem.signature = Language.prettySignature(languageItem.signature);
-                    return resolve(TemplateHoverProvider.makeHover(languageItem));
+                    const item = new TemplateDocumentationItem();
+                    item.category = QuestResourceCategory[languageItem.category].toLowerCase();
+                    item.signature = Language.prettySignature(languageItem.details.signature);
+                    item.summary = languageItem.details.summary;
+                    return resolve(TemplateHoverProvider.makeHover(item));
                 }
 
                 // Seek quest
@@ -107,8 +111,8 @@ export class TemplateHoverProvider implements HoverProvider {
                 const result = Modules.getInstance().findAction(document.lineAt(position.line).text, word);
                 if (result && Modules.isActionName(result, word)) {
                     const item = new TemplateDocumentationItem();
-                    item.category = result.actionKind;
-                    let signature = result.moduleName + ' -> ' + result.details.overloads[result.overload];
+                    item.category = QuestResourceCategory[result.category].toLowerCase();
+                    let signature = result.moduleName + ' -> ' + result.getSignature();
                     if (result.details.overloads.length > 1) {
                         signature += '\n\nother overload(s):';
                         for (let i = 0; i < result.details.overloads.length; i++) {

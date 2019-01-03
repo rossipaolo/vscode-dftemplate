@@ -45,7 +45,7 @@ export abstract class StaticData {
      * @param parameters Parameters as signature words.
      */
     public static actionHasParameterAtPosition(action: ActionInfo, index: number, ...parameters: string[]): boolean {
-        return parameters.indexOf(action.details.overloads[action.overload].split(' ')[index].replace(/\$\{\d:/, '${')) !== -1;
+        return parameters.indexOf(action.getSignature().split(' ')[index].replace(/\$\{\d:/, '${')) !== -1;
     }
 
     /**
@@ -54,7 +54,7 @@ export abstract class StaticData {
      * @param index Index of the parameter. Can be a virtual index if marked as params.
      */
     public static getParameterAtPosition(action: ActionInfo, index: number): string | undefined {
-        const signatureWords = action.details.overloads[action.overload].split(' ');
+        const signatureWords = action.getSignature().split(' ');
         if (index > 0 && index < signatureWords.length) {
             return StaticData.formatParameter(signatureWords[index]);
         } else if (index >= signatureWords.length && /^\$\{\d:\.\.\./.test(signatureWords[signatureWords.length - 1])) {
