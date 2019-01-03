@@ -63,15 +63,6 @@ export function getSymbolName(symbol: string): string {
 }
 
 /**
- * Check if derived is a variation of base.
- * @param base Base symbol (`_symbol_`).
- * @param derived An occurence of a symbol.
- */
-export function isDerivedSymbol(base: string, derived: string): boolean {
-    return new RegExp('(_{1,3}|={1,2})' + base.substring(1), 'g').test(derived);
-}
-
-/**
  * Makes a regexp that matches all occurrences of a symbol.
  * @param symbol An occurence of a symbol.
  */
