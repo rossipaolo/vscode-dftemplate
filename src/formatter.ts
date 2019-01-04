@@ -4,11 +4,11 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from './parsers/parser';
 
 import { Range, TextEdit, TextLine, TextDocument, FormattingOptions, Position } from 'vscode';
-import { getOptions } from '../extension';
-import { MessageBlock, TaskType } from '../parsers/parser';
+import { getOptions } from './extension';
+import { MessageBlock, TaskType } from './parsers/parser';
 
 interface FormatterResults {
     textEdit?: TextEdit;

@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
-import { Formatter } from '../language/formatter';
+import { Formatter } from '../formatter';
 
 export class TemplateOnTypingFormatter implements vscode.OnTypeFormattingEditProvider {
 
