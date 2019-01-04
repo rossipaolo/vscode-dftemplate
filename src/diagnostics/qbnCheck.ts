@@ -97,7 +97,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         if (!taskIsUsed(context, taskName, taskContext)) {
             const definition = taskContext.definition;
             const name = definition.type === TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
-            yield Warnings.unusedDeclarationSymbol(taskContext.range, name);
+            yield Warnings.unusedDeclarationTask(taskContext.range, name);
         }
 
         // Naming convention violation

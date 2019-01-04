@@ -68,6 +68,19 @@ export class Qrc extends QuestBlock {
         }
     }
 
+    /**
+     * Gets the next available message id.
+     * @param current Current message id.
+     * @returns An id which is at least `current` and is not used by other messages.
+     */
+    public getAvailableId(current: number): number {
+        let id = current;
+        while (this.messages.find(x => x.id === id)) {
+            id++;
+        }
+        return id;
+    }
+
     private registerMessage(id: number, line: TextLine, alias?: string): void {
         const range = wordRange(line, String(id));
         const message = new Message(id, range, alias);

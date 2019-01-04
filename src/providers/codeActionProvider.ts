@@ -11,6 +11,8 @@ import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
+import { Quest } from '../language/quest';
+import { first } from '../extension';
 
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
@@ -44,39 +46,48 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
         return new Promise((resolve, reject) => {
 
+            const quest = Quest.get(document);
             const commands: vscode.Command[] = [];
 
             context.diagnostics.forEach(diagnostic => {
                 switch (diagnostic.code) {
                     case DiagnosticCode.DuplicatedMessageNumber:
-                        const messageID = document.getText(diagnostic.range);
-                        const newMessageID = parser.nextAvailableMessageID(document, messageID);
-                        commands.push({
-                            title: 'Change ' + messageID + ' to ' + newMessageID,
-                            command: 'dftemplate.renameSymbol',
-                            arguments: Array<any>(diagnostic.range, newMessageID)
-                        });
+                        const duplicatedMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
+                        if (duplicatedMessage) {
+                            const newMessageID = quest.qrc.getAvailableId(duplicatedMessage.id);
+                            commands.push({
+                                title: 'Change ' + duplicatedMessage.id + ' to ' + newMessageID,
+                                command: 'dftemplate.renameSymbol',
+                                arguments: [diagnostic.range, String(newMessageID)]
+                            });
+                        }
                         break;
                     case DiagnosticCode.UnusedDeclarationMessage:
-                        commands.push({
-                            title: 'Remove unused declaration',
-                            command: 'dftemplate.deleteRange',
-                            arguments: Array<any>(parser.getMessageRange(document, diagnostic.range.start.line))
-                        });
+                        const message = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
+                        if (message) {
+                            commands.push({
+                                title: 'Remove unused declaration',
+                                command: 'dftemplate.deleteRange',
+                                arguments: [message.blockRange]
+                            });
+                        }
                         break;
                     case DiagnosticCode.UnusedDeclarationSymbol:
                         commands.push({
                             title: 'Remove unused declaration',
                             command: 'dftemplate.deleteRange',
-                            arguments: Array<any>(document.lineAt(diagnostic.range.start.line).range)
+                            arguments: [document.lineAt(diagnostic.range.start.line).range]
                         });
                         break;
                     case DiagnosticCode.UnusedDeclarationTask:
-                        commands.push({
-                            title: 'Remove unused declaration',
-                            command: 'dftemplate.deleteRange',
-                            arguments: Array<any>(parser.getTaskRange(document, diagnostic.range.start.line))
-                        });
+                        const task = first(quest.qbn.iterateTasks(), x => x.range.isEqual(diagnostic.range));
+                        if (task) {
+                            commands.push({
+                                title: 'Remove unused declaration',
+                                command: 'dftemplate.deleteRange',
+                                arguments: [task.blockRange]
+                            });
+                        }
                         break;
                     case DiagnosticCode.UndefinedExpression:
                         const prefix = parser.getFirstWord((document.lineAt(diagnostic.range.start.line).text));
@@ -94,14 +105,14 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         break;
                     case DiagnosticCode.IncorrectSymbolVariation:
                         const currentSymbol = document.getText(diagnostic.range);
-                        const definition = parser.findSymbolDefinition(document, currentSymbol);
-                        if (definition) {
-                            parser.getSupportedSymbolVariations(currentSymbol, definition.type).forEach((newSymbol) => {
+                        const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
+                        if (symbolDefinition) {
+                            parser.getSupportedSymbolVariations(currentSymbol, symbolDefinition.type).forEach((newSymbol) => {
                                 if (newSymbol.word !== currentSymbol) {
                                     commands.push({
                                         title: 'Change ' + currentSymbol + ' to ' + newSymbol.word + ' (' + newSymbol.description + ')',
                                         command: 'dftemplate.renameSymbol',
-                                        arguments: Array<any>(diagnostic.range, newSymbol.word)
+                                        arguments: [diagnostic.range, newSymbol.word]
                                     });
                                 }
                             });
@@ -113,19 +124,18 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         commands.push({
                             title: 'Convert ' + symbol + ' to ' + newName,
                             command: 'dftemplate.renameSymbol',
-                            arguments: Array<any>(diagnostic.range, newName)
+                            arguments: [diagnostic.range, newName]
                         });
                         break;
                     case DiagnosticCode.UseAliasForStaticMessage:
-                        const messageLine = document.lineAt(diagnostic.range.start.line);
-                        const id = parser.getMessageIDFromLine(messageLine);
-                        if (id) {
-                            for (const message of Tables.getInstance().staticMessagesTable.messages) {
-                                if (String(message["1"]) === id) {
+                        const numericMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
+                        if (numericMessage) {
+                            for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
+                                if (id === numericMessage.id) {
                                     commands.push({
-                                        title: 'Convert ' + id + ' to ' + message["0"],
+                                        title: 'Convert ' + numericMessage.id + ' to ' + alias,
                                         command: 'dftemplate.renameSymbol',
-                                        arguments: Array<any>(messageLine.range, message["0"] + ':   [' + id + ']')
+                                        arguments: [document.lineAt(numericMessage.range.start.line).range, alias + ':   [' + numericMessage.id + ']']
                                     });
                                 }
                             }

@@ -9,7 +9,7 @@ import { TextLine } from 'vscode';
 import { Language } from './static/language';
 import { TaskType } from '../parsers/parser';
 import { Modules } from './static/modules';
-import { Symbol, QuestBlock, Task, Action } from './common';
+import { Symbol, QuestBlock, Task, Action, getFirst } from './common';
 import { wordRange } from '../diagnostics/common';
 
 /**
@@ -124,6 +124,17 @@ export class Qbn extends QuestBlock {
         yield* this.entryPoint;
         for (const task of this.iterateTasks()) {
             yield* task.actions;
+        }
+    }
+
+    /**
+     * Gets a symbol from any of its variations.
+     * @param symbol Any variation of a symbol.
+     */
+    public getSymbol(symbol: string): Symbol | undefined {
+        const entry = this.symbols.get(parser.getBaseSymbol(symbol));
+        if (entry) {
+            return getFirst(entry);
         }
     }
 
