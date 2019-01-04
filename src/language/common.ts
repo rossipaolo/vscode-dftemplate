@@ -139,9 +139,10 @@ export class Message implements QuestResource {
     public readonly textBlock: TextLine[] = [];    
 
     public get blockRange(): Range {
+        const lineRange = this.range.with(this.range.start.with(undefined, 0));
         return this.textBlock.length > 0 ?
-            this.range.union(this.textBlock[this.textBlock.length - 1].range) :
-            this.range;
+            lineRange.union(this.textBlock[this.textBlock.length - 1].range) :
+            lineRange;
     }
 
     public constructor(

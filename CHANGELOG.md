@@ -5,6 +5,7 @@
 ### Improved
 - Use stored quest instances for the following providers:
     - DefinitionProvider
+    - CodeActionProvider
 
 ## 0.7.0
 
