@@ -6,6 +6,7 @@
 - Use stored quest instances for the following providers:
     - DefinitionProvider
     - CodeActionProvider
+    - ReferenceProvider
 
 ## 0.7.0
 
