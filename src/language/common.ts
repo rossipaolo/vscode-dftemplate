@@ -129,6 +129,27 @@ export class Action {
 
         return this.line.range;
     }
+
+    /**
+     * The first word that is not a parameter.
+     */
+    public getName(): string {
+        const word = this.signature.find(x => !x.type.startsWith('$'));
+        return word ? word.value : '';
+    }
+
+    /**
+     * Is `other` an invocation of the same action as this one?
+     * @param other Another action.
+     */
+    public compareSignature(other: Action) {
+        if (this.signature[0].type === 'when' && other.signature[0].type === 'when') {
+            return true;
+        }
+
+        return this.signature.length === other.signature.length &&
+            !this.signature.find((parameter, index) => parameter.type !== other.signature[index].type);
+    }
 }
 
 /**

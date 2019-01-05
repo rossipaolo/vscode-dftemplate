@@ -9,6 +9,7 @@ import { wordRange } from '../diagnostics/common';
 import { TextLine, TextDocument } from 'vscode';
 import { MessageBlock } from '../parsers/parser';
 import { QuestBlock, Message } from './common';
+import { Tables } from './static/tables';
 
 /**
  * The quest block that holds text messages used by QBN resources.
@@ -57,6 +58,17 @@ export class Qrc extends QuestBlock {
             this.messageBlock = null;
         }
         this.failedParse.push(line);
+    }
+
+    public getMessage(idOrAlias: string): Message | undefined {
+        let id: number | undefined = Number(idOrAlias);
+        if (isNaN(id)) {
+            id = Tables.getInstance().staticMessagesTable.messages.get(idOrAlias);
+        }
+
+        if (id) {
+            return this.messages.find(x => x.id === id);
+        }
     }
 
     /**

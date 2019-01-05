@@ -138,6 +138,17 @@ export class Qbn extends QuestBlock {
         }
     }
 
+    /**
+     * Gets a task from its name.
+     * @param task The name of a task.
+     */
+    public getTask(task: string): Task | undefined {
+        const entry = this.tasks.get(task);
+        if (entry) {
+            return getFirst(entry);
+        }
+    }
+
     private static *iterateMapItems<T>(items: Map<string, T | T[]>): Iterable<T> {
         for (const item of items) {
             if (Array.isArray(item[1])) {
