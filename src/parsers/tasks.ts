@@ -4,9 +4,8 @@
 
 'use strict';
 
-import * as vscode from 'vscode';
 import * as parser from './parser';
-import { TextDocument, TextLine, Range, Location } from "vscode";
+import { TextDocument, TextLine, Range } from "vscode";
 import { Modules } from '../language/static/modules';
 import { QuestResourceCategory } from '../language/static/common';
 
@@ -111,25 +110,6 @@ export function* findAllVariables(document: TextDocument): Iterable<{ line: Text
     if (globalMatch) {
         yield* parser.matchAllLines(document, globalMatch, 2);
     }
-}
-
-/**
- * Gets the range where the entire task block is found.
- * @param document A quest document.
- * @param definitionLine The line where the task is defined.
- */
-export function getTaskRange(document: TextDocument, definitionLine: number): Range {
-    let line = definitionLine;
-    while (++line < document.lineCount && !/^\s*(\s*(-.*)?|variable.*|.*task:|until.*performed)\s*$/.test(document.lineAt(line).text)) {}
-    return new Range(definitionLine, 0, --line, document.lineAt(line).text.length);
-}
-
-/**
- * Finds all references to a global variable in all files.
- * @param name Name of global variable.
- */
-export function findGlobalVarsReferences(name: string, token?: vscode.CancellationToken): Thenable<Location[]> {
-    return parser.findReferences(name, globalMatch, token);
 }
 
 /**
