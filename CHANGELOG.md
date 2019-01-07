@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- DocumentHighlightProvider provides document highlighting for tasks.
+
 ### Improved
 - Use stored quest instances for the following providers:
     - DefinitionProvider
