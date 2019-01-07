@@ -191,11 +191,3 @@ export abstract class QuestBlock {
         }
     }
 }
-
-/**
- * Gets the single or first item.
- * @param item An item or array of items.
- */
-export function getFirst<T>(item: T | T[]): T {
-    return Array.isArray(item) ? item[0] : item;
-}

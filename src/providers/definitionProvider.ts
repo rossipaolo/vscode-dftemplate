@@ -9,7 +9,6 @@ import * as parser from '../parsers/parser';
 
 import { TextDocument, Position, Location } from 'vscode';
 import { Quest } from '../language/quest';
-import { getFirst } from '../language/common';
 import { questIndexToName } from '../parsers/parser';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
@@ -32,15 +31,15 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
                     const quest = Quest.get(document);
 
                     // Symbol
-                    const symbol = quest.qbn.symbols.get(word);
+                    const symbol = quest.qbn.getSymbol(word);
                     if (symbol) {
-                        return resolve(quest.getLocation(getFirst(symbol).range));
+                        return resolve(quest.getLocation(symbol.range));
                     }
 
                     // Task
-                    const task = quest.qbn.tasks.get(word);
+                    const task = quest.qbn.getTask(word);
                     if (task) {
-                        return resolve(quest.getLocation(getFirst(task).range));
+                        return resolve(quest.getLocation(task.range));
                     }
 
                     // Message

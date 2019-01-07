@@ -9,7 +9,7 @@ import { TextLine } from 'vscode';
 import { Language } from './static/language';
 import { TaskType } from '../parsers/parser';
 import { Modules } from './static/modules';
-import { Symbol, QuestBlock, Task, Action, getFirst } from './common';
+import { Symbol, QuestBlock, Task, Action } from './common';
 import { wordRange } from '../diagnostics/common';
 
 /**
@@ -132,10 +132,7 @@ export class Qbn extends QuestBlock {
      * @param symbol Any variation of a symbol.
      */
     public getSymbol(symbol: string): Symbol | undefined {
-        const entry = this.symbols.get(parser.getBaseSymbol(symbol));
-        if (entry) {
-            return getFirst(entry);
-        }
+        return Qbn.getMapItem(this.symbols, parser.getBaseSymbol(symbol));
     }
 
     /**
@@ -143,10 +140,7 @@ export class Qbn extends QuestBlock {
      * @param task The name of a task.
      */
     public getTask(task: string): Task | undefined {
-        const entry = this.tasks.get(task);
-        if (entry) {
-            return getFirst(entry);
-        }
+        return Qbn.getMapItem(this.tasks, task);
     }
 
     private static *iterateMapItems<T>(items: Map<string, T | T[]>): Iterable<T> {
@@ -156,6 +150,13 @@ export class Qbn extends QuestBlock {
             } else {
                 yield item[1];
             }
+        }
+    }
+
+    private static getMapItem<T>(items: Map<string, T | T[]>, key: string): T | undefined {
+        const item = items.get(key);
+        if (item) {
+            return Array.isArray(item) ? item[0] : item;
         }
     }
 }
