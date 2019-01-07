@@ -7,6 +7,7 @@
     - DefinitionProvider
     - CodeActionProvider
     - ReferenceProvider
+    - DocumentHighlightProvider
 
 ## 0.7.0
 
