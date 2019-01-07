@@ -6,6 +6,8 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
+import { Quest } from '../language/quest';
+import { TemplateReferenceProvider } from './referenceProvider';
 
 export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlightProvider {
 
@@ -15,13 +17,15 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
             const word = parser.getWord(document, position);
             if (word) {
 
-                const highlights: vscode.DocumentHighlight[] = [];
+                const quest = Quest.get(document);
 
-                for (const range of parser.findSymbolReferences(document, word, true)) {
-                    highlights.push(new vscode.DocumentHighlight(range, vscode.DocumentHighlightKind.Write));
+                // Symbol
+                const symbol = quest.qbn.getSymbol(word);
+                if (symbol) {
+                    const references = TemplateReferenceProvider.symbolReferences(quest, symbol, true);
+                    const highlights = references.map(x => new vscode.DocumentHighlight(x.range, vscode.DocumentHighlightKind.Read));
+                    return resolve(highlights);
                 }
-
-                return resolve(highlights);
             }
 
             return reject();
