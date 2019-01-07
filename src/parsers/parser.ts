@@ -91,18 +91,6 @@ export function firstLine(document: TextDocument, filter: (line: TextLine) => bo
 }
 
 /**
- * Finds all lines that satisfy the filter predicate. Ignore empty lines and comments.
- */
-export function* filterLines(document: TextDocument, filter: (line: TextLine) => boolean): Iterable<TextLine> {
-    for (let index = 0; index < document.lineCount; index++) {
-        const line = document.lineAt(index);
-        if (!isEmptyOrComment(line.text) && filter(line)) {
-            yield line;
-        }
-    }
-}
-
-/**
  * Finds all lines tht match a regular expression.
  * @param document A quest document.
  * @param regex A regular expression matched on all lines.

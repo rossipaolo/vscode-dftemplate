@@ -5,7 +5,7 @@
 'use strict';
 
 import * as parser from './parser';
-import { TextDocument, TextLine, Range, Position } from "vscode";
+import { TextDocument, TextLine, Range } from "vscode";
 import { Language } from '../language/static/language';
 import { Modules } from '../language/static/modules';
 import { Tables } from '../language/static/tables';
@@ -45,35 +45,6 @@ export function findMessageByIndex(document: TextDocument, id: string): { line: 
     line = parser.findLine(document, new RegExp('^\\bMessage:\\s+' + id + '\\b', 'g'));
     if (line) {
         return { line: line, isDefault: false };
-    }
-}
-
-/**
- * Find the definition of a message from its name. Only default messages have a name.
- * @param document A quest document.
- * @param name The name of a message.
- */
-export function findMessageByName(document: TextDocument, name: string): TextLine | undefined {
-    return parser.findLine(document, new RegExp('\\s*' + name + '\\s*:\\s*\\[\\s*\\d+\\s*\\]', 'g'));
-}
-
-/**
- * Find the defintion of a message.
- * @param document A quest document.
- * @param idOrName Id or name of message.
- */
-export function findMessageDefinition(document: TextDocument, idOrName: string): Position | undefined {
-    if (!isNaN(Number(idOrName))) {
-        const definition = findMessageByIndex(document, idOrName);
-        if (definition) {
-            return new Position(definition.line.lineNumber, definition.isDefault ? 0 : parser.rangeOf(definition.line, idOrName).start.character);
-        }
-    }
-    else {
-        const definition = findMessageByName(document, idOrName);
-        if (definition) {
-            return new Position(definition.lineNumber, 0);
-        }
     }
 }
 
@@ -186,22 +157,6 @@ export function getMessageIdForPosition(document: TextDocument, lineNumber: numb
     }
 
     return nextAvailableMessageID(document, '1011');
-}
-
-/**
- * Gets the range where the entire task block is found.
- * @param document A quest document.
- * @param definitionLine The line where the task is defined.
- */
-export function getMessageRange(document: TextDocument, definitionLine: number): Range {
-
-    let line = definitionLine;
-    const messageBlock = new MessageBlock(document, line);
-    while (messageBlock.isInside()) {
-        line++;
-    }
-
-    return new Range(document.lineAt(definitionLine).range.start, document.lineAt(line).range.end);
 }
 
 /**
