@@ -68,7 +68,7 @@ export function getSymbolName(symbol: string): string {
  */
 export function makeSymbolRegex(symbol: string): RegExp {
     const name = getSymbolName(symbol);
-    return new RegExp(name !== symbol ? '(_{1,3}|={1,2})' + name + '_' : name, 'g');
+    return new RegExp(name !== symbol ? '(_{1,4}|={1,2})' + name + '_' : name, 'g');
 }
 
 /**
