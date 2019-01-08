@@ -9,6 +9,7 @@ import * as parser from '../parsers/parser';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { QuestResource } from '../language/common';
+import { first } from '../extension';
 
 export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlightProvider {
 
@@ -32,6 +33,13 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
                 if (task) {
                     return resolve(TemplateDocumentHighlightProvider.makeHighlights(task,
                         TemplateReferenceProvider.taskReferences(quest, task, false)));
+                }
+
+                // Action
+                const action = first(quest.qbn.iterateActions(), x => x.line.lineNumber === position.line);
+                if (action && action.getName() === word) {
+                    const references = TemplateReferenceProvider.actionReferences(quest, action);
+                    return resolve(references.map(x => new vscode.DocumentHighlight(x.range, vscode.DocumentHighlightKind.Read)));
                 }
             }
 
