@@ -21,6 +21,13 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
 
                 const quest = Quest.get(document);
 
+                // Message
+                const message = quest.qrc.getMessage(word);
+                if (message) {
+                    return resolve(TemplateDocumentHighlightProvider.makeHighlights(message,
+                        TemplateReferenceProvider.messageReferences(quest, message, false)));
+                }
+
                 // Symbol
                 const symbol = quest.qbn.getSymbol(word);
                 if (symbol) {
