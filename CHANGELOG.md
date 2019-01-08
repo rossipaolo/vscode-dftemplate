@@ -12,6 +12,9 @@
     - ReferenceProvider
     - DocumentHighlightProvider
 
+### Fixed
+- ReferenceProvider and DocumentHighlightProvider now correctly highlight prefix of `____symbol_` variation.
+
 ## 0.7.0
 
 ### Added
