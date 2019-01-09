@@ -47,6 +47,11 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                     return resolve(TemplateReferenceProvider.actionReferences(quest, action));
                 }
 
+                // Symbol macro
+                if (word.startsWith('%')) {
+                    return resolve(TemplateReferenceProvider.symbolMacroReferences(quest, word));
+                }
+
                 // Quest
                 if (parser.isQuestReference(line.text)) {
                     return TemplateReferenceProvider.questReferences(word, options.includeDeclaration, token).then(
@@ -162,6 +167,20 @@ export class TemplateReferenceProvider implements ReferenceProvider {
             }
         }
         
+        return locations;
+    }
+
+    public static symbolMacroReferences(quest: Quest, symbol: string): Location[] {
+        const locations: Location[] = [];
+
+        const regex = new RegExp(symbol + '\\b', 'g');
+        for (const line of quest.qrc.iterateMessageLines()) {
+            let result: RegExpExecArray | null;
+            while (result = regex.exec(line.text)) {
+                locations.push(quest.getLocation(new Range(line.lineNumber, result.index, line.lineNumber, result.index + symbol.length)));
+            }
+        }
+
         return locations;
     }
 
