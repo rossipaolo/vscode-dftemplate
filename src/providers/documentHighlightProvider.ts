@@ -48,6 +48,12 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
                     const references = TemplateReferenceProvider.actionReferences(quest, action);
                     return resolve(references.map(x => new vscode.DocumentHighlight(x.range, vscode.DocumentHighlightKind.Read)));
                 }
+
+                // Symbol macro
+                if (word.startsWith('%')) {
+                    const references = TemplateReferenceProvider.symbolMacroReferences(quest, word);
+                    return resolve(references.map(x => new vscode.DocumentHighlight(x.range, vscode.DocumentHighlightKind.Read)));
+                }
             }
 
             return reject();

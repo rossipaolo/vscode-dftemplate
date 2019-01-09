@@ -4,7 +4,7 @@
 
 ### Added
 - ReferenceProvider provides references for symbol macros.
-- DocumentHighlightProvider provides document highlighting for messages, tasks and actions.
+- DocumentHighlightProvider provides document highlighting for messages, tasks, actions and symbol macros.
 
 ### Improved
 - Use stored quest instances for the following providers:
