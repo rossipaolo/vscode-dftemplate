@@ -44,12 +44,12 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 // Action
                 const action = first(quest.qbn.iterateActions(), x => x.line.lineNumber === line.lineNumber);
                 if (action && action.getName() === word) {
-                    return resolve(TemplateReferenceProvider.actionReferences(quest, action));
+                    return resolve(TemplateReferenceProvider.workspaceActionReferences(action, token));
                 }
 
                 // Symbol macro
                 if (word.startsWith('%')) {
-                    return resolve(TemplateReferenceProvider.symbolMacroReferences(quest, word));
+                    return resolve(TemplateReferenceProvider.workspaceSymbolMacroReferences(word, token));
                 }
 
                 // Quest
@@ -170,6 +170,16 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
+    public static async workspaceActionReferences(action: Action, token?: CancellationToken): Promise<Location[]> {
+        const locations: Location[] = [];
+
+        for (const quest of await Quest.getAll(token)) {
+            locations.push(...TemplateReferenceProvider.actionReferences(quest, action));
+        }
+
+        return locations;
+    }
+
     public static symbolMacroReferences(quest: Quest, symbol: string): Location[] {
         const locations: Location[] = [];
 
@@ -179,6 +189,16 @@ export class TemplateReferenceProvider implements ReferenceProvider {
             while (result = regex.exec(line.text)) {
                 locations.push(quest.getLocation(new Range(line.lineNumber, result.index, line.lineNumber, result.index + symbol.length)));
             }
+        }
+
+        return locations;
+    }
+
+    public static async workspaceSymbolMacroReferences(symbol: string, token?: CancellationToken): Promise<Location[]> {
+        const locations: Location[] = [];
+
+        for (const quest of await Quest.getAll(token)) {
+            locations.push(...TemplateReferenceProvider.symbolMacroReferences(quest, symbol));
         }
 
         return locations;

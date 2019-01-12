@@ -12,6 +12,7 @@
     - CodeActionProvider
     - ReferenceProvider
     - DocumentHighlightProvider
+- References of actions and symbol macros are seeked in the entire workspace.
 
 ### Fixed
 - ReferenceProvider and DocumentHighlightProvider now correctly highlight prefix of `____symbol_` variation.
