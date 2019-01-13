@@ -183,11 +183,9 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     public static symbolMacroReferences(quest: Quest, symbol: string): Location[] {
         const locations: Location[] = [];
 
-        const regex = new RegExp(symbol + '\\b', 'g');
-        for (const line of quest.qrc.iterateMessageLines()) {
-            let result: RegExpExecArray | null;
-            while (result = regex.exec(line.text)) {
-                locations.push(quest.getLocation(new Range(line.lineNumber, result.index, line.lineNumber, result.index + symbol.length)));
+        for (const macro of quest.qrc.macros) {
+            if (macro.symbol === symbol) {
+                locations.push(quest.getLocation(macro.range));
             }
         }
 

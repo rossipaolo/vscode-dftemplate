@@ -153,11 +153,30 @@ export class Action {
 }
 
 /**
+ * A macro whose replacement text is based on context.
+ */
+export interface ContextMacro {
+
+    /**
+     * A short name prefixed by a `%` character.
+     */
+    symbol: string;
+
+    /**
+     * The range of the symbol inside a message block.
+     */
+    range: Range;
+}
+
+/**
  * A text block with a serial number. Can be used for popups, journal, letters, and rumours.
  */
 export class Message implements QuestResource {
 
-    public readonly textBlock: TextLine[] = [];    
+    /**
+     * The block of text associated to this message.
+     */
+    public readonly textBlock: TextLine[] = [];
 
     public get blockRange(): Range {
         const lineRange = this.range.with(this.range.start.with(undefined, 0));
