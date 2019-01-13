@@ -10,6 +10,7 @@ import { Errors, Warnings, Hints, wordRange, findParameter } from './common';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
+import { Language } from '../language/static/language';
 
 /**
  * Analyses the QRC section of a quest.
@@ -73,6 +74,13 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
                         Hints.SymbolVariation(wordRange(line, symbol));
                 }
             }
+        }
+    }
+
+    // Macros
+    for (const macro of context.qrc.macros) {
+        if (!Language.getInstance().findSymbol(macro.symbol)) {
+            yield Errors.undefinedSymbol(macro.range, macro.symbol);
         }
     }
 

@@ -6,9 +6,9 @@
 
 import * as parser from '../parsers/parser';
 import { wordRange } from '../diagnostics/common';
-import { TextLine, TextDocument } from 'vscode';
+import { TextLine, TextDocument, Range } from 'vscode';
 import { MessageBlock } from '../parsers/parser';
-import { QuestBlock, Message } from './common';
+import { QuestBlock, Message, ContextMacro } from './common';
 import { Tables } from './static/tables';
 
 /**
@@ -20,8 +20,12 @@ export class Qrc extends QuestBlock {
      * Messages definitions in this QRC block.
      */
     public readonly messages: Message[] = [];
-    
-    private textBlock: TextLine[] | undefined;
+
+    /**
+     * Context macros used by messages.
+     */
+    public readonly macros: ContextMacro[] = [];
+
     private messageBlock: parser.MessageBlock | null = null;
 
     /**
@@ -32,8 +36,8 @@ export class Qrc extends QuestBlock {
     public parse(document: TextDocument, line: TextLine): void {
 
         // Inside a message block
-        if (this.textBlock && this.messageBlock && this.messageBlock.isInside(line.lineNumber)) {
-            this.textBlock.push(line);
+        if (this.messages.length > 0 && this.messageBlock && this.messageBlock.isInside(line.lineNumber)) {
+            this.parseMessageLine(line);
             return;
         }
 
@@ -97,6 +101,21 @@ export class Qrc extends QuestBlock {
         const range = wordRange(line, String(id));
         const message = new Message(id, range, alias);
         this.messages.push(message);
-        this.textBlock = message.textBlock;
+    }
+
+    private parseMessageLine(line: TextLine): void {
+
+        // Text
+        this.messages[this.messages.length - 1].textBlock.push(line);
+
+        // Macros
+        const regex = /%[a-z0-9]+\b/g;
+        let result: RegExpExecArray | null;
+        while (result = regex.exec(line.text)) {
+            this.macros.push({
+                symbol: result[0],
+                range: new Range(line.lineNumber, result.index, line.lineNumber, result.index + result[0].length)
+            });
+        }
     }
 }
