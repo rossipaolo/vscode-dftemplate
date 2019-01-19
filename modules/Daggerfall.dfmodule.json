@@ -316,6 +316,12 @@
             ]
         },
         {
+            "summary": "Removes active instances of a Foe in game world.",
+            "overloads": [
+                "remove foe ${1:_foe_}"
+            ]
+        },
+        {
             "summary": "Removes Qrc text message from player journal.",
             "overloads": [
                 "remove log step ${1:nn}"
@@ -517,6 +523,7 @@
         "Heal-Willpower",
         "Regenerate",
         "SpellAbsorption",
+        "Passive-Item-Specials",
         "Passive-Specials",
         "Vampirism-Curse",
         "Detect-Enemy",
