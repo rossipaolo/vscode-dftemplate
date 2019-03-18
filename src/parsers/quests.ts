@@ -49,32 +49,6 @@ export function findQuestDefinition(name: string, token?: vscode.CancellationTok
 }
 
 /**
- * Finds all references to a quest in all files.
- * @param questName Name pattern of quest.
- */
-export function findQuestReferences(questName: string, token?: vscode.CancellationToken): Thenable<Location[]> {
-
-    /**
-     * Finds references to S000nnnn family quest from its index.
-     */
-    function findIndexReferences(): Thenable<Location[]> {
-        const index = questNameToIndex(questName);
-        const indexPattern = index + ' ' + index;
-        return index ? parser.findLinesInAllQuests(new RegExp('start quest ' + indexPattern), false, token).then(results =>
-            results.map(x => {
-                const char = x.line.text.indexOf(indexPattern);
-                return new Location(x.document.uri, new vscode.Range(x.line.lineNumber, char, x.line.lineNumber, char + indexPattern.length));
-            })) : Promise.resolve([]);
-    }
-
-    // Find references by name and index and merge the results.
-    return Promise.all([
-        parser.findReferences(questName, questReferencePattern, token),
-        findIndexReferences()
-    ]).then(locations => locations[0].concat(locations[1]));
-}
-
-/**
  * Finds all quests in the workspace.
  */
 export function findAllQuests(token?: vscode.CancellationToken): Thenable<Quest[]> {
