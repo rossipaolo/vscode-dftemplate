@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.8.0
 
 ### Added
 - ReferenceProvider provides references for symbol macros.
