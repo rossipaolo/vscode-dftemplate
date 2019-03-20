@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+### Added
+- Completion proposals and diagnostics for skills (from _Spells-Entity_ table).
+
 ## 0.8.0
 
 ### Added

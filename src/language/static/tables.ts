@@ -175,6 +175,19 @@ class StaticMessagesTable extends Table {
     }
 }
 
+class SpellsEntityTable extends Table {
+
+    public readonly skills: string[] = [];
+
+    protected set(data: string[][]) {
+        data.forEach(entry => {
+            if (entry[1] === '1') {
+                this.skills.push(entry[0]);
+            }
+        });
+    }
+}
+
 export class Tables {
     private static instance: Tables | null;
 
@@ -187,6 +200,7 @@ export class Tables {
     public readonly soundsTable = new SoundsTable();
     public readonly spellsTable = new SpellsTable();
     public readonly staticMessagesTable = new StaticMessagesTable();
+    public readonly spellsEntityTable = new SpellsEntityTable();
 
     private constructor() {
     }
@@ -209,7 +223,8 @@ export class Tables {
                 instance.placesTable.load(path.join(tablesPath, 'Quests-Places.txt')),
                 instance.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt')),
                 instance.spellsTable.load(path.join(tablesPath, 'Quests-Spells.txt')),
-                instance.staticMessagesTable.load(path.join(tablesPath, 'Quests-StaticMessages.txt'))
+                instance.staticMessagesTable.load(path.join(tablesPath, 'Quests-StaticMessages.txt')),
+                instance.spellsEntityTable.load(path.join(tablesPath, 'Spells-Entity.txt'))
             ]).then(() => resolve(),
                 (e) => reject(e));
         });
@@ -244,6 +259,8 @@ export class Tables {
                 return this.soundsTable.sounds;
             case ParameterTypes.spell:
                 return this.spellsTable.spells;
+            case ParameterTypes.skillName:
+                return this.spellsEntityTable.skills;
         }
     }
 
