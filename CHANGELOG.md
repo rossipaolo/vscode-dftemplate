@@ -8,6 +8,7 @@
 ### Improved
 - Use stored quest instances for the following providers:
     - RenameProvider
+    - CodeLensProvider
 
 ## 0.8.0
 

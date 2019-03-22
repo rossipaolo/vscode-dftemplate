@@ -5,11 +5,7 @@
 'use strict';
 
 import * as parser from './parser';
-import { TextDocument, TextLine, Range } from "vscode";
-import { Language } from '../language/static/language';
-import { Modules } from '../language/static/modules';
-import { Tables } from '../language/static/tables';
-import { ParameterTypes } from '../language/static/parameterTypes';
+import { TextDocument, TextLine } from "vscode";
 
 /**
  * Gets the index of the additional message defined in the given line.
@@ -45,78 +41,6 @@ export function findMessageByIndex(document: TextDocument, id: string): { line: 
     line = parser.findLine(document, new RegExp('^\\bMessage:\\s+' + id + '\\b', 'g'));
     if (line) {
         return { line: line, isDefault: false };
-    }
-}
-
-/**
- * Finds all references to a message in a quest.
- * @param document A quest document.
- * @param idOrName Id or name of message.
- * @param includeDeclaration Include the position of the message declaration?
- */
-export function* findMessageReferences(document: TextDocument, idOrName: string, includeDeclaration: boolean = true): Iterable<Range> {
-
-    const isId = !isNaN(Number(idOrName));
-    const declaration = isId ?
-        new RegExp('^\\s*([a-zA-Z]+:\\s+\\[\\s*' + idOrName + '\\s*\\]|Message:\\s+' + idOrName + ')') :
-        new RegExp('\\s*' + idOrName + '\\s*:\\s*\\[\\s*\\d+\\s*\\]');
-
-    /**
-     * Finds all references to a message id or one of its text aliases.
-     * @param idOrName Message id or text alias.
-     */
-    function* findReferences(idOrName: string, isId: boolean, allowDeclaration: boolean): Iterable<Range> {
-        for (const line of parser.findLines(document, new RegExp('\\b' + idOrName + '\\b'))) {
-
-            if (declaration.test(line.text)) {
-                if (allowDeclaration && includeDeclaration) {
-                    yield parser.rangeOf(line, idOrName);
-                }
-    
-                continue;
-            }
-    
-            const firstWord = parser.getFirstWord(line.text);
-            if (firstWord) {
-    
-                // Check this is a message for symbol definition
-                const symbolDefinition = Language.getInstance().findDefinition(firstWord, line.text);
-                if (symbolDefinition) {
-                    if (symbolDefinition.matches.find(x => x.signature === ParameterTypes.message || (isId ? x.signature === ParameterTypes.messageID : x.signature === ParameterTypes.messageName))) {
-                        yield parser.rangeOf(line, idOrName);
-                    }
-
-                    continue;
-                }
-
-                // Check this is a message for action invocation
-                const actionInvocation = Modules.getInstance().findAction(line.text, firstWord);
-                if (actionInvocation) {
-                    if (Modules.actionHasParameterAtPosition(actionInvocation, Modules.getWordIndex(line.text, idOrName),
-                        ParameterTypes.message, isId ? ParameterTypes.messageID : ParameterTypes.messageName)) {
-                        yield parser.rangeOf(line, idOrName);
-                    }
-
-                    continue;
-                }
-            }
-        }
-    }
-
-    // Find references to given word
-    yield* findReferences(idOrName, isId, true);
-
-    if (!isId) {
-        // Find references to static message from its id
-        const id = Tables.getInstance().staticMessagesTable.messages.get(idOrName);
-        if (id) {
-            yield* findReferences(String(id), true, false);
-        }
-    } else {
-        // Find references to static message from its text aliases
-        for (const alias of Tables.getInstance().staticMessagesTable.getAliases(Number(idOrName))) {
-            yield* findReferences(alias, false, false);
-        }
     }
 }
 
