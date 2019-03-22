@@ -42,12 +42,12 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
     }
 
     public provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext):
-        Thenable<vscode.Command[]> {
+        Thenable<(vscode.Command|vscode.CodeAction)[]> {
 
         return new Promise((resolve, reject) => {
 
             const quest = Quest.get(document);
-            const commands: vscode.Command[] = [];
+            const commands: (vscode.Command|vscode.CodeAction)[] = [];
 
             context.diagnostics.forEach(diagnostic => {
                 switch (diagnostic.code) {
@@ -117,6 +117,12 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                                 }
                             });
                         }
+                        break;
+                    case DiagnosticCode.MissingPositiveSign:
+                        const action = new vscode.CodeAction(`Change to +${document.getText(diagnostic.range)}`, vscode.CodeActionKind.QuickFix);
+                        action.edit = new vscode.WorkspaceEdit();
+                        action.edit.insert(document.uri, diagnostic.range.start, '+');
+                        commands.push(action);
                         break;
                     case DiagnosticCode.SymbolNamingConvention:
                         const symbol = document.getText(diagnostic.range);
