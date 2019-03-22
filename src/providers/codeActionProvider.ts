@@ -6,34 +6,19 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
-import { DiagnosticCode } from '../diagnostics/common';
+import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit } from 'vscode';
+import { first } from '../extension';
 import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
+import { QuestResource } from '../language/common';
 import { Quest } from '../language/quest';
-import { first } from '../extension';
-
+import { DiagnosticCode } from '../diagnostics/common';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
     public constructor() {
-        vscode.commands.registerCommand('dftemplate.deleteRange', (range: vscode.Range) => {
-            if (vscode.window.activeTextEditor) {
-                vscode.window.activeTextEditor.edit((editBuilder) => {
-                    editBuilder.delete(range);
-                });
-            }
-        });
-
-        vscode.commands.registerCommand('dftemplate.renameSymbol', (range: vscode.Range, newName: string) => {
-            if (vscode.window.activeTextEditor) {
-                vscode.window.activeTextEditor.edit((editBuilder) => {
-                    editBuilder.replace(range, newName);
-                });
-            }
-        });
-
         vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
             if (vscode.window.activeTextEditor) {
                 vscode.window.activeTextEditor.insertSnippet(new vscode.SnippetString(snippet), range);
@@ -42,51 +27,43 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
     }
 
     public provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext):
-        Thenable<(vscode.Command|vscode.CodeAction)[]> {
+        Thenable<vscode.CodeAction[]> {
 
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
 
             const quest = Quest.get(document);
-            const commands: (vscode.Command|vscode.CodeAction)[] = [];
+            const actions: vscode.CodeAction[] = [];
 
-            context.diagnostics.forEach(diagnostic => {
+            context.diagnostics.filter(x => range.intersection(x.range)).forEach(diagnostic => {
+                let action: CodeAction | undefined;
                 switch (diagnostic.code) {
                     case DiagnosticCode.DuplicatedMessageNumber:
                         const duplicatedMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
                         if (duplicatedMessage) {
                             const newMessageID = quest.qrc.getAvailableId(duplicatedMessage.id);
-                            commands.push({
-                                title: 'Change ' + duplicatedMessage.id + ' to ' + newMessageID,
-                                command: 'dftemplate.renameSymbol',
-                                arguments: [diagnostic.range, String(newMessageID)]
-                            });
+                            action = new CodeAction(`Change ${duplicatedMessage.id} to ${newMessageID}`);
+                            action.kind = CodeActionKind.QuickFix;
+                            action.edit = new WorkspaceEdit();
+                            action.edit.replace(document.uri, diagnostic.range, String(newMessageID));
+                            actions.push(action);
                         }
                         break;
                     case DiagnosticCode.UnusedDeclarationMessage:
-                        const message = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
-                        if (message) {
-                            commands.push({
-                                title: 'Remove unused declaration',
-                                command: 'dftemplate.deleteRange',
-                                arguments: [message.blockRange]
-                            });
+                        action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qrc.messages);
+                        if (action) {
+                            actions.push(action);
                         }
                         break;
                     case DiagnosticCode.UnusedDeclarationSymbol:
-                        commands.push({
-                            title: 'Remove unused declaration',
-                            command: 'dftemplate.deleteRange',
-                            arguments: [document.lineAt(diagnostic.range.start.line).range]
-                        });
+                        action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qbn.iterateSymbols());
+                        if (action) {
+                            actions.push(action);
+                        }
                         break;
                     case DiagnosticCode.UnusedDeclarationTask:
-                        const task = first(quest.qbn.iterateTasks(), x => x.range.isEqual(diagnostic.range));
-                        if (task) {
-                            commands.push({
-                                title: 'Remove unused declaration',
-                                command: 'dftemplate.deleteRange',
-                                arguments: [task.blockRange]
-                            });
+                        action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qbn.iterateTasks());
+                        if (action) {
+                            actions.push(action);
                         }
                         break;
                     case DiagnosticCode.UndefinedExpression:
@@ -95,11 +72,13 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             for (const signature of [
                                 ...Language.getInstance().caseInsensitiveSeek(prefix),
                                 ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
-                                commands.push({
-                                    title: 'Change to \'' + StaticData.prettySignature(signature) + '\'',
+                                action = new CodeAction(`Change to '${StaticData.prettySignature(signature)}'`);
+                                action.command = {
+                                    title: action.title,
                                     command: 'dftemplate.insertSnippetAtRange',
                                     arguments: [signature, diagnostic.range]
-                                });
+                                };
+                                actions.push(action);
                             }
                         }
                         break;
@@ -107,42 +86,39 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         const currentSymbol = document.getText(diagnostic.range);
                         const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
                         if (symbolDefinition) {
-                            parser.getSupportedSymbolVariations(currentSymbol, symbolDefinition.type).forEach((newSymbol) => {
-                                if (newSymbol.word !== currentSymbol) {
-                                    commands.push({
-                                        title: 'Change ' + currentSymbol + ' to ' + newSymbol.word + ' (' + newSymbol.description + ')',
-                                        command: 'dftemplate.renameSymbol',
-                                        arguments: [diagnostic.range, newSymbol.word]
-                                    });
-                                }
+                            parser.getSupportedSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
+                                const title = `Change ${currentSymbol} to ${newSymbol.word} (${newSymbol.description})`;
+                                const action = new vscode.CodeAction(title);
+                                action.kind = diagnostic.severity === DiagnosticSeverity.Hint ? CodeActionKind.Empty : CodeActionKind.QuickFix;
+                                action.edit = new vscode.WorkspaceEdit();
+                                action.edit.replace(document.uri, diagnostic.range, newSymbol.word);
+                                actions.push(action);
                             });
                         }
                         break;
                     case DiagnosticCode.MissingPositiveSign:
-                        const action = new vscode.CodeAction(`Change to +${document.getText(diagnostic.range)}`, vscode.CodeActionKind.QuickFix);
+                        action = new vscode.CodeAction(`Change to +${document.getText(diagnostic.range)}`, vscode.CodeActionKind.QuickFix);
                         action.edit = new vscode.WorkspaceEdit();
                         action.edit.insert(document.uri, diagnostic.range.start, '+');
-                        commands.push(action);
+                        actions.push(action);
                         break;
                     case DiagnosticCode.SymbolNamingConvention:
                         const symbol = document.getText(diagnostic.range);
                         const newName = parser.forceSymbolNamingConventions(symbol);
-                        commands.push({
-                            title: 'Convert ' + symbol + ' to ' + newName,
-                            command: 'dftemplate.renameSymbol',
-                            arguments: [diagnostic.range, newName]
-                        });
+                        action = new CodeAction(`Rename ${symbol} to ${newName}`, CodeActionKind.QuickFix);
+                        action.edit = new WorkspaceEdit();
+                        action.edit.replace(document.uri, diagnostic.range, newName);
+                        actions.push(action);
                         break;
                     case DiagnosticCode.UseAliasForStaticMessage:
                         const numericMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
                         if (numericMessage) {
                             for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
                                 if (id === numericMessage.id) {
-                                    commands.push({
-                                        title: 'Convert ' + numericMessage.id + ' to ' + alias,
-                                        command: 'dftemplate.renameSymbol',
-                                        arguments: [document.lineAt(numericMessage.range.start.line).range, alias + ':   [' + numericMessage.id + ']']
-                                    });
+                                    action = new CodeAction(`Convert ${numericMessage.id} to ${alias}`, CodeActionKind.QuickFix);
+                                    action.edit = new WorkspaceEdit();
+                                    action.edit.replace(document.uri, document.lineAt(numericMessage.range.start.line).range, `${alias}:   [${numericMessage.id}]`);
+                                    actions.push(action);
                                 }
                             }
                         }
@@ -150,7 +126,19 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                 }
             });
 
-            return commands.length > 0 ? resolve(commands) : reject();
+            return resolve(actions);
         });
+    }
+
+    private static removeUnusedResource(document: vscode.TextDocument, diagnostic: vscode.Diagnostic, resources: Iterable<QuestResource>):
+        CodeAction | undefined {
+        const resource = first(resources, x => x.range.isEqual(diagnostic.range));
+        if (resource) {
+            const action = new CodeAction('Remove unused declaration');
+            action.kind = CodeActionKind.QuickFix;
+            action.edit = new WorkspaceEdit();
+            action.edit.delete(document.uri, resource.blockRange);
+            return action;
+        }
     }
 }

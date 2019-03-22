@@ -10,6 +10,7 @@
 - Use stored quest instances for the following providers:
     - RenameProvider
     - CodeLensProvider
+- Improvements to CodeActionProvider.
 
 ## 0.8.0
 
