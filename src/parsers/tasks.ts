@@ -5,7 +5,7 @@
 'use strict';
 
 import * as parser from './parser';
-import { TextDocument, TextLine, Range } from "vscode";
+import { TextDocument, TextLine } from "vscode";
 import { Modules } from '../language/static/modules';
 import { QuestResourceCategory } from '../language/static/common';
 
@@ -75,20 +75,6 @@ export function parseTaskDefinition(text: string): TaskDefinition | undefined {
  */
 export function findTaskDefinition(document: TextDocument, symbol: string): TextLine | undefined {
     return parser.findLine(document, makeTaskRegex(symbol));
-}
-
-/**
- * Finds all references to a task in a quest.
- * @param document A quest document.
- */
-export function* findTasksReferences(document: TextDocument, symbol: string, includeDeclaration: boolean = true): Iterable<Range> {
-    const declaration = makeTaskRegex(symbol);
-    for (const line of parser.findLines(document, new RegExp('\\b' + symbol + '\\b'))) {
-        if (includeDeclaration || !declaration.test(line.text)) {
-            const index = line.text.indexOf(symbol);
-            yield new Range(line.lineNumber, index, line.lineNumber, index + symbol.length);
-        }
-    }
 }
 
 /**

@@ -6,8 +6,9 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
-
 import { TextDocument, CancellationToken, CodeLens } from 'vscode';
+import { Quest } from '../language/quest';
+import { TemplateReferenceProvider } from './referenceProvider';
 
 export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
 
@@ -20,65 +21,45 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     public provideCodeLenses(document: TextDocument, token: CancellationToken): CodeLens[] | Thenable<CodeLens[]> {
+        
         const codelenses: CodeLens[] = [];
-
-        const clocks: { line: vscode.TextLine, symbol: string }[] = [];
+        const quest = Quest.get(document);
 
         // Messages
-        for (const message of parser.findAllMessages(document)) {
-            const referenceCodeLens = TemplateCodeLensProvider.getReferenceCodeLens(document, message,
-                () => parser.findMessageReferences(document, message.symbol, false));
-            if (referenceCodeLens) {
-                codelenses.push(referenceCodeLens);
-            }
+        for (const message of quest.qrc.messages) {
+            const references = TemplateReferenceProvider.messageReferences(quest, message, false);
+            codelenses.push(TemplateCodeLensProvider.makeReferencesCodeLens(document, message.range, references));
         }
 
         // Symbols
-        for (const definition of parser.findAllSymbolDefinitions(document)) {
-            const referenceCodeLens = TemplateCodeLensProvider.getReferenceCodeLens(document, definition,
-                () => parser.findSymbolReferences(document, definition.symbol, false));
-            if (referenceCodeLens) {
-                codelenses.push(referenceCodeLens);
-
-                // Find clocks
-                if (/^\s*Clock/.test(definition.line.text)) {
-                    clocks.push(definition);
-                }
-            }
-        }
-
-        // Variables
-        for (const definition of parser.findAllVariables(document)) {
-            const referenceCodeLens = TemplateCodeLensProvider.getReferenceCodeLens(document, definition,
-                () => parser.findTasksReferences(document, definition.symbol, false));
-            if (referenceCodeLens) {
-                codelenses.push(referenceCodeLens);
-            }
+        for (const symbol of quest.qbn.iterateSymbols()) {
+            const references = TemplateReferenceProvider.symbolReferences(quest, symbol, false);
+            codelenses.push(TemplateCodeLensProvider.makeReferencesCodeLens(document, symbol.range, references));
         }
 
         // Tasks
-        for (const definition of parser.findAllTasks(document)) {
-            const referenceCodeLens = TemplateCodeLensProvider.getReferenceCodeLens(document, definition,
-                () => parser.findTasksReferences(document, definition.symbol, false));
-            if (referenceCodeLens) {
-                codelenses.push(referenceCodeLens);
+        for (const task of quest.qbn.iterateTasks()) {
+            
+            // References
+            const references = TemplateReferenceProvider.taskReferences(quest, task, false);
+            codelenses.push(TemplateCodeLensProvider.makeReferencesCodeLens(document, task.range, references));
 
-                // Clocks
-                const clock = clocks.find(x => x.symbol === definition.symbol);
-                if (clock) {
-                    codelenses.push(new CodeLens(referenceCodeLens.range,
+            // Triggered by a condition
+            if (parser.isConditionalTask(document, task.range.start.line)) {
+                codelenses.push(new CodeLens(task.range, { title: 'conditional execution', command: '' }));
+            }
+
+            // Triggered by clock
+            for (const symbol of quest.qbn.iterateSymbols()) {
+                if (symbol.type === 'Clock' && symbol.name === task.definition.symbol) {
+                    codelenses.push(new CodeLens(task.range,
                         {
                             title: 'clock timer',
                             command: 'dftemplate.revealRange',
-                            arguments: [clock.line.range]
+                            arguments: [symbol.range]
                         })
                     );
-                }
-
-                // Tasks started by a condition
-                if (parser.isConditionalTask(document, definition.line.lineNumber)) {
-                    codelenses.push(new CodeLens(referenceCodeLens.range, { title: 'conditional execution', command: '' })
-                    );
+                    break;
                 }
             }
         }
@@ -86,25 +67,17 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
         return codelenses;
     }
 
-    private static getReferenceCodeLens(document: TextDocument, task: { line: vscode.TextLine, symbol: string },
-        findReferencesWithoutDeclaration: (document: TextDocument, symbol: string) => Iterable<vscode.Range>): CodeLens | undefined {
-        const locations: vscode.Location[] = [];
-        for (const range of findReferencesWithoutDeclaration(document, task.symbol)) {
-            locations.push(new vscode.Location(document.uri, range));
-        }
-
-        const index = task.line.text.indexOf(task.symbol);
-        if (index !== -1) {
-            const range = new vscode.Range(task.line.lineNumber, index, task.line.lineNumber, index + task.symbol.length);
-            return locations.length > 0 ?
-                new CodeLens(range,
-                    {
-                        title: locations.length === 1 ? '1 reference' : locations.length + ' references',
-                        command: 'editor.action.showReferences',
-                        arguments: [document.uri, new vscode.Position(task.line.lineNumber, index), locations]
-                    }
-                ) :
-                new CodeLens(range, { title: '0 references', command: '' });
-        }
+    /**
+     * Makes a CodeLens with references count for a resource.
+     * @param document The document where the resource is defined.
+     * @param range The range of the resource definition.
+     * @param references Location of references to the resource.
+     */
+    private static makeReferencesCodeLens(document: TextDocument, range: vscode.Range, references: vscode.Location[]): CodeLens {
+        return new CodeLens(range, references.length > 0 ? {
+            title: references.length === 1 ? '1 reference' : references.length + ' references',
+            command: 'editor.action.showReferences',
+            arguments: [document.uri, range.start, references]
+        } : { title: '0 references', command: '' });
     }
 }
