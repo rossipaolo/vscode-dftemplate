@@ -145,7 +145,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         for (const languageItem of Language.getInstance().seekByPrefix(prefix)) {
             let prettySignature = Language.prettySignature(languageItem.details.signature);
             let item = new vscode.CompletionItem(prettySignature, TemplateCompletionItemProvider.getCompletionItemKind(languageItem.category));
-            item.insertText = new vscode.SnippetString(languageItem.details.signature);
+            item.insertText = new vscode.SnippetString(Language.getInstance().getSymbolSnippet(languageItem.details.signature));
             item.detail = prettySignature;
             item.documentation = new vscode.MarkdownString(languageItem.details.summary);
             item.command = TemplateCompletionItemProvider.signatureInfoCommand;

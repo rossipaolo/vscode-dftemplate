@@ -229,6 +229,18 @@ export class Language extends StaticData {
         }
     }
 
+    public getSymbolSnippet(signature: string): string | undefined {
+        if (this.definitions) {
+            for (const [,symbol] of this.definitions) {
+                for (const definition of symbol) {
+                    if (definition.signature === signature) {
+                        return definition.snippet;
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Gets all supported variation schemas of a symbol type.
      * @param type A symbol type.
