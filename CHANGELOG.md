@@ -12,6 +12,9 @@
     - CodeLensProvider
 - Improvements to CodeActionProvider.
 
+### Fixed
+- Fixed completion proposals for symbol definitions.
+
 ## 0.8.0
 
 ### Added

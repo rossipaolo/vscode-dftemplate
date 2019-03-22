@@ -45,6 +45,7 @@
                     "signature": "${foe}"
                 }
             ],
+            "signature": "Foe _symbol_ is anEnemy",
             "summary": "Defines a single enemy of type `anEnemy`.",
             "parameters": [
                 {
@@ -62,6 +63,7 @@
                     "signature": "${foe}"
                 }
             ],
+            "signature": "Foe _symbol_ is nn anEnemy",
             "summary": "Defines a number of enemies of type `anEnemy`.",
             "parameters": [
                 {
