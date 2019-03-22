@@ -4,6 +4,7 @@
 
 ### Added
 - Completion proposals and diagnostics for skills (from _Spells-Entity_ table).
+- QuickFix: insert `+` when sign for a number is required but missing.
 
 ### Improved
 - Use stored quest instances for the following providers:

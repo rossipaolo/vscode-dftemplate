@@ -18,6 +18,7 @@ export enum DiagnosticCode {
     DuplicatedMessageNumber,
     DuplicatedDefinition,
     UndefinedExpression,
+    MissingPositiveSign,
     GenericWarning,
     UnusedDeclarationMessage,
     UnusedDeclarationSymbol,
@@ -36,7 +37,7 @@ export const Errors = {
     numberIsNotNatural: (range: Range, word: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Natural number doesn\'t accept a sign.', DiagnosticSeverity.Error),
     numberIsNotInteger: (range: Range, word: string) =>
-        makeDiagnostic(range, DiagnosticCode.GenericError, 'Integer number must have a sign.', DiagnosticSeverity.Error),
+        makeDiagnostic(range, DiagnosticCode.MissingPositiveSign, 'Integer number must have a sign.', DiagnosticSeverity.Error),
     duplicatedMessageNumber: (range: Range, id: number, otherDefinitions: vscode.Location[]) =>
         makeDiagnostic(range, DiagnosticCode.DuplicatedMessageNumber, 'Message number already in use: ' + id + '.', DiagnosticSeverity.Error,
         { locations: otherDefinitions, label: 'message definition' }),
