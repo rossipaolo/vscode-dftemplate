@@ -14,7 +14,7 @@ import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
 import { QuestResource } from '../language/common';
 import { Quest } from '../language/quest';
-import { DiagnosticCode } from '../diagnostics/common';
+import { DiagnosticCode, wordRange } from '../diagnostics/common';
 import { symbolPlaceholderToType } from '../parsers/parser';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
@@ -80,6 +80,20 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                                     arguments: [signature, diagnostic.range]
                                 };
                                 actions.push(action);
+                            }
+                        }
+                        break;
+                    case DiagnosticCode.UndefinedStaticMessage:
+                        const message = quest.qrc.getMessage(diagnostic.range);
+                        if (message && message.alias) {
+                            const aliasRange = wordRange(document.lineAt(diagnostic.range.start.line), message.alias);
+                            for (const [name, id] of Tables.getInstance().staticMessagesTable.messages) {
+                                if (id === message.id) {
+                                    action = new CodeAction(`Change to '${name}'`, CodeActionKind.QuickFix);
+                                    action.edit = new WorkspaceEdit();
+                                    action.edit.replace(document.uri, aliasRange, name);
+                                    actions.push(action);
+                                }
                             }
                         }
                         break;

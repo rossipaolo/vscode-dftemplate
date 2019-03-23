@@ -63,11 +63,19 @@ export class Qrc extends QuestBlock {
         }
         this.failedParse.push(line);
     }
+    
+    /**
+     * Gets a message this QRC block.
+     * @param arg A numeric id, text alias or range.
+     */
+    public getMessage(arg: string | Range): Message | undefined {
+        if (arg instanceof Range) {
+            return this.messages.find(x => x.range.isEqual(arg));
+        }
 
-    public getMessage(idOrAlias: string): Message | undefined {
-        let id: number | undefined = Number(idOrAlias);
+        let id: number | undefined = Number(arg);
         if (isNaN(id)) {
-            id = Tables.getInstance().staticMessagesTable.messages.get(idOrAlias);
+            id = Tables.getInstance().staticMessagesTable.messages.get(arg);
         }
 
         if (id) {
