@@ -5,6 +5,7 @@
 ### Added
 - Completion proposals and diagnostics for skills (from _Spells-Entity_ table).
 - QuickFix: insert `+` when sign for a number is required but missing.
+- QuickFix: make new task or variable for a clock resource.
 
 ### Improved
 - Use stored quest instances for the following providers:

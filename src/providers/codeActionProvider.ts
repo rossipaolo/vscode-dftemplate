@@ -82,6 +82,18 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             }
                         }
                         break;
+                    case DiagnosticCode.ClockWithoutTask:
+                        const clockName = document.getText(diagnostic.range);
+                        const clockTaskPos = document.lineAt(document.lineCount - 1).rangeIncludingLineBreak.end;
+                        action = new CodeAction('Make clock task', CodeActionKind.QuickFix);   
+                        action.edit = new WorkspaceEdit();
+                        action.edit.insert(document.uri, clockTaskPos, `\n\n${clockName} task:`);
+                        actions.push(action);
+                        action = new CodeAction('Make clock variable', CodeActionKind.QuickFix);
+                        action.edit = new WorkspaceEdit();
+                        action.edit.insert(document.uri, clockTaskPos, `\n\nvariable ${clockName}`);
+                        actions.push(action);
+                        break;
                     case DiagnosticCode.IncorrectSymbolVariation:
                         const currentSymbol = document.getText(diagnostic.range);
                         const symbolDefinition = quest.qbn.getSymbol(currentSymbol);

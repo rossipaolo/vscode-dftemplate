@@ -24,6 +24,7 @@ export enum DiagnosticCode {
     UnusedDeclarationSymbol,
     UnusedDeclarationTask,
     IncorrectSymbolVariation,
+    ClockWithoutTask,
     GenericHint,
     SymbolNamingConvention,
     UseAliasForStaticMessage
@@ -78,7 +79,7 @@ export const Warnings = {
     unstartedClock: (range: Range, name: string) =>
         makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never starts.', DiagnosticSeverity.Warning),
     unlinkedClock: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + " doesn't activate a task.", DiagnosticSeverity.Warning),
+        makeDiagnostic(range, DiagnosticCode.ClockWithoutTask, name + " doesn't activate a task.", DiagnosticSeverity.Warning),
     incorrectSymbolVariation: (range: Range, symbol: string, type: string) =>
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, symbol + " is not a valid variation for type '" + type + "'.", DiagnosticSeverity.Warning)
 };
