@@ -115,6 +115,12 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             }
                         }
                         break;
+                    case DiagnosticCode.UndefinedContextMacro:
+                        action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, Language.getInstance().contextMacros);
+                        if (action) {
+                            actions.push(action);
+                        }
+                        break;
                     case DiagnosticCode.UndefinedSymbol:
                         const symbolParameter = quest.qbn.getParameter(diagnostic.range);
                         if (symbolParameter) {

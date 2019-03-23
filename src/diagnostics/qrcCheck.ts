@@ -80,7 +80,7 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
     // Macros
     for (const macro of context.qrc.macros) {
         if (!Language.getInstance().findSymbol(macro.symbol)) {
-            yield Errors.undefinedSymbol(macro.range, macro.symbol);
+            yield Errors.undefinedContextMacro(macro.range, macro.symbol);
         }
     }
 
