@@ -6,8 +6,6 @@
 
 import * as parser from './parser';
 import { TextDocument, TextLine } from "vscode";
-import { Modules } from '../language/static/modules';
-import { QuestResourceCategory } from '../language/static/common';
 
 export enum TaskType {
     /** Is started by a set or trigger: `_foo_ task:` */
@@ -96,26 +94,6 @@ export function* findAllVariables(document: TextDocument): Iterable<{ line: Text
     if (globalMatch) {
         yield* parser.matchAllLines(document, globalMatch, 2);
     }
-}
-
-/**
- * Has this task one or more conditions?
- * @param document A quest document.
- * @param lineNumber The declaration line.
- */
-export function isConditionalTask(document: TextDocument, lineNumber: number): boolean {
-    if (document.lineCount > lineNumber + 1) {
-        const text = document.lineAt(lineNumber + 1).text.trim();
-        const space = text.indexOf(' ');
-        if (space > 0) {
-            const action = Modules.getInstance().findAction(text, text.substring(0, space));
-            if (action && action.category === QuestResourceCategory.Condition) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
 
 function makeTaskRegex(symbol: string) {

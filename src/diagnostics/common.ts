@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import { Range, DiagnosticSeverity } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { Parameter } from './signatureCheck';
+import { Parameter } from '../language/common';
 import { Quest } from '../language/quest';
 
 /**

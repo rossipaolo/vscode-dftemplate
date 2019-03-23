@@ -139,9 +139,9 @@ function symbolHasReferences(context: Quest, symbol: string): boolean {
     return false;
 }
 
-function taskIsUsed(context: Quest, taskName: string, taskContext: Task): boolean {
+function taskIsUsed(context: Quest, taskName: string, task: Task): boolean {
     // Started by trigger
-    if (parser.isConditionalTask(context.document, taskContext.range.start.line)) {
+    if (task.hasAnyCondition()) {
         return true;
     }
 

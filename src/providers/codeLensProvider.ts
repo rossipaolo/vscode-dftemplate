@@ -5,7 +5,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
 import { TextDocument, CancellationToken, CodeLens } from 'vscode';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
@@ -45,7 +44,7 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
             codelenses.push(TemplateCodeLensProvider.makeReferencesCodeLens(document, task.range, references));
 
             // Triggered by a condition
-            if (parser.isConditionalTask(document, task.range.start.line)) {
+            if (task.hasAnyCondition()) {
                 codelenses.push(new CodeLens(task.range, { title: 'conditional execution', command: '' }));
             }
 

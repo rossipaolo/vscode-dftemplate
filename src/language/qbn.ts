@@ -9,10 +9,9 @@ import { TextLine, Range } from 'vscode';
 import { Language } from './static/language';
 import { TaskType } from '../parsers/parser';
 import { Modules } from './static/modules';
-import { Symbol, QuestBlock, Task, Action } from './common';
+import { Symbol, QuestBlock, Task, Action, Parameter } from './common';
 import { wordRange } from '../diagnostics/common';
 import { first } from '../extension';
-import { Parameter } from '../diagnostics/signatureCheck';
 
 /**
  * Quest resources and operation: the quest block that holds resources definition and tasks.
