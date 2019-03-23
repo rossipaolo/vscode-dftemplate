@@ -15,6 +15,7 @@
 
 ### Fixed
 - Fixed completion proposals for symbol definitions.
+- Fixed diagnostics for `Foe` type.
 
 ## 0.8.0
 
