@@ -18,6 +18,7 @@ export enum DiagnosticCode {
     DuplicatedMessageNumber,
     DuplicatedDefinition,
     UndefinedExpression,
+    UndefinedAttribute,
     MissingPositiveSign,
     GenericWarning,
     UnusedDeclarationMessage,
@@ -56,7 +57,7 @@ export const Errors = {
     undefinedTask: (range: Range, symbol: string) =>
         makeDiagnostic(range, DiagnosticCode.GenericError, 'Reference to undefined task: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedAttribute: (range: Range, name: string, group: string) =>
-        makeDiagnostic(range, DiagnosticCode.GenericError, "The name '" + name + "' doesn't exist in the attribute group '" + group + "'.", DiagnosticSeverity.Error),
+        makeDiagnostic(range, DiagnosticCode.UndefinedAttribute, "The name '" + name + "' doesn't exist in the attribute group '" + group + "'.", DiagnosticSeverity.Error),
     undefinedExpression: (range: Range, block: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedExpression, 'Undefined expression inside block \'' + block + '\'.', DiagnosticSeverity.Error),
     undefinedUntilPerformed: (range: Range, symbol: string) =>

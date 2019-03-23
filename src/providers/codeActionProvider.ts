@@ -82,6 +82,20 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             }
                         }
                         break;
+                    case DiagnosticCode.UndefinedAttribute:
+                        const parameter = quest.qbn.getParameter(diagnostic.range);
+                        if (parameter) {
+                            const values = Tables.getInstance().getValues(parameter.type);
+                            if (values) {
+                                const stringSimilarity = require('string-similarity');
+                                const value = stringSimilarity.findBestMatch(document.getText(diagnostic.range), values).bestMatch.target;
+                                action = new CodeAction(`Change to ${value}`, CodeActionKind.QuickFix);
+                                action.edit = new WorkspaceEdit();
+                                action.edit.replace(document.uri, diagnostic.range, value);
+                                actions.push(action);
+                            }
+                        }
+                        break;
                     case DiagnosticCode.ClockWithoutTask:
                         const clockName = document.getText(diagnostic.range);
                         const clockTaskPos = document.lineAt(document.lineCount - 1).rangeIncludingLineBreak.end;

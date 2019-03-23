@@ -5,12 +5,14 @@
 'use strict';
 
 import * as parser from '../parsers/parser';
-import { TextLine } from 'vscode';
+import { TextLine, Range } from 'vscode';
 import { Language } from './static/language';
 import { TaskType } from '../parsers/parser';
 import { Modules } from './static/modules';
 import { Symbol, QuestBlock, Task, Action } from './common';
 import { wordRange } from '../diagnostics/common';
+import { first } from '../extension';
+import { Parameter } from '../diagnostics/signatureCheck';
 
 /**
  * Quest resources and operation: the quest block that holds resources definition and tasks.
@@ -141,6 +143,19 @@ export class Qbn extends QuestBlock {
      */
     public getTask(task: string): Task | undefined {
         return Qbn.getMapItem(this.tasks, task);
+    }
+
+    /**
+     * Gets a parameter of a symbol definition or an action.
+     * @param range The range of the parameter in the document.
+     */
+    public getParameter(range: Range): Parameter | undefined {
+        const invocation = first(this.iterateSymbols(), x => x.blockRange.contains(range)) ||
+            first(this.iterateActions(), x => x.getRange().contains(range));
+        if (invocation && invocation.signature) {
+            const value = invocation.line.text.substring(range.start.character, range.end.character);
+            return invocation.signature.find(x => x.value === value);
+        }
     }
 
     private static *iterateMapItems<T>(items: Map<string, T | T[]>): Iterable<T> {
