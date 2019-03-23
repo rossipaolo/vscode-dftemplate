@@ -8,6 +8,7 @@
 - QuickFix: make new task or variable for a clock resource.
 - QuickFix: suggest best match for unknown value in symbol definition or action.
 - QuickFix: suggest best match for reference to unknown symbol or task.
+- QuickFix: suggest correct spelling for a message text alias.
 
 ### Improved
 - Use stored quest instances for the following providers:
