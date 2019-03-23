@@ -15,6 +15,7 @@ import { StaticData } from '../language/static/staticData';
 import { QuestResource } from '../language/common';
 import { Quest } from '../language/quest';
 import { DiagnosticCode } from '../diagnostics/common';
+import { symbolPlaceholderToType } from '../parsers/parser';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
@@ -82,17 +83,37 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             }
                         }
                         break;
+                    case DiagnosticCode.UndefinedSymbol:
+                        const symbolParameter = quest.qbn.getParameter(diagnostic.range);
+                        if (symbolParameter) {
+                            const symbolNames = Array.from(quest.qbn.iterateSymbols())
+                                .filter(x => x.type === symbolPlaceholderToType(symbolParameter.type))
+                                .map(x => x.name);
+                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
+                            if (action) {
+                                actions.push(action);
+                            }
+                        }
+                        break;
+                    case DiagnosticCode.UndefinedTask:
+                        const taskParameter = quest.qbn.getParameter(diagnostic.range);
+                        if (taskParameter) {
+                            const taskNames = Array.from(quest.qbn.iterateTasks()).map(x => x.definition.symbol);
+                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames);
+                            if (action) {
+                                actions.push(action);
+                            }
+                        }
+                        break;
                     case DiagnosticCode.UndefinedAttribute:
                         const parameter = quest.qbn.getParameter(diagnostic.range);
                         if (parameter) {
                             const values = Tables.getInstance().getValues(parameter.type);
                             if (values) {
-                                const stringSimilarity = require('string-similarity');
-                                const value = stringSimilarity.findBestMatch(document.getText(diagnostic.range), values).bestMatch.target;
-                                action = new CodeAction(`Change to ${value}`, CodeActionKind.QuickFix);
-                                action.edit = new WorkspaceEdit();
-                                action.edit.replace(document.uri, diagnostic.range, value);
-                                actions.push(action);
+                                action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, values);
+                                if (action) {
+                                    actions.push(action);
+                                }
                             }
                         }
                         break;
@@ -166,5 +187,14 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
             action.edit.delete(document.uri, resource.blockRange);
             return action;
         }
+    }
+
+    private static bestMatch(document: vscode.TextDocument, range: vscode.Range, values: string[]): CodeAction {
+        const stringSimilarity = require('string-similarity');
+        const value = stringSimilarity.findBestMatch(document.getText(range), values).bestMatch.target;
+        const action = new CodeAction(`Change to ${value}`, CodeActionKind.QuickFix);
+        action.edit = new WorkspaceEdit();
+        action.edit.replace(document.uri, range, value);
+        return action;
     }
 }
