@@ -243,7 +243,7 @@ export class Tables {
                 return this.factionsTable.factionTypes;
             case ParameterTypes.group:
                 return this.factionsTable.groups;
-            case ParameterTypes.group:
+            case ParameterTypes.foe:
                 return this.foesTable.foes;
             case ParameterTypes.commonItem:
                 return this.itemsTable.commonItems;
