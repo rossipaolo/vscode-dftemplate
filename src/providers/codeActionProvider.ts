@@ -12,6 +12,7 @@ import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
+import { ParameterTypes } from '../language/static/parameterTypes';
 import { QuestResource } from '../language/common';
 import { Quest } from '../language/quest';
 import { DiagnosticCode, wordRange } from '../diagnostics/common';
@@ -94,6 +95,23 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                                     action.edit.replace(document.uri, aliasRange, name);
                                     actions.push(action);
                                 }
+                            }
+                        }
+                        break;
+                    case DiagnosticCode.UndefinedMessage:
+                        const messageParameter = quest.qbn.getParameter(diagnostic.range);
+                        if (messageParameter) {
+                            let messages: string[] = [];
+                            if (messageParameter.type !== ParameterTypes.messageName) {
+                                messages = messages.concat(quest.qrc.messages.map(x => String(x.id)));
+                            }
+                            if (messageParameter.type !== ParameterTypes.messageID) {
+                                messages = messages.concat(quest.qrc.messages.filter(x => x.alias).map(x => x.alias) as string[]);
+                            }
+
+                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, messages);
+                            if (action) {
+                                actions.push(action);
                             }
                         }
                         break;

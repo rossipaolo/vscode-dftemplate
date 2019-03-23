@@ -7,7 +7,7 @@
 - QuickFix: insert `+` when sign for a number is required but missing.
 - QuickFix: make new task or variable for a clock resource.
 - QuickFix: suggest best match for unknown value in symbol definition or action.
-- QuickFix: suggest best match for reference to unknown symbol or task.
+- QuickFix: suggest best match for reference to unknown message, symbol or task.
 - QuickFix: suggest correct spelling for a message text alias.
 
 ### Improved
