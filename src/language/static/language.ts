@@ -32,6 +32,13 @@ export class Language extends StaticData {
     private static instance: Language | null;
 
     /**
+     * Symbols used inside QRC message blocks to be expanded depending on context.
+     */
+    public get contextMacros() : string[] {
+        return this.table ? [...this.table.symbols.keys()] : [];
+    }
+
+    /**
      * Load language tables.
      */
     public load(context: ExtensionContext): Promise<void> {

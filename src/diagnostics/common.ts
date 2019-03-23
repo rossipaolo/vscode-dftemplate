@@ -20,6 +20,7 @@ export enum DiagnosticCode {
     UndefinedExpression,
     UndefinedStaticMessage,
     UndefinedMessage,
+    UndefinedContextMacro,
     UndefinedSymbol,
     UndefinedTask,
     UndefinedAttribute,
@@ -56,6 +57,8 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.UndefinedStaticMessage, '\'' + name + '\' is not a valid alias for message ' + id + '.', DiagnosticSeverity.Error),
     undefinedMessage: (range: Range, message: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedMessage, 'Reference to undefined message: ' + message + '.', DiagnosticSeverity.Error),
+    undefinedContextMacro: (range: Range, symbol: string) =>
+        makeDiagnostic(range, DiagnosticCode.UndefinedContextMacro, 'Reference to undefined symbol: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedSymbol: (range: Range, symbol: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedSymbol, 'Reference to undefined symbol: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedTask: (range: Range, symbol: string) =>
