@@ -11,15 +11,8 @@ import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Errors } from './common';
 import { ParameterTypes } from '../language/static/parameterTypes';
+import { Parameter } from '../language/common';
 import { Quest } from '../language/quest';
-
-/**
- * A parameter in a symbol or action signature.
- */
-export interface Parameter {
-    type: string;
-    value: string;
-}
 
 /**
 * Analyses the definition of a symbol or action.

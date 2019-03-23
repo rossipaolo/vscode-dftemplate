@@ -4,11 +4,11 @@
 
 'use strict';
 
-import { Parameter } from "../diagnostics/signatureCheck";
 import { Range, TextLine } from "vscode";
 import { TaskDefinition, TaskType } from "../parsers/parser";
+import { ParameterMatch, QuestResourceCategory } from "./static/common";
+import { Modules } from "./static/modules";
 import { wordRange } from "../diagnostics/common";
-import { ParameterMatch } from "./static/common";
 
 /**
  * A resource usable in a quest.
@@ -24,6 +24,14 @@ export interface QuestResource {
      * The range of the entire definition.
      */
     blockRange: Range;
+}
+
+/**
+ * A parameter in a symbol or action signature.
+ */
+export interface Parameter {
+    type: string;
+    value: string;
 }
 
 /**
@@ -85,6 +93,16 @@ export class Task implements QuestResource {
     public constructor(
         public range: Range,
         public definition: TaskDefinition) {
+    }
+
+    /**
+     * Does this task have at least one condition?
+     */
+    public hasAnyCondition(): boolean {
+        return !!this.actions.find(action => {
+            const actionInfo = Modules.getInstance().findAction(action.line.text);
+            return !!(actionInfo && actionInfo.category === QuestResourceCategory.Condition);
+        });
     }
 }
 
