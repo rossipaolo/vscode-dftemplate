@@ -163,3 +163,14 @@ export function* findAllSymbolDefinitions(document: TextDocument): Iterable<{ li
         yield variable;
     }
 }
+
+/**
+ * Convert a symbol placeholder to its symbol type.
+ * @param placeholder A placeholder for a symbol in a snippet.
+ * @example 
+ * `\${_clock_}` -> `Clock`
+ */
+export function symbolPlaceholderToType(placeholder: string) {
+    placeholder = placeholder.replace('${_', '').replace('_}', '');
+    return placeholder.substring(0, 1).toUpperCase().concat(placeholder.substring(1));
+}
