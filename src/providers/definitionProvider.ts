@@ -18,7 +18,7 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
             const word = parser.getWord(document, position);
             if (word) {
 
-                if (parser.isQuestReference(document.lineAt(position.line).text)) {
+                if (parser.isQuestReference(document.lineAt(position.line).text, word)) {
 
                     // Quest
                     return Quest.getAll(token).then(quests => {

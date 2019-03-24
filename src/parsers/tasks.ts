@@ -67,15 +67,6 @@ export function parseTaskDefinition(text: string): TaskDefinition | undefined {
 }
 
 /**
- * Finds the definition of a task from it symbol.
- * @param document A quest document.
- * @param symbol The symbol of a task.
- */
-export function findTaskDefinition(document: TextDocument, symbol: string): TextLine | undefined {
-    return parser.findLine(document, makeTaskRegex(symbol));
-}
-
-/**
  * Finds the definition of all tasks in a quest.
  * @param document A quest document.
  */
@@ -94,9 +85,4 @@ export function* findAllVariables(document: TextDocument): Iterable<{ line: Text
     if (globalMatch) {
         yield* parser.matchAllLines(document, globalMatch, 2);
     }
-}
-
-function makeTaskRegex(symbol: string) {
-    return new RegExp('^\\s*(' + symbol + '\\s+task:|' + 'until\\s*' + symbol + '\\s*performed|' +
-        '(variable|' + globalVarsAlternation + ')\\s+' + symbol + ')');
 }

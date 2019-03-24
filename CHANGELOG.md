@@ -15,6 +15,7 @@
     - RenameProvider
     - CodeLensProvider
     - CompletionItemProvider
+    - HoverProvider
 - Improvements to CodeActionProvider.
 
 ### Fixed
