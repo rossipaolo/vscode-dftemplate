@@ -8,11 +8,11 @@ import * as vscode from 'vscode';
 import * as parser from '../parsers/parser';
 
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
+import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { QuestResourceCategory } from '../language/static/common';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
@@ -73,19 +73,19 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                         TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix);
                         break;
                     case ParameterTypes.clockSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Clock);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Clock);
                         break;
                     case ParameterTypes.foeSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Foe);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Foe);
                         break;
                     case ParameterTypes.itemSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Item);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Item);
                         break;
                     case ParameterTypes.personSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Person);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Person);
                         break;
                     case ParameterTypes.placeSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, parser.Types.Place);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Place);
                         break;
                     case ParameterTypes.task:
                         for (const definitionQuery of TemplateCompletionItemProvider.taskQueries(document)) {
