@@ -5,7 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
+import { TEMPLATE_LANGUAGE } from '../extension';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
@@ -142,7 +143,9 @@ export class Quest {
      * @param token An optional cancellation token.
      */
     public static async getAll(token?: vscode.CancellationToken): Promise<Quest[]> {
-        const documents = await parser.getAllDocuments(token);
-        return documents.map(document => Quest.get(document));
+        const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
+        const documents = await Promise.all(uris.map(uri => vscode.workspace.openTextDocument(uri)));
+        const quests = documents.filter(document => document.languageId === TEMPLATE_LANGUAGE);
+        return quests.map(document => Quest.get(document));
     }
 }

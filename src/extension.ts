@@ -24,7 +24,7 @@ import { TemplateDocumentRangeFormattingEditProvider } from './providers/documen
 import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { Tables } from './language/static/tables';
-import { setGlobalVariables } from './parsers/tasks';
+import { tasks } from './parser';
 import { Quest } from './language/quest';
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
@@ -65,7 +65,7 @@ export function activate(context: ExtensionContext) {
         Modules.getInstance().load(context),
         Tables.getInstance().load()
     ]).then(() => {
-        setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
+        tasks.setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
         if (getOptions()['diagnostics']['enabled']) {
             context.subscriptions.push(makeDiagnosticCollection(context));
         }

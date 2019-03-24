@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { Language } from './static/language';
 import { QuestBlock, Action } from './common';
 

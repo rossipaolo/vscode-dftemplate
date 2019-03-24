@@ -4,7 +4,7 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 
 import { RenameProvider, TextDocument, Position, WorkspaceEdit, Range, CancellationToken } from 'vscode';
 import { Quest } from '../language/quest';
@@ -31,8 +31,8 @@ export class TemplateRenameProvider implements RenameProvider {
 
                     const symbolOrTask = quest.qbn.getSymbol(word) || quest.qbn.getTask(word);
                     if (symbolOrTask) {          
-                        const name = parser.getSymbolName(word);
-                        newName = parser.getSymbolName(newName);
+                        const name = parser.symbols.getSymbolName(word);
+                        newName = parser.symbols.getSymbolName(newName);
 
                         function subRange(range: Range, text: string, subText: string): Range {
                             const offset = text.indexOf(subText);
