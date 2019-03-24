@@ -5,8 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
-
+import { SymbolType } from '../language/static/common';
 import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Errors } from './common';
@@ -97,15 +96,15 @@ function analyseParameter(context: Quest, parameter: Parameter, range: () => vsc
             }
             break;
         case ParameterTypes.itemSymbol:
-            return checkType(context, parameter.value, parser.Types.Item, range);
+            return checkType(context, parameter.value, SymbolType.Item, range);
         case ParameterTypes.personSymbol:
-            return checkType(context, parameter.value, parser.Types.Person, range);
+            return checkType(context, parameter.value, SymbolType.Person, range);
         case ParameterTypes.placeSymbol:
-            return checkType(context, parameter.value, parser.Types.Place, range);
+            return checkType(context, parameter.value, SymbolType.Place, range);
         case ParameterTypes.clockSymbol:
-            return checkType(context, parameter.value, parser.Types.Clock, range);
+            return checkType(context, parameter.value, SymbolType.Clock, range);
         case ParameterTypes.foeSymbol:
-            return checkType(context, parameter.value, parser.Types.Foe, range);
+            return checkType(context, parameter.value, SymbolType.Foe, range);
         case ParameterTypes.task:
             if (!context.qbn.tasks.has(parameter.value)) {
                 return Errors.undefinedTask(range(), parameter.value);

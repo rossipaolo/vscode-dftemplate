@@ -161,7 +161,7 @@ export class TemplateHoverProvider implements HoverProvider {
      * Get the summary and a description for symbol according to prefix and type.
      */
     private static getSymbolDescription(document: TextDocument, name: string, symbol: parser.Symbol): string {
-        const variation = parser.getSupportedSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
+        const variation = Language.getInstance().getSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
 
         const summary = parser.makeSummary(document, symbol.location.range.start.line);
         const meaning = variation ? variation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';

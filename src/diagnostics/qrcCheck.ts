@@ -7,10 +7,10 @@
 import * as parser from '../parsers/parser';
 import { Diagnostic, } from "vscode";
 import { Errors, Warnings, Hints, wordRange, findParameter } from './common';
+import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
-import { Language } from '../language/static/language';
 
 /**
  * Analyses the QRC section of a quest.
@@ -69,7 +69,7 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
                         symbolDefinition = symbolDefinition[0];
                     }
                     
-                    yield !parser.isSupportedSymbolVariation(symbol, symbolDefinition.type) ?
+                    yield !Language.getInstance().isSymbolVariationDefined(symbol, symbolDefinition.type) ?
                         Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolDefinition.type) :
                         Hints.SymbolVariation(wordRange(line, symbol));
                 }

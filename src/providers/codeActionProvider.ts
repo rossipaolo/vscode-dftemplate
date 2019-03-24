@@ -171,7 +171,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         const currentSymbol = document.getText(diagnostic.range);
                         const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
                         if (symbolDefinition) {
-                            parser.getSupportedSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
+                            Language.getInstance().getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
                                 const title = `Change ${currentSymbol} to ${newSymbol.word} (${newSymbol.description})`;
                                 const action = new vscode.CodeAction(title);
                                 action.kind = diagnostic.severity === DiagnosticSeverity.Hint ? CodeActionKind.Empty : CodeActionKind.QuickFix;

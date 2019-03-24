@@ -19,6 +19,17 @@ export enum QuestResourceCategory {
 }
 
 /**
+ * Types of symbol resources.
+ */
+export const enum SymbolType {
+    Item = 'Item',
+    Person = 'Person',
+    Place = 'Place',
+    Clock = 'Clock',
+    Foe = 'Foe'
+}
+
+/**
  * Specifications of a quest resource.
  */
 export interface QuestResourceDetails {
@@ -116,6 +127,22 @@ export interface SymbolInfo {
     * Parameters for the signature of this symbol.
     */
     parameters: ParameterInfo[];
+}
+
+/**
+ * A variation of a symbol, used inside QRC message blocks.
+ */
+export interface SymbolVariation {
+
+    /**
+     * The symbol with a prefix and a suffix.
+     */
+    readonly word: string;
+
+    /**
+     * A description for the meaning of this variation.
+     */
+    readonly description: string;
 }
 
 /**

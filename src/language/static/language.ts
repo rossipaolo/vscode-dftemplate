@@ -9,9 +9,10 @@ import * as path from 'path';
 
 import { ExtensionContext } from 'vscode';
 import { iterateAll, where, select, selectMany } from '../../extension';
+import { getSymbolName } from '../../parsers/parser';
+import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo, SymbolVariation } from './common';
 import { StaticData } from "./staticData";
 import { Tables } from './tables';
-import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo } from './common';
 
 interface LanguageTable {
     symbols: Map<string, string>;
@@ -251,11 +252,34 @@ export class Language extends StaticData {
     /**
      * Gets all supported variation schemas of a symbol type.
      * @param type A symbol type.
+     * @param symbol The name of the symbol.
+     * @param formatName Provide custom formatting for the description.
      */
-    public getSymbolVariations(type: string) {
+    public getSymbolVariations(symbol: string, type: string, formatName?: (name: string) => string): SymbolVariation[] {
         if (this.table && this.table.symbolsVariations) {
-            return this.table.symbolsVariations.get(type);
+            let variations = this.table.symbolsVariations.get(type);
+            if (variations) {
+                if (symbol) {
+                    const name = getSymbolName(symbol);
+                    variations = variations.map(x => {
+                        return { word: x.word.replace('$', name), description: x.description.replace('$', formatName ? formatName(name) : name) };
+                    });
+                }
+
+                return variations;
+            }
         }
+
+        return [];
+    }
+
+    /**
+    * Checks if the symbol variation has a defined value for its type.
+    * @param symbol An occurence of a symbol.
+    * @param type The type of the symbol.
+    */
+    public isSymbolVariationDefined(symbol: string, type: string): boolean {
+        return !!Language.getInstance().getSymbolVariations(symbol, type).find(x => x.word === symbol);
     }
 
     /**

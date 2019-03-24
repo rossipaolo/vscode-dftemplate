@@ -10,6 +10,7 @@ import { Diagnostic } from "vscode";
 import { Errors, Warnings, Hints, findParameter } from './common';
 import { analyseSignature } from './signatureCheck';
 import { TaskType } from '../parsers/parser';
+import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 import { Symbol, Task } from '../language/common';
@@ -62,7 +63,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         }
 
         // Clock
-        if (symbolContext.type === parser.Types.Clock) {
+        if (symbolContext.type === SymbolType.Clock) {
             if (!first(context.qbn.iterateActions(), x => x.line.text.indexOf('start timer ' + symbolName) !== -1)) {
                 yield Warnings.unstartedClock(symbolContext.range, symbolName);
             }
