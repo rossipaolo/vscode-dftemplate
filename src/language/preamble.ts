@@ -42,4 +42,15 @@ export class Preamble extends QuestBlock {
 
         this.failedParse.push(line);
     }
+
+    /**
+     * Gets the value of the `DisplayName` directive.
+     */
+    public getDisplayName(): string | undefined {
+        for (const directive of this.directives.filter(x => x.signature.length > 1)) {
+            if (directive.signature[0].value === 'DisplayName:') {
+                return directive.signature.slice(1).map(x => x.value).join(' ');
+            }
+        }
+    }
 }

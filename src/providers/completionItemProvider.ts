@@ -5,29 +5,17 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
-
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
 import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
+import { Quest } from '../language/quest';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
     private static readonly signatureInfoCommand = { command: 'editor.action.triggerParameterHints', title: '' };
-
-    private static taskQueries = (document: TextDocument) => [
-        {
-            kind: vscode.CompletionItemKind.Variable,
-            result: parser.findAllVariables(document)
-        },
-        {
-            kind: vscode.CompletionItemKind.Method,
-            result: parser.findAllTasks(document)
-        }
-    ]
 
     public provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken): Thenable<CompletionItem[]> {
         return new Promise(function (resolve, reject) {
@@ -49,6 +37,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
 
             const items: CompletionItem[] = [];
+            const quest = Quest.get(document);
 
             const param = TemplateCompletionItemProvider.findParamSignature(line, prefix, text);
             if (param) {
@@ -56,44 +45,43 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 // Inside an invocation: suggests values according to parameter type
                 switch (param) {
                     case ParameterTypes.questName:
-                        return TemplateCompletionItemProvider.findQuestsCompletionItems(token).then((items) => {
+                        return TemplateCompletionItemProvider.findQuestsCompletionItems(prefix, token).then((items) => {
                             return resolve(items);
                         }), () => reject();
                     case ParameterTypes.message:
                     case ParameterTypes.messageName:
-                        for (const message of parser.findAllMessages(document)) {
-                            if (message.symbol.startsWith(prefix)) {
-                                const item = new CompletionItem(message.symbol, vscode.CompletionItemKind.Struct);
-                                item.detail = message.line.text.trim();
+                        for (const message of quest.qrc.messages) {
+                            if (message.alias && message.alias.startsWith(prefix)) {
+                                const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
+                                item.detail = document.lineAt(message.range.start.line).text.trim();
                                 items.push(item);
                             }
                         }
                         break;
                     case ParameterTypes.symbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, quest, prefix);
                         break;
                     case ParameterTypes.clockSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Clock);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, quest, prefix, SymbolType.Clock);
                         break;
                     case ParameterTypes.foeSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Foe);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, quest, prefix, SymbolType.Foe);
                         break;
                     case ParameterTypes.itemSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Item);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, quest, prefix, SymbolType.Item);
                         break;
                     case ParameterTypes.personSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Person);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, quest, prefix, SymbolType.Person);
                         break;
                     case ParameterTypes.placeSymbol:
-                        TemplateCompletionItemProvider.doSymbolSuggestions(items, document, prefix, SymbolType.Place);
+                        TemplateCompletionItemProvider.doSymbolSuggestions(items, quest, prefix, SymbolType.Place);
                         break;
                     case ParameterTypes.task:
-                        for (const definitionQuery of TemplateCompletionItemProvider.taskQueries(document)) {
-                            for (const result of definitionQuery.result) {
-                                const item = new vscode.CompletionItem(result.symbol, definitionQuery.kind);
-                                item.detail = result.line.text;
-                                items.push(item);
-                            }
+                        for (const task of quest.qbn.iterateTasks()) {
+                            const kind = task.isVariable ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Method;
+                            const item = new vscode.CompletionItem(task.definition.symbol, kind);
+                            item.detail = document.lineAt(task.range.start.line).text.trim();
+                            items.push(item);
                         }
                         break;
                     case ParameterTypes.effectKey:
@@ -114,14 +102,14 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                     TemplateCompletionItemProvider.findSignatures(prefix, items);
 
                     if ('message'.startsWith(prefix.toLowerCase())) {
-                        items.push(TemplateCompletionItemProvider.messageDefinition(document, position));
+                        items.push(TemplateCompletionItemProvider.messageDefinition(quest, position));
                     }
                 }
 
                 // Find all symbols defined in the quest
-                for (const result of parser.findAllSymbolDefinitions(document)) {
-                    const item = new vscode.CompletionItem(result.symbol, vscode.CompletionItemKind.Field);
-                    item.detail = result.line.text;
+                for (const symbol of quest.qbn.iterateSymbols()) {
+                    const item = new vscode.CompletionItem(symbol.name, vscode.CompletionItemKind.Field);
+                    item.detail = symbol.line.text;
                     items.push(item);
                 }
             }
@@ -130,14 +118,18 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         });
     }
 
-    private static findQuestsCompletionItems(token: CancellationToken): Thenable<CompletionItem[]> {
-        return parser.findAllQuests(token).then((quests) => {
-            return quests.map((quest): CompletionItem => {
-                const item = new CompletionItem(quest.pattern, vscode.CompletionItemKind.Class);
-                item.detail = quest.displayName;
-                return item;
-            });
-        });
+    private static async findQuestsCompletionItems(prefix: string, token: CancellationToken): Promise<CompletionItem[]> {
+        prefix = prefix.toUpperCase();
+        const quests = await Quest.getAll(token);
+        return quests.reduce((items, quest) => {
+            const name = quest.getName();
+            if (name && name.toUpperCase().startsWith(prefix)) {
+                const item = new CompletionItem(name, vscode.CompletionItemKind.Class);
+                item.detail = quest.preamble.getDisplayName() || name;
+                items.push(item);
+            }
+            return items;
+        }, new Array<CompletionItem>());
     }
 
     private static findSignatures(prefix: string, items: vscode.CompletionItem[]) {
@@ -166,9 +158,9 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
     }
 
-    private static messageDefinition(document: TextDocument, position: Position): CompletionItem {
+    private static messageDefinition(quest: Quest, position: Position): CompletionItem {
         const item = new vscode.CompletionItem('Message: id', TemplateCompletionItemProvider.getCompletionItemKind(QuestResourceCategory.Message));
-        item.insertText = new vscode.SnippetString('Message:  ${1:' + parser.getMessageIdForPosition(document, position.line) + '}');
+        item.insertText = new vscode.SnippetString('Message:  ${1:' + quest.qrc.getAvailableId(position) + '}');
         item.detail = 'Message: id';
         item.documentation = 'An additional message block';
         return item;
@@ -209,12 +201,11 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
     }
 
-    private static doSymbolSuggestions(items: vscode.CompletionItem[], document: TextDocument, prefix: string, type?: string) {
-        for (const symbol of parser.findAllSymbolDefinitions(document)) {
-            const definition = symbol.line.text.trim();
-            if ((!type || definition.startsWith(type)) && symbol.symbol.startsWith(prefix)) {
-                const item = new CompletionItem(symbol.symbol, vscode.CompletionItemKind.Field);
-                item.detail = definition;
+    private static doSymbolSuggestions(items: vscode.CompletionItem[], quest: Quest, prefix: string, type?: string) {
+        for (const symbol of quest.qbn.iterateSymbols()) {
+            if ((!type || symbol.type === type) && symbol.name.startsWith(prefix)) {
+                const item = new CompletionItem(symbol.name, vscode.CompletionItemKind.Field);
+                item.detail = symbol.line.text.trim();
                 items.push(item);
             }
         }

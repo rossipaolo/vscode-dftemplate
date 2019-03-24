@@ -14,6 +14,7 @@
 - Use stored quest instances for the following providers:
     - RenameProvider
     - CodeLensProvider
+    - CompletionItemProvider
 - Improvements to CodeActionProvider.
 
 ### Fixed

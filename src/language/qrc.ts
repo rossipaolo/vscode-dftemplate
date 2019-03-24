@@ -6,7 +6,7 @@
 
 import * as parser from '../parsers/parser';
 import { wordRange } from '../diagnostics/common';
-import { TextLine, TextDocument, Range } from 'vscode';
+import { TextLine, TextDocument, Range, Position } from 'vscode';
 import { MessageBlock } from '../parsers/parser';
 import { QuestBlock, Message, ContextMacro } from './common';
 import { Tables } from './static/tables';
@@ -91,14 +91,26 @@ export class Qrc extends QuestBlock {
             yield* message.textBlock;
         }
     }
-
+    
     /**
-     * Gets the next available message id.
-     * @param current Current message id.
-     * @returns An id which is at least `current` and is not used by other messages.
+     * Finds an available message id which is bigger or equal than the given id
+     * or the id of the message above the given position.
+     * @param minOrPos The minimum id or the position where the message is going to be placed.
      */
-    public getAvailableId(current: number): number {
-        let id = current;
+    public getAvailableId(minOrPos: number | Position): number {
+
+        function getPrecedingId(messages: Message[], position: Position): number {
+            let precedingMessage: Message | undefined;
+            for (const message of messages.filter(x => x.range.start.isBefore(position))) {
+                if (!precedingMessage || message.range.start.isAfter(precedingMessage.range.start)) {
+                    precedingMessage = message;
+                }
+            }
+
+            return precedingMessage ? precedingMessage.id + 1 : 1011;
+        }
+
+        let id = minOrPos instanceof Position ? getPrecedingId(this.messages, minOrPos) : minOrPos;
         while (this.messages.find(x => x.id === id)) {
             id++;
         }
