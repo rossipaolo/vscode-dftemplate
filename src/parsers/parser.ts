@@ -5,8 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-
-import { TextDocument, Position, TextLine, Location } from 'vscode';
+import { TextDocument, Position, TextLine } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 
 export * from './symbols';
@@ -35,16 +34,6 @@ export function getFirstWord(text: string): string | undefined {
     if (match) {
         return match[1];
     }
-}
-
-/**
- * Gets the range of a word inside a line of text.
- * @param line A document line.
- * @param word A word inside `line`.
- */
-export function rangeOf(line: TextLine, word: string) {
-    const index = line.text.indexOf(word);
-    return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
 }
 
 /**
@@ -132,53 +121,6 @@ export function* matchAllLines(document: TextDocument, regex: RegExp, match: num
         const matches = regex.exec(line.text);
         if (matches) { yield { line: line, symbol: matches[match] }; }
     }
-}
-
-/**
- * Iterates all lines in a document which are not empty nor comments.
- */
-export function* getCodeLines(document: TextDocument): Iterable<TextLine> {
-    for (let index = 0; index < document.lineCount; index++) {
-        const line = document.lineAt(index);
-        if (!isEmptyOrComment(line.text)) {
-            yield line;
-        }
-    }
-}
-
-/**
- * Gets all matches with index in a string.
- * @param text A string.
- * @param regex A regular expression with global flag.
- */
-export function* getMatches(text: string, regex: RegExp): Iterable<{ word: string, index: number }> {
-
-    if (regex.flags.indexOf('g') === -1) {
-        console.error('Regex has no global flag: ' + regex.toString());
-        return;
-    }
-
-    let result: RegExpExecArray | null;
-    while ((result = regex.exec(text)) !== null) {
-        yield { word: result[0], index: result.index };
-    }
-}
-
-/**
- * Finds references of a symbol in all files with a regular expression.
- * @param name Name of symbol.
- * @param regex A regular expression that matches the symbol references.
- */
-export function findReferences(name: string, regex: RegExp, token?: vscode.CancellationToken): Thenable<Location[]> {
-    return findLinesInAllQuests(regex, false, token).then(results => {
-        return results.reduce((locations, result) => {
-            const index = result.line.text.indexOf(name);
-            if (index !== -1) {
-                locations.push(new Location(result.document.uri, new vscode.Range(result.line.lineNumber, index, result.line.lineNumber, index + name.length)));
-            }
-            return locations;
-        }, new Array<Location>());
-    });
 }
 
 /**
