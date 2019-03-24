@@ -12,7 +12,7 @@ const questDefinitionPattern = /^\s*Quest:\s+([a-zA-Z0-9_]+)/;
 const questReferencePattern = /^\s*(Quest:|start\s+quest)\s+[a-zA-Z0-9_]+/;
 export const displayNamePattern = /^\s*DisplayName:\s(.*)$/;
 
-interface Quest {
+interface ParsedQuest {
     pattern: string;
     displayName: string;
     location: Location;
@@ -23,22 +23,10 @@ export function isQuestReference(line: string) {
 }
 
 /**
- * Finds the display name of the given quest.
- * @param document A quest document.
- */
-export function findDisplayName(document: TextDocument): string {
-    for (const displayName of parser.matchAllLines(document, displayNamePattern)) {
-        return displayName.symbol;
-    }
-
-    return '';
-}
-
-/**
  * Find quest definition.
  * @param name Name pattern or index of quest.
  */
-export function findQuestDefinition(name: string, token?: vscode.CancellationToken): Promise<Quest> {
+export function findQuestDefinition(name: string, token?: vscode.CancellationToken): Promise<ParsedQuest> {
     const questName = !isNaN(Number(name)) ? questIndexToName(name) : name;
     return new Promise((resolve, reject) => {
         return parser.findAllQuests(token).then((quests) => {
@@ -51,7 +39,7 @@ export function findQuestDefinition(name: string, token?: vscode.CancellationTok
 /**
  * Finds all quests in the workspace.
  */
-export function findAllQuests(token?: vscode.CancellationToken): Thenable<Quest[]> {
+export function findAllQuests(token?: vscode.CancellationToken): Thenable<ParsedQuest[]> {
     return parser.findLinesInAllQuests(questDefinitionPattern, true, token).then(results => {
         return results.reduce((quests, result) => {
             const match = questDefinitionPattern.exec(result.line.text);
@@ -63,7 +51,7 @@ export function findAllQuests(token?: vscode.CancellationToken): Thenable<Quest[
                 });
             }
             return quests;
-        }, new Array<Quest>());
+        }, new Array<ParsedQuest>());
     }, () => []);
 }
 
@@ -75,11 +63,13 @@ export function questIndexToName(index: string): string {
 }
 
 /**
- * Gets the index of a S000nnnn family quest from its name.
+ * Finds the display name of the given quest.
+ * @param document A quest document.
  */
-export function questNameToIndex(name: string): string | undefined {
-    const match = name.match(/S0+([^0]+[0-9]*)/);
-    if (match) {
-        return match[1];
+function findDisplayName(document: TextDocument): string {
+    for (const displayName of parser.matchAllLines(document, displayNamePattern)) {
+        return displayName.symbol;
     }
+
+    return '';
 }
