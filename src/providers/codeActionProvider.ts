@@ -128,9 +128,15 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                                 .filter(x => x.type === symbolPlaceholderToType(symbolParameter.type))
                                 .map(x => x.name);
                             action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
-                            if (action) {
-                                actions.push(action);
-                            }
+                        } else if (quest.qrc.range && quest.qrc.range.contains(diagnostic.range)) {
+                            const symbol = document.getText(diagnostic.range);
+                            const name = parser.getSymbolName(symbol);
+                            const symbolNames = Array.from(quest.qbn.iterateSymbols())
+                                .map(x => symbol.replace(name, parser.getSymbolName(x.name)));
+                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
+                        }
+                        if (action) {
+                            actions.push(action);
                         }
                         break;
                     case DiagnosticCode.UndefinedTask:
