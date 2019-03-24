@@ -19,7 +19,7 @@ export class TemplateRenameProvider implements RenameProvider {
             if (word) {
                 const edit = new WorkspaceEdit();             
                 
-                if (parser.isQuestReference(document.lineAt(position.line).text)) {
+                if (parser.isQuestReference(document.lineAt(position.line).text, word)) {
                     return TemplateReferenceProvider.questReferences(word, true, token).then(locations => {
                         for (const location of locations) {
                             edit.replace(location.uri, location.range, newName);

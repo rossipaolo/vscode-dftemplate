@@ -4,81 +4,83 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
-
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
+import { getWord, makeSummary, isQuestReference, questIndexToName } from '../parsers/parser';
+import { QuestResourceCategory } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
-import { QuestResourceCategory } from '../language/static/common';
+import { Symbol } from '../language/common';
+import { Quest } from '../language/quest';
 
-class TemplateDocumentationParameter {
-    public name = '';
-    public description = '';
+interface TemplateDocumentationParameter {
+    name: string;
+    description: string;
 }
 
-class TemplateDocumentationItem {
-    public category = '';
-    public signature = '';
-    public summary = '';
-    public parameters: TemplateDocumentationParameter[] = [];
+interface TemplateDocumentationItem {
+    category: string;
+    signature: string;
+    summary?: string;
+    parameters?: TemplateDocumentationParameter[];
 }
 
 export class TemplateHoverProvider implements HoverProvider {
 
     public provideHover(document: TextDocument, position: Position, token: CancellationToken): Thenable<Hover> {
-        let instance:TemplateHoverProvider = this;
-        return new Promise(function (resolve, reject) {
-            let word = parser.getWord(document, position);
+        return new Promise(resolve => {
+            const word = getWord(document, position);
             if (word) {
-                // If is a symbol, show description according to prefix.
-                if (parser.isSymbol(word)) {
-                    let definition = parser.findSymbolDefinition(document, word);
-                    if (definition) {
-                        let item = new TemplateDocumentationItem();
-                        item.category = 'symbol';
-                        item.signature = document.lineAt(definition.location.range.start.line).text;
-                        item.summary = TemplateHoverProvider.getSymbolDescription(document, word, definition);
-                        return resolve(TemplateHoverProvider.makeHover(item));
-                    }
 
-                    const taskLine = parser.findTaskDefinition(document, word);
-                    if (taskLine) {
-                        const item = new TemplateDocumentationItem();
-                        item.category = 'task';
-                        item.signature = taskLine.text.trim();
-                        item.summary = parser.makeSummary(document, taskLine.lineNumber);
-                        return resolve(TemplateHoverProvider.makeHover(item));
-                    }
+                const quest = Quest.get(document);
+
+                const symbol = quest.qbn.getSymbol(word);
+                if (symbol) {
+                    const item = {
+                        category: 'symbol',
+                        signature: document.lineAt(symbol.range.start.line).text,
+                        summary: TemplateHoverProvider.getSymbolDescription(document, word, symbol)
+                    };
+                    return resolve(TemplateHoverProvider.makeHover(item));
                 }
 
-                // Seek message from number
-                if (!isNaN(Number(word))) {           
-                    let messageDefinition = parser.findMessageByIndex(document, word);
-                    if (messageDefinition) {
-                        let line = messageDefinition.line;
-                        if (messageDefinition.isDefault) {
-                            return resolve(instance.provideHover(document, new Position(line.lineNumber, 0), token));
+                const task = quest.qbn.getTask(word);
+                if (task) {
+                    const item = {
+                        category: 'task',
+                        signature: document.lineAt(task.range.start).text.trim(),
+                        summary: makeSummary(document, task.range.start.line)
+                    };
+                    return resolve(TemplateHoverProvider.makeHover(item));
+                }
+
+                const message = quest.qrc.getMessage(word);
+                if (message) {
+
+                    const item: TemplateDocumentationItem = {
+                        category: 'message',
+                        signature: document.lineAt(message.range.start).text.trim()
+                    };
+
+                    if (message.alias) {
+                        const details = Language.getInstance().findMessage(message.alias);
+                        if (details) {
+                            item.summary = details.summary;
                         }
-                        else {
-                            let item = new TemplateDocumentationItem();
-                            item.category = 'message';
-                            item.signature = line.text;
-                            const summary = parser.makeSummary(document, line.lineNumber);
-                            if (summary) {
-                                item.summary = summary;
-                            }
-                            return resolve(TemplateHoverProvider.makeHover(item));
-                        }
+                    } else {
+                        item.summary = makeSummary(document, message.range.start.line);
                     }
+
+                    return resolve(TemplateHoverProvider.makeHover(item));
                 }
 
                 // Seek word in documentation files
                 const definition = Language.getInstance().findDefinition(word, document.lineAt(position.line).text);
                 if (definition) {
-                    const item = new TemplateDocumentationItem();
-                    item.category = 'definition';
-                    item.signature = definition.signature;
+                    const item: TemplateDocumentationItem = {
+                        category: 'definition',
+                        signature: definition.signature
+                    };
                     const overloads = Language.getInstance().numberOfOverloads(word) - 1;
                     if (overloads > 0) {
                         item.signature += ' (+' + overloads + ' overloads)';
@@ -89,29 +91,33 @@ export class TemplateHoverProvider implements HoverProvider {
                 }
                 const languageItem = Language.getInstance().seekByName(word);
                 if (languageItem) {
-                    const item = new TemplateDocumentationItem();
-                    item.category = QuestResourceCategory[languageItem.category].toLowerCase();
-                    item.signature = Language.prettySignature(languageItem.details.signature);
-                    item.summary = languageItem.details.summary;
+                    const item = {
+                        category: QuestResourceCategory[languageItem.category].toLowerCase(),
+                        signature: Language.prettySignature(languageItem.details.signature),
+                        summary: languageItem.details.summary,
+                    };
                     return resolve(TemplateHoverProvider.makeHover(item));
                 }
 
                 // Seek quest
-                if (word !== 'start' && parser.isQuestReference(document.lineAt(position.line).text)) {
-                    return parser.findQuestDefinition(word, token).then((quest) => {
-                        let item = new TemplateDocumentationItem();
-                        item.category = 'quest';
-                        item.signature = 'Quest: ' + quest.pattern;
-                        item.summary = quest.displayName;
-                        return resolve(TemplateHoverProvider.makeHover(item));
-                    }, () => reject());
+                if (isQuestReference(document.lineAt(position.line).text, word)) {
+                    const questName = !isNaN(Number(word)) ? questIndexToName(word) : word;
+                    return Quest.getAll(token).then(quests => {
+                        const quest = quests.find(x => x.getName() === questName);
+                        if (quest) {
+                            const item = {
+                                category: 'quest',
+                                signature: 'Quest: ' + quest.getName(),
+                                summary: quest.preamble.getDisplayName() || quest.getName()
+                            };
+                            return resolve(TemplateHoverProvider.makeHover(item));
+                        }
+                    });
                 }
 
                 // Actions
                 const result = Modules.getInstance().findAction(document.lineAt(position.line).text, word);
                 if (result && Modules.isActionName(result, word)) {
-                    const item = new TemplateDocumentationItem();
-                    item.category = QuestResourceCategory[result.category].toLowerCase();
                     let signature = result.moduleName + ' -> ' + result.getSignature();
                     if (result.details.overloads.length > 1) {
                         signature += '\n\nother overload(s):';
@@ -121,13 +127,16 @@ export class TemplateHoverProvider implements HoverProvider {
                             }
                         }
                     }
-                    item.signature = Modules.prettySignature(signature);
-                    item.summary = result.details.summary;
+                    const item = {
+                        category: QuestResourceCategory[result.category].toLowerCase(),
+                        signature: Modules.prettySignature(signature),
+                        summary: result.details.summary
+                    };
                     return resolve(TemplateHoverProvider.makeHover(item));
                 }
             }
 
-            return reject();
+            return resolve();
         });
     }
 
@@ -156,14 +165,14 @@ export class TemplateHoverProvider implements HoverProvider {
 
         return new Hover(hovertext);
     }
-    
+
     /**
      * Get the summary and a description for symbol according to prefix and type.
      */
-    private static getSymbolDescription(document: TextDocument, name: string, symbol: parser.Symbol): string {
+    private static getSymbolDescription(document: TextDocument, name: string, symbol: Symbol): string {
         const variation = Language.getInstance().getSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
 
-        const summary = parser.makeSummary(document, symbol.location.range.start.line);
+        const summary = makeSummary(document, symbol.range.start.line);
         const meaning = variation ? variation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
 
         return summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;

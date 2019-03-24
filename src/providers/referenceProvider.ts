@@ -53,7 +53,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 }
 
                 // Quest
-                if (parser.isQuestReference(line.text)) {
+                if (parser.isQuestReference(line.text, word)) {
                     return TemplateReferenceProvider.questReferences(word, options.includeDeclaration, token).then(
                         locations => resolve(locations));
                 }

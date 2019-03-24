@@ -25,25 +25,6 @@ export function getStaticMessage(text: string) {
     }
 }
 
-/**
- * Find the definition of a message from its index.
- * @param document A quest document.
- * @param id The numeric index of a message.
- */
-export function findMessageByIndex(document: TextDocument, id: string): { line: TextLine, isDefault: boolean } | undefined {
-    // Default message
-    let line = parser.findLine(document, new RegExp('\\[\\s*' + id + '\\s*\\]', 'g'));
-    if (line) {
-        return { line: line, isDefault: true };
-    }
-
-    // Additional message
-    line = parser.findLine(document, new RegExp('^\\bMessage:\\s+' + id + '\\b', 'g'));
-    if (line) {
-        return { line: line, isDefault: false };
-    }
-}
-
 export function* findAllMessages(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
     for (const match of parser.matchAllLines(document, /\s*([a-zA-Z]+):\s*\[\s*[0-9]+\s*\]/)) {
         yield match;

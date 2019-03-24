@@ -4,23 +4,9 @@
 
 'use strict';
 
-import * as parser from './parser';
-import { TextDocument, Location, Range, TextLine, Position } from "vscode";
-
-export interface Symbol {
-    type: string;
-    location: Location;
-}
+import { TextLine } from "vscode";
 
 const definitionMatch = /^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/;
-
-/**
-* Checks if a word is a symbol with any accepted prefix.
-* @param word A word of text.
-*/
-export function isSymbol(word: string): boolean {
-    return /(_{1,3}|={1,2})[a-zA-Z0-9_.-]+_/.test(word);
-}
 
 /**
  * Finds all symbols with any accepted prefix.
@@ -63,16 +49,6 @@ export function makeSymbolRegex(symbol: string): RegExp {
 }
 
 /**
- * Check if this line is a symbol definition.
- * @param text A quest line.
- * @param base Base symbol (`_symbol_`).
- */
-export function isSymbolDefinition(text: string, base: string): boolean {
-    const result = text.match(definitionMatch);
-    return result !== null && result[1] === base;
-}
-
-/**
  * Gets the name of the symbol defined in the given line.
  * @param line A quest line.
  */
@@ -84,7 +60,7 @@ export function getSymbolFromLine(line: TextLine): string | undefined {
 }
 
 /**
- * Checks if symbol is is named as `_symbol_`.
+ * Checks if symbol is named as `_symbol_`.
  * @param symbol A symbol name.
  */
 export function symbolFollowsNamingConventions(symbol: string): boolean {
@@ -99,35 +75,6 @@ export function forceSymbolNamingConventions(symbol: string): string {
     if (!symbol.startsWith('_')) { symbol = '_' + symbol; }
     if (!symbol.endsWith('_')) { symbol += '_'; }
     return symbol;
-}
-
-/**
- * Find the definition of a symbol.
- * @param document A quest document.
- * @param symbol A symbol occurence.
- */
-export function findSymbolDefinition(document: TextDocument, symbol: string): Symbol | undefined {
-    symbol = getBaseSymbol(symbol);   
-    const line = parser.firstLine(document, l => isSymbolDefinition(l.text, symbol));
-    if (line) {
-        const index = line.text.indexOf(symbol);
-        if (index !== -1) {
-            return {
-                location: new Location(document.uri, new Range(new Position(line.lineNumber, index), new Position(line.lineNumber, index + symbol.length))),
-                type: line.text.substring(0, index).trim()
-            };
-        }
-    }
-}
-
-/**
- * Find the definition of all symbols in a quest.
- * @param document A quest document.
- */
-export function* findAllSymbolDefinitions(document: TextDocument): Iterable<{ line: TextLine, symbol: string }> {
-    for (const variable of parser.matchAllLines(document, definitionMatch)) {
-        yield variable;
-    }
 }
 
 /**
