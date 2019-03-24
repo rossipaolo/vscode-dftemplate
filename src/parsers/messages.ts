@@ -54,36 +54,6 @@ export function* findAllMessages(document: TextDocument): Iterable<{ line: TextL
 }
 
 /**
- * Finds the first index which is not already used by a message.
- * @param document A quest document.
- * @param id The first index to start seeking.
- */
-export function nextAvailableMessageID(document: TextDocument, id: string): string {
-    let messageID = Number(id);
-    while (parser.findMessageByIndex(document, String(messageID))) {
-        messageID++;
-    }
-    return String(messageID);
-}
-
-/**
- * Finds a message id which is not used and is bigger than the id of the previous message.
- * @param document A quest document.
- * @param lineNumber The line where the message ought to be positioned.
- */
-export function getMessageIdForPosition(document: TextDocument, lineNumber: number): string {
-    for (let index = lineNumber; index > 0; index--) {
-        const line = document.lineAt(index);
-        const match = line.text.match(/\s*Message:\s+([0-9]+)/);
-        if (match) {
-            return nextAvailableMessageID(document, String(Number(match[1]) + 1));
-        }
-    }
-
-    return nextAvailableMessageID(document, '1011');
-}
-
-/**
  * Detects the range of a message block as lines are being provided. 
  * Also allows to checks multiple lines at once.
  */
