@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit } from 'vscode';
 import { first } from '../extension';
 import { Tables } from '../language/static/tables';
@@ -16,7 +16,7 @@ import { ParameterTypes } from '../language/static/parameterTypes';
 import { QuestResource } from '../language/common';
 import { Quest } from '../language/quest';
 import { DiagnosticCode, wordRange } from '../diagnostics/common';
-import { symbolPlaceholderToType } from '../parsers/parser';
+import { symbols } from '../parser';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
@@ -125,14 +125,14 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         const symbolParameter = quest.qbn.getParameter(diagnostic.range);
                         if (symbolParameter) {
                             const symbolNames = Array.from(quest.qbn.iterateSymbols())
-                                .filter(x => x.type === symbolPlaceholderToType(symbolParameter.type))
+                                .filter(x => x.type === symbols.symbolPlaceholderToType(symbolParameter.type))
                                 .map(x => x.name);
                             action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
                         } else if (quest.qrc.range && quest.qrc.range.contains(diagnostic.range)) {
                             const symbol = document.getText(diagnostic.range);
-                            const name = parser.getSymbolName(symbol);
+                            const name = parser.symbols.getSymbolName(symbol);
                             const symbolNames = Array.from(quest.qbn.iterateSymbols())
-                                .map(x => symbol.replace(name, parser.getSymbolName(x.name)));
+                                .map(x => symbol.replace(name, parser.symbols.getSymbolName(x.name)));
                             action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
                         }
                         if (action) {
@@ -195,7 +195,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         break;
                     case DiagnosticCode.SymbolNamingConvention:
                         const symbol = document.getText(diagnostic.range);
-                        const newName = parser.forceSymbolNamingConventions(symbol);
+                        const newName = parser.symbols.forceSymbolNamingConventions(symbol);
                         action = new CodeAction(`Rename ${symbol} to ${newName}`, CodeActionKind.QuickFix);
                         action.edit = new WorkspaceEdit();
                         action.edit.replace(document.uri, diagnostic.range, newName);

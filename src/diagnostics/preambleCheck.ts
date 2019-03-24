@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { Errors } from './common';
 import { analyseSignature } from './signatureCheck';
 import { Quest } from '../language/quest';

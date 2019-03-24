@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { analysePreamble } from './preambleCheck';

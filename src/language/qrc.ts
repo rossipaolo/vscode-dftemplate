@@ -4,10 +4,9 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { wordRange } from '../diagnostics/common';
 import { TextLine, TextDocument, Range, Position } from 'vscode';
-import { MessageBlock } from '../parsers/parser';
 import { QuestBlock, Message, ContextMacro } from './common';
 import { Tables } from './static/tables';
 
@@ -26,7 +25,7 @@ export class Qrc extends QuestBlock {
      */
     public readonly macros: ContextMacro[] = [];
 
-    private messageBlock: parser.MessageBlock | null = null;
+    private messageBlock: parser.messages.MessageBlock | null = null;
 
     /**
     * Parses a line in a QRC block and builds its diagnostic context.
@@ -42,18 +41,18 @@ export class Qrc extends QuestBlock {
         }
 
         // Static message definition 
-        const staticMessage = parser.getStaticMessage(line.text);
+        const staticMessage = parser.messages.parseStaticMessage(line.text);
         if (staticMessage) {
             this.registerMessage(staticMessage.id, line, staticMessage.name);
-            this.messageBlock = new MessageBlock(document, line.lineNumber);
+            this.messageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
             return;
         }
 
         // Additional message definition
-        const messageID = parser.getMessageIDFromLine(line);
+        const messageID = parser.messages.parseMessage(line.text);
         if (messageID) {
-            this.registerMessage(Number(messageID), line);
-            this.messageBlock = new MessageBlock(document, line.lineNumber);
+            this.registerMessage(messageID, line);
+            this.messageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
             return;
         }
 

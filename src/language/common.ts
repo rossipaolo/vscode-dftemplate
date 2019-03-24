@@ -5,7 +5,7 @@
 'use strict';
 
 import { Range, TextLine } from "vscode";
-import { TaskDefinition, TaskType } from "../parsers/parser";
+import { tasks } from "../parser";
 import { ParameterMatch, QuestResourceCategory } from "./static/common";
 import { Modules } from "./static/modules";
 import { wordRange } from "../diagnostics/common";
@@ -80,8 +80,8 @@ export class Task implements QuestResource {
     public readonly actions: Action[] = [];
 
     public get isVariable(): boolean {
-        return this.definition.type === TaskType.Variable
-            || this.definition.type === TaskType.GlobalVarLink;
+        return this.definition.type === tasks.TaskType.Variable
+            || this.definition.type === tasks.TaskType.GlobalVarLink;
     }
 
     public get blockRange(): Range {
@@ -92,7 +92,7 @@ export class Task implements QuestResource {
 
     public constructor(
         public range: Range,
-        public definition: TaskDefinition) {
+        public definition: tasks.TaskDefinition) {
     }
 
     /**

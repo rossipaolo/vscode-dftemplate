@@ -9,7 +9,7 @@ import * as path from 'path';
 
 import { ExtensionContext } from 'vscode';
 import { iterateAll, where, select, selectMany } from '../../extension';
-import { getSymbolName } from '../../parsers/parser';
+import { symbols } from '../../parser';
 import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo, SymbolVariation } from './common';
 import { StaticData } from "./staticData";
 import { Tables } from './tables';
@@ -260,7 +260,7 @@ export class Language extends StaticData {
             let variations = this.table.symbolsVariations.get(type);
             if (variations) {
                 if (symbol) {
-                    const name = getSymbolName(symbol);
+                    const name = symbols.getSymbolName(symbol);
                     variations = variations.map(x => {
                         return { word: x.word.replace('$', name), description: x.description.replace('$', formatName ? formatName(name) : name) };
                     });

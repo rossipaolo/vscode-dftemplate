@@ -6,7 +6,7 @@
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
-import { getWord, makeSummary, isQuestReference, questIndexToName } from '../parsers/parser';
+import { getWord, makeSummary, isQuestReference, questIndexToName } from '../parser';
 import { QuestResourceCategory } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';

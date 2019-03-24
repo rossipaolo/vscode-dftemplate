@@ -4,10 +4,10 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { TextLine, Range } from 'vscode';
 import { Language } from './static/language';
-import { TaskType } from '../parsers/parser';
+import { tasks } from '../parser';
 import { Modules } from './static/modules';
 import { Symbol, QuestBlock, Task, Action, Parameter } from './common';
 import { wordRange } from '../diagnostics/common';
@@ -47,7 +47,7 @@ export class Qbn extends QuestBlock {
     public parse(line: TextLine): void {
 
         // Symbol definition
-        const symbol = parser.getSymbolFromLine(line);
+        const symbol = parser.symbols.parseSymbol(line.text);
         if (symbol) {
             const text = line.text.trim();
             const type = text.substring(0, text.indexOf(' '));
@@ -71,11 +71,11 @@ export class Qbn extends QuestBlock {
         }
 
         // Task definition
-        const task = parser.parseTaskDefinition(line.text);
+        const task = parser.tasks.parseTask(line.text);
         if (task) {
 
             const newTaskDefinition = new Task(wordRange(line, task.symbol), task);
-            if (task.type === TaskType.PersistUntil) {
+            if (task.type === tasks.TaskType.PersistUntil) {
                 this.persistUntilTasks.push(newTaskDefinition);
             } else {
                 const taskDefinition = this.tasks.get(task.symbol);
@@ -133,7 +133,7 @@ export class Qbn extends QuestBlock {
      * @param symbol Any variation of a symbol.
      */
     public getSymbol(symbol: string): Symbol | undefined {
-        return Qbn.getMapItem(this.symbols, parser.getBaseSymbol(symbol));
+        return Qbn.getMapItem(this.symbols, parser.symbols.getBaseSymbol(symbol));
     }
 
     /**

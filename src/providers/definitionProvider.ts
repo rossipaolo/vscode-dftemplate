@@ -5,11 +5,11 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 
 import { TextDocument, Position, Location } from 'vscode';
 import { Quest } from '../language/quest';
-import { questIndexToName } from '../parsers/parser';
+import { questIndexToName } from '../parser';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 

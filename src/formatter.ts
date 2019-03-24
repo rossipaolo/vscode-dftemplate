@@ -4,11 +4,10 @@
 
 'use strict';
 
-import * as parser from './parsers/parser';
+import * as parser from './parser';
 
 import { Range, TextEdit, TextLine, TextDocument, FormattingOptions, Position } from 'vscode';
 import { getOptions } from './extension';
-import { MessageBlock, TaskType } from './parsers/parser';
 
 interface FormatterResults {
     textEdit?: TextEdit;
@@ -226,7 +225,7 @@ export class Formatter {
 
         // Format message block following a declaration
         function makeMessageResults(textEdit: TextEdit | undefined) {
-            const messageBlock = new MessageBlock(instance.document, line.lineNumber);
+            const messageBlock = new parser.messages.MessageBlock(instance.document, line.lineNumber);
             const formatterResults: FormatterResults = {
                 textEdit: textEdit,
                 formatNextLineRequest: {
@@ -267,14 +266,14 @@ export class Formatter {
         }
 
         // Static message declaration
-        const staticMessage = parser.getStaticMessage(line.text);
+        const staticMessage = parser.messages.parseStaticMessage(line.text);
         if (staticMessage) {
             return makeMessageResults(!/^[a-zA-Z]+:  \[[0-9]+\]$/.test(line.text) ?
                 new TextEdit(line.range, staticMessage.name + ':  [' + staticMessage.id + ']') : undefined);
         }
 
         // Additional message declaration
-        const additionalMessageID = parser.getMessageIDFromLine(line);
+        const additionalMessageID = parser.messages.parseMessage(line.text);
         if (additionalMessageID) {
             return makeMessageResults(!/^Message:  [0-9]+$/.test(line.text) ?
                 new TextEdit(line.range, 'Message:  ' + additionalMessageID) : undefined);
@@ -354,8 +353,8 @@ export class Formatter {
      */
     private formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
         if (!parser.isEmptyOrComment(line.text) &&
-            !parser.getSymbolFromLine(line) &&
-            !parser.parseTaskDefinition(line.text)) {
+            !parser.symbols.parseSymbol(line.text) &&
+            !parser.tasks.parseTask(line.text)) {
             return this.formatTaskScope(line);
         }
     }
@@ -364,7 +363,7 @@ export class Formatter {
      * Formats the definition of a task and request the following lines until the end of the task block.
      */
     private formatTask(line: TextLine): FormatterResults | undefined {
-        const task = parser.parseTaskDefinition(line.text);
+        const task = parser.tasks.parseTask(line.text);
         if (task) {
             return {
                 textEdits: Formatter.filterTextEdits(
@@ -372,7 +371,7 @@ export class Formatter {
                     Formatter.trimLeft(line),
                     ...Formatter.setInnerSpaces(line)
                 ),
-                formatNextLineRequest: task.type !== TaskType.Variable ? this.getTaskBlockFormatRequest() : undefined
+                formatNextLineRequest: task.type !== parser.tasks.TaskType.Variable ? this.getTaskBlockFormatRequest() : undefined
             };
         }
     }
@@ -408,7 +407,7 @@ export class Formatter {
     private getTaskBlockFormatRequest(): FormatLineRequest {
         return {
             requestLine: (line) => {
-                return !/^\s*$/g.test(line.text) && !parser.parseTaskDefinition(line.text);
+                return !/^\s*$/g.test(line.text) && !parser.tasks.parseTask(line.text);
             },
             formatLine: (line) => {
                 return this.formatEmptyOrComment(line) || this.formatTaskScope(line);

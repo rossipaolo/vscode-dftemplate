@@ -4,13 +4,13 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken, Range } from 'vscode';
 import { Quest } from '../language/quest';
 import { Symbol, Message, Task, Action } from '../language/common';
 import { wordRange } from '../diagnostics/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { questIndexToName } from '../parsers/parser';
+import { questIndexToName } from '../parser';
 import { first } from '../extension';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
@@ -102,7 +102,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         const locations: Location[] = [];
 
         // Messages
-        const regex = parser.makeSymbolRegex(symbol.name);
+        const regex = parser.symbols.makeSymbolRegex(symbol.name);
         for (const line of quest.qrc.iterateMessageLines()) {
             let match: RegExpExecArray | null;
             while (match = regex.exec(line.text)) {
@@ -116,7 +116,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         }
 
         // Actions
-        const baseSymbol = parser.getBaseSymbol(symbol.name);
+        const baseSymbol = parser.symbols.getBaseSymbol(symbol.name);
         for (const action of quest.qbn.iterateActions()) {
             if (action.signature.find(x => x.value === baseSymbol)) {
                 locations.push(quest.getLocation(wordRange(action.line, baseSymbol)));

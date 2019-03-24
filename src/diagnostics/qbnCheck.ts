@@ -4,12 +4,12 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 
 import { Diagnostic } from "vscode";
 import { Errors, Warnings, Hints, findParameter } from './common';
 import { analyseSignature } from './signatureCheck';
-import { TaskType } from '../parsers/parser';
+import { tasks } from '../parser';
 import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
@@ -73,7 +73,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         }
 
         // Naming convention violation
-        if (!parser.symbolFollowsNamingConventions(symbolName)) {
+        if (!parser.symbols.symbolFollowsNamingConventions(symbolName)) {
             yield Hints.symbolNamingConventionViolation(symbolContext.range);
         }
     }
@@ -97,12 +97,12 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         // Unused      
         if (!taskIsUsed(context, taskName, taskContext)) {
             const definition = taskContext.definition;
-            const name = definition.type === TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
+            const name = definition.type === tasks.TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
             yield Warnings.unusedDeclarationTask(taskContext.range, name);
         }
 
         // Naming convention violation
-        if (!parser.symbolFollowsNamingConventions(taskName)) {
+        if (!parser.symbols.symbolFollowsNamingConventions(taskName)) {
             yield Hints.symbolNamingConventionViolation(taskContext.range);
         }
     }
@@ -125,14 +125,14 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 }
 
 function symbolHasReferences(context: Quest, symbol: string): boolean {
-    const baseSymbol = parser.getBaseSymbol(symbol);
+    const baseSymbol = parser.symbols.getBaseSymbol(symbol);
     for (const action of context.qbn.iterateActions()) {
         if (action.signature.find(x => x.value === baseSymbol)) {
             return true;
         }
     }
 
-    const regex = parser.makeSymbolRegex(symbol);
+    const regex = parser.symbols.makeSymbolRegex(symbol);
     if (first(context.qrc.iterateMessageLines(), x => regex.test(x.text))) {
         return true;
     }

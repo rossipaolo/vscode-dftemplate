@@ -4,7 +4,7 @@
 
 'use strict';
 
-import * as parser from '../parsers/parser';
+import * as parser from '../parser';
 import { Diagnostic, } from "vscode";
 import { Errors, Warnings, Hints, wordRange, findParameter } from './common';
 import { Language } from '../language/static/language';
@@ -58,10 +58,10 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
 
     // Symbols inside message blocks
     for (const line of context.qrc.iterateMessageLines()) {
-        const symbols = parser.findAllSymbolsInALine(line.text);
+        const symbols = parser.symbols.findAllSymbolsInALine(line.text);
         if (symbols) {
             for (const symbol of symbols) {
-                let symbolDefinition = context.qbn.symbols.get(parser.getBaseSymbol(symbol));
+                let symbolDefinition = context.qbn.symbols.get(parser.symbols.getBaseSymbol(symbol));
                 if (!symbolDefinition) {
                     yield Errors.undefinedSymbol(wordRange(line, symbol), symbol);
                 } else {       
