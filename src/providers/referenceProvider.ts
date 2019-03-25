@@ -8,9 +8,8 @@ import * as parser from '../parser';
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken, Range } from 'vscode';
 import { Quest } from '../language/quest';
 import { Symbol, Message, Task, Action } from '../language/common';
-import { wordRange } from '../diagnostics/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { questIndexToName } from '../parser';
+import { questIndexToName, wordRange } from '../parser';
 import { first } from '../extension';
 
 export class TemplateReferenceProvider implements ReferenceProvider {

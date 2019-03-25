@@ -31,6 +31,19 @@ export function getFirstWord(text: string): string | undefined {
 }
 
 /**
+ * Gets the range of the first occurrence of `word` in the given text line.
+ * @param line A document line.
+ * @param word A word to seek in the line.
+ * @returns The range of the first occurrence of the word if found, an empty range otherwise.
+ */
+export function wordRange(line: vscode.TextLine, word: string): vscode.Range {
+    const index = line.text.indexOf(word);
+    return index !== -1 ?
+        new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length) :
+        new vscode.Range(line.lineNumber, 0, line.lineNumber, 0);
+}
+
+/**
  * Checks if a line is empty or a comment.
  * @param text A line of a quest.
  */
