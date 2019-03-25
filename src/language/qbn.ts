@@ -6,12 +6,9 @@
 
 import * as parser from '../parser';
 import { TextLine, Range } from 'vscode';
-import { Language } from './static/language';
-import { tasks } from '../parser';
-import { Modules } from './static/modules';
-import { Symbol, QuestBlock, Task, Action, Parameter } from './common';
-import { wordRange } from '../diagnostics/common';
 import { first } from '../extension';
+import { Symbol, QuestBlock, Task, Action, Parameter } from './common';
+import { Modules } from './static/modules';
 
 /**
  * Quest resources and operation: the quest block that holds resources definition and tasks.
@@ -22,7 +19,7 @@ export class Qbn extends QuestBlock {
      * Symbols that reference the resources used by the quest.
      */
     public readonly symbols = new Map<string, Symbol | Symbol[]>();
-    
+
     /**
      * Headless startup task which starts automatically when the quest begins.
      */
@@ -47,48 +44,22 @@ export class Qbn extends QuestBlock {
     public parse(line: TextLine): void {
 
         // Symbol definition
-        const symbol = parser.symbols.parseSymbol(line.text);
+        const symbol = Symbol.parse(line);
         if (symbol) {
-            const text = line.text.trim();
-            const type = text.substring(0, text.indexOf(' '));
-            const definition = Language.getInstance().findDefinition(type, text);
-
-            const symbolDefinitionContext = new Symbol(type, wordRange(line, symbol), line);
-            if (definition) {
-                symbolDefinitionContext.parse(definition.matches);
-            }
-
-            const symbolDefinition = this.symbols.get(symbol);
-            if (!symbolDefinition) {
-                this.symbols.set(symbol, symbolDefinitionContext);
-            } else if (!Array.isArray(symbolDefinition)) {
-                this.symbols.set(symbol, [symbolDefinition, symbolDefinitionContext]);
-            } else {
-                symbolDefinition.push(symbolDefinitionContext);
-            }
-
+            Qbn.pushMapItem(this.symbols, symbol.name, symbol);
             return;
         }
 
         // Task definition
-        const task = parser.tasks.parseTask(line.text);
+        const task = Task.parse(line);
         if (task) {
-
-            const newTaskDefinition = new Task(wordRange(line, task.symbol), task);
-            if (task.type === tasks.TaskType.PersistUntil) {
-                this.persistUntilTasks.push(newTaskDefinition);
+            if (task.definition.type === parser.tasks.TaskType.PersistUntil) {
+                this.persistUntilTasks.push(task);
             } else {
-                const taskDefinition = this.tasks.get(task.symbol);
-                if (!taskDefinition) {
-                    this.tasks.set(task.symbol, newTaskDefinition);
-                } else if (!Array.isArray(taskDefinition)) {
-                    this.tasks.set(task.symbol, [taskDefinition, newTaskDefinition]);
-                } else {
-                    taskDefinition.push(newTaskDefinition);
-                }
+                Qbn.pushMapItem(this.tasks, task.definition.symbol, task);
             }
 
-            this.currentActionsBlock = newTaskDefinition.actions;
+            this.currentActionsBlock = task.actions;
             return;
         }
 
@@ -154,6 +125,17 @@ export class Qbn extends QuestBlock {
         if (invocation && invocation.signature) {
             const value = invocation.line.text.substring(range.start.character, range.end.character);
             return invocation.signature.find(x => x.value === value);
+        }
+    }
+
+    private static pushMapItem<T>(items: Map<string, T | T[]>, key: string, item: T) {
+        const entry = items.get(key);
+        if (!entry) {
+            items.set(key, item);
+        } else if (!Array.isArray(entry)) {
+            items.set(key, [entry, item]);
+        } else {
+            entry.push(item);
         }
     }
 
