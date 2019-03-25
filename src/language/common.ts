@@ -4,17 +4,19 @@
 
 'use strict';
 
+import * as parser from '../parser';
 import { Range, TextLine } from "vscode";
 import { tasks } from "../parser";
-import { ParameterMatch, QuestResourceCategory } from "./static/common";
+import { QuestResourceCategory, SymbolType } from "./static/common";
 import { Modules } from "./static/modules";
 import { wordRange } from "../diagnostics/common";
+import { Language } from "./static/language";
 
 /**
  * A resource usable in a quest.
  */
 export interface QuestResource {
-    
+
     /**
      * The range of the symbol declaration.
      */
@@ -39,35 +41,82 @@ export interface Parameter {
  */
 export class Symbol implements QuestResource {
 
-    public signature: Parameter[] | null = null;
-
-    public get name() {
+    /**
+     * The string that allows to reference this symbol, declared with the definition.
+     * It often includes a prefix and suffix: `_symbol_`.
+     */
+    public get name(): string {
         return this.line.text.trim().split(' ')[1];
     }
 
+    /**
+     * The range of the line where the symbol is defined.
+     */
     public get blockRange() {
         return this.line.range;
     }
 
-    public constructor(
-        public type: string,
-        public range: Range,
-        public line: TextLine) {
+    private constructor(
+
+        /**
+         * What kind of resource is linked to this symbol.
+         */
+        public readonly type: SymbolType,
+
+        /**
+         * The range of the symbol.
+         */
+        public readonly range: Range,
+
+        /**
+         * The line where the symbol is defined.
+         */
+        public readonly line: TextLine,
+
+        /**
+         * Parameters provided with the symbol definition.
+         */
+        public readonly signature: Parameter[] | undefined) {
     }
 
     /**
-     * Parses the symbol definition and retrieve its parameters.
-     * @param signature Regex that matches parameter.
+     * Attempts to parse a symbol definition.
+     * @param line A text line with a symbol definition.
+     * @returns A `Symbol` instance if parse operation was successful, `undefined` otherwise.
      */
-    public parse(signature: ParameterMatch[]): void {
-        this.signature = signature ? signature.reduce<Parameter[]>((parameters, word) => {
-            const match = this.line.text.match(word.regex);
-            if (match) {
-                parameters.push({ type: word.signature, value: match[1] });
+    public static parse(line: TextLine): Symbol | undefined {
+        const name = parser.symbols.parseSymbol(line.text);
+        if (name) {
+            const text = line.text.trim();
+            const type = text.substring(0, text.indexOf(' '));
+            const signature = Symbol.parseSignature(type, text);
+            return new Symbol(type as SymbolType, wordRange(line, name), line, signature);
+        }
+    }
+
+    /**
+     * Matches parameters for the given symbol definition.
+     * @param type The type of the symbol.
+     * @param text The entire symbol definition line.
+     * @returns An array of parameters, which can be empty, if parse operation was successful,
+     * `undefined` otherwise.
+     */
+    private static parseSignature(type: string, text: string): Parameter[] | undefined {
+        const definition = Language.getInstance().findDefinition(type, text);
+        if (definition) {
+            if (definition.matches && definition.matches.length > 0) {
+                return definition.matches.reduce<Parameter[]>((parameters, word) => {
+                    const match = text.match(word.regex);
+                    if (match) {
+                        parameters.push({ type: word.signature, value: match[1] });
+                    }
+
+                    return parameters;
+                }, []);
             }
 
-            return parameters;
-        }, []) : [];
+            return [];
+        }
     }
 }
 
@@ -77,22 +126,39 @@ export class Symbol implements QuestResource {
  */
 export class Task implements QuestResource {
 
+    /**
+     * The actions block owned by this task.
+     */
     public readonly actions: Action[] = [];
 
+    /**
+     * True if this task is declared as a variable.
+     */
     public get isVariable(): boolean {
         return this.definition.type === tasks.TaskType.Variable
             || this.definition.type === tasks.TaskType.GlobalVarLink;
     }
 
+    /**
+     * The range of the task with its actions block.
+     */
     public get blockRange(): Range {
         return this.actions.length > 0 ?
             this.range.union(this.actions[this.actions.length - 1].line.range) :
             this.range;
     }
 
-    public constructor(
-        public range: Range,
-        public definition: tasks.TaskDefinition) {
+    private constructor(
+
+        /**
+         * The range of the symbol of this task.
+         */
+        public readonly range: Range,
+
+        /**
+         * Informations provided with the task definition, such as symbol and type.
+         */
+        public readonly definition: tasks.TaskDefinition) {
     }
 
     /**
@@ -103,6 +169,18 @@ export class Task implements QuestResource {
             const actionInfo = Modules.getInstance().findAction(action.line.text);
             return !!(actionInfo && actionInfo.category === QuestResourceCategory.Condition);
         });
+    }
+
+    /**
+     * Attempts to parse a task definition.
+     * @param line A text line with a task definition.
+     * @returns A `Task` instance if parse operation was successful, `undefined` otherwise.
+     */
+    public static parse(line: TextLine): Task | undefined {
+        const task = parser.tasks.parseTask(line.text);
+        if (task) {
+            return new Task(wordRange(line, task.symbol), task);
+        }
     }
 }
 
@@ -196,6 +274,9 @@ export class Message implements QuestResource {
      */
     public readonly textBlock: TextLine[] = [];
 
+    /**
+     * The range of the message including its text block.
+     */
     public get blockRange(): Range {
         const lineRange = this.range.with(this.range.start.with(undefined, 0));
         return this.textBlock.length > 0 ?
@@ -203,10 +284,39 @@ export class Message implements QuestResource {
             lineRange;
     }
 
-    public constructor(
-        public id: number,
-        public range: Range,
-        public alias?: string) {
+    private constructor(
+
+        /**
+         * The numeric id associated to this message.
+         */
+        public readonly id: number,
+
+        /**
+         * The range of the message id.
+         */
+        public readonly range: Range,
+
+        /**
+         * A meaningful string that can be used to reference the message.
+         */
+        public readonly alias?: string) {
+    }
+
+    /**
+     * Attempts to parse a message definition.
+     * @param line A text line with a message definition.
+     * @returns A `Message` instance if parse operation was successful, `undefined` otherwise.
+     */
+    public static parse(line: TextLine): Message | undefined {
+        const id = parser.messages.parseMessage(line.text);
+        if (id) {
+            return new Message(id, wordRange(line, String(id)));
+        }
+
+        const data = parser.messages.parseStaticMessage(line.text);
+        if (data) {
+            return new Message(data.id, wordRange(line, String(data.id)), data.name);
+        }
     }
 }
 

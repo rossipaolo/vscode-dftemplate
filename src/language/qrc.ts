@@ -5,7 +5,6 @@
 'use strict';
 
 import * as parser from '../parser';
-import { wordRange } from '../diagnostics/common';
 import { TextLine, TextDocument, Range, Position } from 'vscode';
 import { QuestBlock, Message, ContextMacro } from './common';
 import { Tables } from './static/tables';
@@ -40,21 +39,13 @@ export class Qrc extends QuestBlock {
             return;
         }
 
-        // Static message definition 
-        const staticMessage = parser.messages.parseStaticMessage(line.text);
-        if (staticMessage) {
-            this.registerMessage(staticMessage.id, line, staticMessage.name);
+        // Message definition 
+        const message = Message.parse(line);
+        if (message) {
+            this.messages.push(message);
             this.messageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
             return;
-        }
-
-        // Additional message definition
-        const messageID = parser.messages.parseMessage(line.text);
-        if (messageID) {
-            this.registerMessage(messageID, line);
-            this.messageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
-            return;
-        }
+        }   
 
         // Undefined expression in qrc block
         if (this.messageBlock) {
@@ -114,12 +105,6 @@ export class Qrc extends QuestBlock {
             id++;
         }
         return id;
-    }
-
-    private registerMessage(id: number, line: TextLine, alias?: string): void {
-        const range = wordRange(line, String(id));
-        const message = new Message(id, range, alias);
-        this.messages.push(message);
     }
 
     private parseMessageLine(line: TextLine): void {
