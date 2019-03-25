@@ -15,8 +15,8 @@ import { StaticData } from '../language/static/staticData';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { QuestResource } from '../language/common';
 import { Quest } from '../language/quest';
-import { DiagnosticCode, wordRange } from '../diagnostics/common';
-import { symbols } from '../parser';
+import { DiagnosticCode } from '../diagnostics/common';
+import { symbols, wordRange } from '../parser';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 

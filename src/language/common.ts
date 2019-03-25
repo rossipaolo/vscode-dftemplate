@@ -6,10 +6,9 @@
 
 import * as parser from '../parser';
 import { Range, TextLine } from "vscode";
-import { tasks } from "../parser";
+import { tasks, wordRange } from "../parser";
 import { QuestResourceCategory, SymbolType } from "./static/common";
 import { Modules } from "./static/modules";
-import { wordRange } from "../diagnostics/common";
 import { Language } from "./static/language";
 
 /**

@@ -104,11 +104,6 @@ export const Hints = {
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
 };
 
-export function wordRange(line: vscode.TextLine, word: string): Range {
-    const index = line.text.indexOf(word);
-    return new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length);
-}
-
 /**
 * Checks if any symbol or action invocations has a parameter that matches `filter`.
 * @param context Diagnostic context for the current document.

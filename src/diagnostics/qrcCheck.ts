@@ -6,7 +6,8 @@
 
 import * as parser from '../parser';
 import { Diagnostic, } from "vscode";
-import { Errors, Warnings, Hints, wordRange, findParameter } from './common';
+import { Errors, Warnings, Hints, findParameter } from './common';
+import { wordRange } from '../parser';
 import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
