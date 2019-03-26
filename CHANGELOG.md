@@ -23,6 +23,7 @@
 ### Fixed
 - Fixed completion proposals for symbol definitions.
 - Fixed diagnostics for `Foe` type.
+- Fixed auto removal of unused variables.
 
 ## 0.8.0
 
