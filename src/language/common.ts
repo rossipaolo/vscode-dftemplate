@@ -144,7 +144,7 @@ export class Task implements QuestResource {
     public get blockRange(): Range {
         return this.actions.length > 0 ?
             this.range.union(this.actions[this.actions.length - 1].line.range) :
-            this.range;
+            new Range(this.range.start.line, 0, this.range.end.line + 1, 0);
     }
 
     private constructor(
