@@ -332,7 +332,7 @@ export abstract class QuestBlock {
     }
 
     public get range(): Range | undefined {
-        if (this.start && this.end) {
+        if (this.start !== undefined && this.end !== undefined) {
             return new Range(this.start, 0, this.end, 0);
         }
     }
