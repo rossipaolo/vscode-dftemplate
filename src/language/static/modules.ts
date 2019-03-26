@@ -40,14 +40,8 @@ export class Modules extends StaticData {
      * Load all enabled modules.
      * @param context Current context of extension.
      */
-    public load(context: ExtensionContext): Promise<void> {
-        var instance = this;
-        return new Promise((resolve) => {
-            Modules.loadModules(getOptions()['modules'], context).then((modules) => {
-                instance.modules = modules;
-                return resolve();
-            }, () => vscode.window.showErrorMessage('Failed to import modules.'));
-        });
+    public async load(context: ExtensionContext): Promise<void> {
+        this.modules = await Modules.loadModules(getOptions()['modules'], context);
     }
 
     /**
