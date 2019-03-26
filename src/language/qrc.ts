@@ -7,6 +7,7 @@
 import * as parser from '../parser';
 import { TextLine, TextDocument, Range, Position } from 'vscode';
 import { QuestBlock, Message, ContextMacro } from './common';
+import { QuestParseContext } from './quest';
 import { Tables } from './static/tables';
 
 /**
@@ -24,17 +25,15 @@ export class Qrc extends QuestBlock {
      */
     public readonly macros: ContextMacro[] = [];
 
-    private messageBlock: parser.messages.MessageBlock | null = null;
-
     /**
     * Parses a line in a QRC block and builds its diagnostic context.
     * @param document A quest document.
     * @param line A line in QRC block.
     */
-    public parse(document: TextDocument, line: TextLine): void {
+    public parse(document: TextDocument, line: TextLine, context: QuestParseContext): void {
 
         // Inside a message block
-        if (this.messages.length > 0 && this.messageBlock && this.messageBlock.isInside(line.lineNumber)) {
+        if (this.messages.length > 0 && context.currentMessageBlock && context.currentMessageBlock.isInside(line.lineNumber)) {
             this.parseMessageLine(line);
             return;
         }
@@ -43,13 +42,13 @@ export class Qrc extends QuestBlock {
         const message = Message.parse(line);
         if (message) {
             this.messages.push(message);
-            this.messageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
+            context.currentMessageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
             return;
         }   
 
         // Undefined expression in qrc block
-        if (this.messageBlock) {
-            this.messageBlock = null;
+        if (context.currentMessageBlock) {
+            context.currentMessageBlock = undefined;
         }
         this.failedParse.push(line);
     }

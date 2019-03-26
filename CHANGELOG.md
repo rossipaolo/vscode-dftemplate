@@ -17,6 +17,7 @@
     - CompletionItemProvider
     - HoverProvider
 - Improvements to CodeActionProvider.
+- Improved quest parsing to detect invalid multiple `QRC` or `QBN` directives.
 
 ### Fixed
 - Fixed completion proposals for symbol definitions.

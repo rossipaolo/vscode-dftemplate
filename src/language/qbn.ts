@@ -8,6 +8,7 @@ import * as parser from '../parser';
 import { TextLine, Range } from 'vscode';
 import { first } from '../extension';
 import { Symbol, QuestBlock, Task, Action, Parameter } from './common';
+import { QuestParseContext } from './quest';
 import { Modules } from './static/modules';
 
 /**
@@ -35,13 +36,11 @@ export class Qbn extends QuestBlock {
      */
     public readonly persistUntilTasks: Task[] = [];
 
-    private currentActionsBlock: Action[] = this.entryPoint;
-
     /**
     * Parses a line in a QBN block and build its diagnostic context.
     * @param line A line in QBN block. 
     */
-    public parse(line: TextLine): void {
+    public parse(line: TextLine, context: QuestParseContext): void {
 
         // Symbol definition
         const symbol = Symbol.parse(line);
@@ -59,14 +58,17 @@ export class Qbn extends QuestBlock {
                 Qbn.pushMapItem(this.tasks, task.definition.symbol, task);
             }
 
-            this.currentActionsBlock = task.actions;
+            context.currentActionsBlock = task.actions;
             return;
         }
 
         // Action invocation
         const actionResult = Modules.getInstance().findAction(line.text);
         if (actionResult) {
-            this.currentActionsBlock.push(new Action(line, actionResult.getSignature()));
+            if (!context.currentActionsBlock) {
+                context.currentActionsBlock = this.entryPoint;
+            }
+            context.currentActionsBlock.push(new Action(line, actionResult.getSignature()));
             return;
         }
 

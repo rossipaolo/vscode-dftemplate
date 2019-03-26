@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { TEMPLATE_LANGUAGE } from '../extension';
+import { Action } from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
@@ -15,6 +16,12 @@ enum QuestBlock {
     Preamble,
     QRC,
     QBN
+}
+
+export interface QuestParseContext {
+    block: QuestBlock;
+    currentMessageBlock?: parser.messages.MessageBlock;
+    currentActionsBlock?: Action[];
 }
 
 /**
@@ -43,7 +50,9 @@ export class Quest {
 
     private constructor(public readonly document: vscode.TextDocument) {
 
-        let block = QuestBlock.Preamble;
+        const context: QuestParseContext = {
+            block: QuestBlock.Preamble
+        };
         this.preamble.start = 0;
 
         for (let index = 0; index < this.document.lineCount; index++) {
@@ -53,37 +62,35 @@ export class Quest {
             if (parser.isEmptyOrComment(line.text)) {
                 continue;
             }
-    
-            // Detect next block
-            if (line.text.indexOf('QRC:') !== -1) {
-                block = QuestBlock.QRC;
-                this.qrc.start = line.lineNumber;
-                continue;
-            }
-            else if (line.text.indexOf('QBN:') !== -1) {
-                block = QuestBlock.QBN;
-                this.qbn.start = line.lineNumber;
-                continue;
-            }
-    
-            // Parse current block
-            switch (block) {
+
+            // Parse blocks separated by QRC and QBN directives
+            switch (context.block) {
                 case QuestBlock.Preamble:
-                    this.preamble.parse(line);
+                    if (line.text.indexOf('QRC:') !== -1) {
+                        context.block = QuestBlock.QRC;
+                        this.preamble.end = (this.qrc.start = line.lineNumber) - 1;
+                    } else {
+                        this.preamble.parse(line);
+                    }
                     break;
                 case QuestBlock.QRC:
-                    this.qrc.parse(this.document, line);
+                    if (line.text.indexOf('QBN:') !== -1) {
+                        context.block = QuestBlock.QBN;
+                        this.qrc.end = (this.qbn.start = line.lineNumber) - 1;
+                    } else {
+                        this.qrc.parse(this.document, line, context);
+                    }
                     break;
                 case QuestBlock.QBN:
-                    this.qbn.parse(line);
+                    this.qbn.parse(line, context);
                     break;
             }
         }
 
-        this.preamble.end = this.qrc.start ? this.qrc.start - 1 : undefined;
-        this.qrc.end = this.qbn.start ? this.qbn.start - 1 : undefined;
-        this.qbn.end = this.document.lineCount - 1;
-
+        if (this.qbn.start) {
+            this.qbn.end = this.document.lineCount - 1;
+        }
+        
         this.version = document.version;
     }
 
