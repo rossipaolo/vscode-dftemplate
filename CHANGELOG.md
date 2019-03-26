@@ -9,6 +9,7 @@
 - QuickFix: suggest best match for unknown value in symbol definition or action.
 - QuickFix: suggest best match for reference to unknown message, symbol or task.
 - QuickFix: suggest correct spelling for a message text alias.
+- If `dftemplate.tablesPath` is not set a open dialog is prompted at startup.
 
 ### Improved
 - Use stored quest instances for the following providers:

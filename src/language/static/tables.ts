@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-
 import { getOptions, select, where } from '../../extension';
 import { ParameterTypes } from './parameterTypes';
 
@@ -205,29 +204,25 @@ export class Tables {
     private constructor() {
     }
 
-    public load(): Promise<void> {
-        const instance = this;
-        return new Promise((resolve, reject) => {
+    public async load(): Promise<void> {
 
-            const tablesPath = Tables.getTablesPath();
-            if (!tablesPath) {
-                return reject('Tables path is not set!');
-            }
+        const tablesPath = await Tables.getTablesPath();
+        if (!tablesPath) {
+            return Promise.reject('Tables path is not set!');
+        }
 
-            return Promise.all([
-                instance.diseasesTable.load(path.join(tablesPath, 'Quests-Diseases.txt')),
-                instance.factionsTable.load(path.join(tablesPath, 'Quests-Factions.txt')),
-                instance.foesTable.load(path.join(tablesPath, 'Quests-Foes.txt')),
-                instance.globalVarsTable.load(path.join(tablesPath, 'Quests-GlobalVars.txt')),
-                instance.itemsTable.load(path.join(tablesPath, 'Quests-Items.txt')),
-                instance.placesTable.load(path.join(tablesPath, 'Quests-Places.txt')),
-                instance.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt')),
-                instance.spellsTable.load(path.join(tablesPath, 'Quests-Spells.txt')),
-                instance.staticMessagesTable.load(path.join(tablesPath, 'Quests-StaticMessages.txt')),
-                instance.spellsEntityTable.load(path.join(tablesPath, 'Spells-Entity.txt'))
-            ]).then(() => resolve(),
-                (e) => reject(e));
-        });
+        await Promise.all([
+            this.diseasesTable.load(path.join(tablesPath, 'Quests-Diseases.txt')),
+            this.factionsTable.load(path.join(tablesPath, 'Quests-Factions.txt')),
+            this.foesTable.load(path.join(tablesPath, 'Quests-Foes.txt')),
+            this.globalVarsTable.load(path.join(tablesPath, 'Quests-GlobalVars.txt')),
+            this.itemsTable.load(path.join(tablesPath, 'Quests-Items.txt')),
+            this.placesTable.load(path.join(tablesPath, 'Quests-Places.txt')),
+            this.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt')),
+            this.spellsTable.load(path.join(tablesPath, 'Quests-Spells.txt')),
+            this.staticMessagesTable.load(path.join(tablesPath, 'Quests-StaticMessages.txt')),
+            this.spellsEntityTable.load(path.join(tablesPath, 'Spells-Entity.txt'))
+        ]);
     }
 
     /**
@@ -272,7 +267,13 @@ export class Tables {
         this.instance = null;
     }
 
-    private static getTablesPath(): string | undefined {
+    /**
+     * Gets the path to _StreamingAssets/Tables_. It can be obtained in three ways:
+     * 1. From settings.
+     * 2. From relative path if workspace is inside _StreamingAssets_.
+     * 3. With an open dialog request; the selected folder is written to user settings.
+     */
+    private static async getTablesPath(): Promise<string | undefined> {
 
         // Path from settings
         const tablesPath = getOptions()['tablesPath'];
@@ -289,24 +290,33 @@ export class Tables {
         else {
 
             // From subfolder of 'StreamingAssets' to 'StreamingAssets/Tables'
-            const rootPath = Tables.getRootPath();
+            const getRootPath = () => {
+                if (vscode.workspace.workspaceFolders) {
+                    return vscode.workspace.workspaceFolders[0].uri.fsPath;
+                }
+
+                if (vscode.window.activeTextEditor) {
+                    return vscode.window.activeTextEditor.document.uri.fsPath;
+                }
+            };
+            const rootPath = getRootPath();
             if (rootPath) {
                 const i = rootPath.lastIndexOf('StreamingAssets');
                 if (i !== -1) {
                     return path.resolve(rootPath.substring(0, i), path.join('StreamingAssets', 'Tables'));
                 }
             }
-        }
-        
-    }
 
-    private static getRootPath(): string | undefined {
-        if (vscode.workspace.workspaceFolders) {
-            return vscode.workspace.workspaceFolders[0].uri.fsPath;
-        }
-
-        if (vscode.window.activeTextEditor) {
-            return vscode.window.activeTextEditor.document.uri.fsPath;
+            // Ask with open folder dialog
+            const item = await vscode.window.showErrorMessage('Path to StreamingAssets/Tables is not set!', 'Select folder');
+            if (item) {
+                const uri = await vscode.window.showOpenDialog({ canSelectFolders: true });
+                if (uri) {
+                    const fsPath = uri[0].fsPath;
+                    await getOptions().update('tablesPath', fsPath, true);
+                    return fsPath;
+                }
+            }
         }
     }
 }

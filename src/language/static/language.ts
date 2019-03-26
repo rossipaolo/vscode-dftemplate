@@ -4,9 +4,7 @@
 
 'use strict';
 
-import * as vscode from 'vscode';
 import * as path from 'path';
-
 import { ExtensionContext } from 'vscode';
 import { iterateAll, where, select, selectMany } from '../../extension';
 import { symbols } from '../../parser';
@@ -42,25 +40,25 @@ export class Language extends StaticData {
     /**
      * Load language tables.
      */
-    public load(context: ExtensionContext): Promise<void> {
+    public async load(context: ExtensionContext): Promise<void> {
         const instance = this;
-        return new Promise((resolve, reject) => {
-            Promise.all([
-                Language.loadTable(context, 'language.json').then((obj) => {
-                    instance.table = {
-                        symbols: Language.objectToMap(obj.symbols),
-                        symbolsVariations: Language.objectToMap(obj.symbolsVariations),
-                        keywords: Language.objectToMap(obj.keywords),
-                        messages: Language.objectToMap(obj.messages),
-                    };
-                }, () => vscode.window.showErrorMessage('Failed to import language table.')),
-                Language.loadTable(context, 'definitions.json').then((obj) => {
-                    instance.definitions = Language.objectToMap(obj);
-                })
-            ]).then(() => {
-                return resolve();
-            }, () => reject());
-        });
+
+        const loadTable = async (name: string) =>
+            await Language.parseFromJson(path.join(context.extensionPath, 'tables', name));
+
+        await Promise.all([
+            loadTable('language.json').then(obj => {
+                instance.table = {
+                    symbols: Language.objectToMap(obj.symbols),
+                    symbolsVariations: Language.objectToMap(obj.symbolsVariations),
+                    keywords: Language.objectToMap(obj.keywords),
+                    messages: Language.objectToMap(obj.messages),
+                };
+            }),
+            loadTable('definitions.json').then(obj => {
+                instance.definitions = Language.objectToMap(obj);
+            })
+        ]);
     }
 
     /**
@@ -322,15 +320,6 @@ export class Language extends StaticData {
                 yield item["1"];
             }
         }
-    }
-
-    private static loadTable(context: ExtensionContext, location: string): Promise<any> {
-        return new Promise((resolve, reject) => {
-            const tablePath = path.join(context.extensionPath, 'tables', location);
-            Language.parseFromJson(tablePath).then((obj) => {
-                return resolve(obj);
-            }, () => reject('Failed to load ' + location));
-        });
     }
 
     private static objectToMap<T>(obj: any): Map<string, T> {
