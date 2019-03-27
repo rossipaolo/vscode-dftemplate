@@ -8,6 +8,12 @@
             ]
         },
         {
+            "summary": "Triggers when character reaches minimum value for specified attribute.",
+            "overloads": [
+                "when attribute ${1:attributeName} is at least ${2:nn}"
+            ]
+        },
+        {
             "summary": "Triggers when player enters/exits a certain location area.",
             "overloads": [
                 "when pc ${1|enters,exits|} ${2:locationType}"

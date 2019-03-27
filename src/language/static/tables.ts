@@ -176,12 +176,18 @@ class StaticMessagesTable extends Table {
 
 class SpellsEntityTable extends Table {
 
+    public readonly attributes: string[] = [];
     public readonly skills: string[] = [];
 
     protected set(data: string[][]) {
         data.forEach(entry => {
-            if (entry[1] === '1') {
-                this.skills.push(entry[0]);
+            switch (entry[1]) {
+                case '0':
+                    this.attributes.push(entry[0]);
+                    break;
+                case '1':
+                    this.skills.push(entry[0]);
+                    break;
             }
         });
     }
@@ -254,6 +260,8 @@ export class Tables {
                 return this.soundsTable.sounds;
             case ParameterTypes.spell:
                 return this.spellsTable.spells;
+            case ParameterTypes.attributeName:
+                return this.spellsEntityTable.attributes;
             case ParameterTypes.skillName:
                 return this.spellsEntityTable.skills;
         }

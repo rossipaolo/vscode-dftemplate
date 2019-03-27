@@ -3,7 +3,7 @@
 ## Unreleased
 
 ### Added
-- Completion proposals and diagnostics for skills (from _Spells-Entity_ table).
+- Completion proposals and diagnostics for attributes and skills (from _Spells-Entity_ table).
 - QuickFix: insert `+` when sign for a number is required but missing.
 - QuickFix: make new task or variable for a clock resource.
 - QuickFix: suggest best match for unknown value in symbol definition or action.
@@ -19,6 +19,7 @@
     - HoverProvider
 - Improvements to CodeActionProvider.
 - Improved quest parsing to detect invalid multiple `QRC` or `QBN` directives.
+- Updated list of actions and effects.
 
 ### Fixed
 - Fixed completion proposals for symbol definitions.
