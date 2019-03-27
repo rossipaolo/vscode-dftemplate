@@ -38,6 +38,7 @@ export abstract class ParameterTypes {
     public static readonly permanentPlace = '${permanentPlace}';
     public static readonly locationType = '${locationType}';
     public static readonly sound = '${sound}';
+    public static readonly attributeName = '${attributeName}';
     public static readonly skillName = '${skillName}';
 
     /**
@@ -98,6 +99,8 @@ export abstract class ParameterTypes {
                 return 'A type of exterior location that appears on the automap, such as a settlement or dungeon.';
             case ParameterTypes.sound:
                 return 'The name of a sound, such as a model creature noise or an environmental sound effect.';
+            case ParameterTypes.attributeName:
+                return 'The name of an attribute.';
             case ParameterTypes.skillName:
                 return 'The name of a skill.';
         }
