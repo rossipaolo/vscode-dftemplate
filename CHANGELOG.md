@@ -21,6 +21,7 @@
 - Improvements to CodeActionProvider.
 - Improvements to CompletionItemProvider.
 - Improved quest parsing to detect invalid multiple `QRC` or `QBN` directives.
+- Description for symbol variation inside hover is shown only inside the `QRC` block.
 - Updated list of actions and effects.
 
 ### Fixed

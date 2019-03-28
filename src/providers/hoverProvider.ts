@@ -39,7 +39,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     const item = {
                         category: 'symbol',
                         signature: document.lineAt(symbol.range.start.line).text,
-                        summary: TemplateHoverProvider.getSymbolDescription(document, word, symbol)
+                        summary: TemplateHoverProvider.getSymbolDescription(quest, word, symbol, position)
                     };
                     return resolve(TemplateHoverProvider.makeHover(item));
                 }
@@ -167,14 +167,17 @@ export class TemplateHoverProvider implements HoverProvider {
     }
 
     /**
-     * Get the summary and a description for symbol according to prefix and type.
+     * Gets the summary for a symbol and, if inside the `QRC` block, a description for its variation based on prefix and type.
      */
-    private static getSymbolDescription(document: TextDocument, name: string, symbol: Symbol): string {
-        const variation = Language.getInstance().getSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
+    private static getSymbolDescription(quest: Quest, name: string, symbol: Symbol, position: Position): string {
+        const summary = makeSummary(quest.document, symbol.range.start.line);
+        
+        if (quest.qrc.range && quest.qrc.range.contains(position)) {
+            const variation = Language.getInstance().getSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
+            const meaning = variation ? variation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
+            return summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
+        }
 
-        const summary = makeSummary(document, symbol.range.start.line);
-        const meaning = variation ? variation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
-
-        return summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
+        return summary;
     }
 }
