@@ -105,6 +105,11 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         if (!parser.symbols.symbolFollowsNamingConventions(taskName)) {
             yield Hints.symbolNamingConventionViolation(taskContext.range);
         }
+
+        // Convert to variable
+        if (taskContext.actions.length === 0 && !taskContext.isVariable) {
+            yield Hints.convertTaskToVariable(taskContext.range);
+        }
     }
 
     for (const task of context.qbn.persistUntilTasks) {

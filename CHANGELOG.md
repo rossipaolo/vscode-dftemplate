@@ -10,6 +10,8 @@
 - QuickFix: suggest best match for unknown value in symbol definition or action.
 - QuickFix: suggest best match for reference to unknown message, symbol or task.
 - QuickFix: suggest correct spelling for a message text alias.
+- QuickFix: convert empty task to variable.
+- Refactoring: convert variable to task. 
 - If `dftemplate.tablesPath` is not set a open dialog is prompted at startup.
 
 ### Improved
