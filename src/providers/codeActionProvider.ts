@@ -214,8 +214,27 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             }
                         }
                         break;
+                    case DiagnosticCode.ConvertTaskToVariable:
+                        const task = quest.qbn.getTask(diagnostic.range);
+                        if (task) {
+                            action = new CodeAction('Convert to variable', CodeActionKind.QuickFix);
+                            action.edit = new WorkspaceEdit();
+                            action.edit.replace(document.uri, task.blockRange, `variable ${task.definition.symbol}`);
+                            actions.push(action);
+                        }
+                        break;
                 }
             });
+
+            if (!range.isEmpty) {
+                const task = quest.qbn.getTask(range);
+                if (task && task.definition.type === parser.tasks.TaskType.Variable) {
+                    const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
+                    action.edit = new WorkspaceEdit();
+                    action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
+                    actions.push(action);
+                }
+            }
 
             return resolve(actions);
         });

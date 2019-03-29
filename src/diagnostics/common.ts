@@ -33,7 +33,8 @@ export enum DiagnosticCode {
     ClockWithoutTask,
     GenericHint,
     SymbolNamingConvention,
-    UseAliasForStaticMessage
+    UseAliasForStaticMessage,
+    ConvertTaskToVariable,
 }
 
 export const Errors = {
@@ -101,7 +102,9 @@ export const Hints = {
         makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint,
             { locations: [previousLocation], label: 'message ' + previous }),
     SymbolVariation: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint)
+        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint),
+    convertTaskToVariable: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.ConvertTaskToVariable, 'Empty task can be converted to variable.', DiagnosticSeverity.Hint)  
 };
 
 /**

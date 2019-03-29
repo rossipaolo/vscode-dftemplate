@@ -110,11 +110,13 @@ export class Qbn extends QuestBlock {
     }
 
     /**
-     * Gets a task from its name.
-     * @param task The name of a task.
+     * Gets a task.
+     * @param task The name of a task or its range.
      */
-    public getTask(task: string): Task | undefined {
-        return Qbn.getMapItem(this.tasks, task);
+    public getTask(task: string | Range): Task | undefined {
+        return task instanceof Range ?
+            first(this.iterateTasks(), x => x.range.isEqual(task) || x.blockRange.isEqual(task)) :
+            Qbn.getMapItem(this.tasks, task);
     }
 
     /**

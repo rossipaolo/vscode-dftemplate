@@ -142,12 +142,16 @@ export class Task implements QuestResource {
      * The range of the task with its actions block.
      */
     public get blockRange(): Range {
-        return this.actions.length > 0 ?
-            this.range.union(this.actions[this.actions.length - 1].line.range) :
-            new Range(this.range.start.line, 0, this.range.end.line + 1, 0);
+        return this.actions.length === 0 ? this.line.range :
+            this.range.union(this.actions[this.actions.length - 1].line.range);
     }
 
     private constructor(
+
+        /**
+         * The line where this task is declared.
+         */
+        public readonly line: TextLine,
 
         /**
          * The range of the symbol of this task.
@@ -178,7 +182,7 @@ export class Task implements QuestResource {
     public static parse(line: TextLine): Task | undefined {
         const task = parser.tasks.parseTask(line.text);
         if (task) {
-            return new Task(wordRange(line, task.symbol), task);
+            return new Task(line, wordRange(line, task.symbol), task);
         }
     }
 }
