@@ -14,7 +14,7 @@ import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 import { Symbol, Task } from '../language/common';
-import { first } from '../extension';
+import { first, getOptions } from '../extension';
 
 /**
  * Analyses the QBN section of a quest.
@@ -120,7 +120,22 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         }
     }
 
+    const hintTaskActivationForm: boolean = getOptions()['diagnostics']['hintTaskActivationForm'];
     for (const action of context.qbn.iterateActions()) {
+        if (hintTaskActivationForm) {
+            if (action.isInvocationOf('start', 'task')) {
+                const task = context.qbn.getTask(action.signature[2].value);
+                if (task && task.isVariable) {
+                    yield Hints.changeStartTaskToSetVar(action.getRange(0));
+                }
+            } else if (action.isInvocationOf('setvar')) {
+                const task = context.qbn.getTask(action.signature[1].value);
+                if (task && !task.isVariable) {
+                    yield Hints.changeSetVarToStartTask(action.getRange(0));
+                }
+            }
+        }
+
         yield* analyseSignature(context, action.line, action.signature, true);
     }
 

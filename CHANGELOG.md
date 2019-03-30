@@ -12,6 +12,7 @@
 - QuickFix: suggest correct spelling for a message text alias.
 - QuickFix: convert empty task to variable.
 - Refactoring: convert variable to task.
+- Refactoring: switch `start task` and `setvar` when appropriate (`dftemplate.diagnostics.hintTaskActivationForm`).
 - Refactoring: extract group of actions to a new task.
 - If `dftemplate.tablesPath` is not set a open dialog is prompted at startup.
 

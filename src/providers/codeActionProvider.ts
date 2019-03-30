@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit } from 'vscode';
-import { first } from '../extension';
+import { first, getOptions } from '../extension';
 import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
@@ -17,6 +17,7 @@ import { QuestResource, Task } from '../language/common';
 import { Quest } from '../language/quest';
 import { DiagnosticCode } from '../diagnostics/common';
 import { symbols, wordRange } from '../parser';
+import { TemplateReferenceProvider } from './referenceProvider';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
@@ -236,8 +237,18 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                             action = new CodeAction('Convert to variable', CodeActionKind.QuickFix);
                             action.edit = new WorkspaceEdit();
                             action.edit.replace(document.uri, task.blockRange, `variable ${task.definition.symbol}`);
+                            if (getOptions()['diagnostics']['hintTaskActivationForm']) {
+                                TemplateCodeActionProvider.changeTextEdits(document,
+                                    TemplateReferenceProvider.taskReferences(quest, task, false), 'start task', 'setvar', action.edit);
+                            }
                             actions.push(action);
                         }
+                        break;
+                    case DiagnosticCode.ChangeStartTastToSetVar:
+                        actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'start task', 'setvar'));
+                        break;
+                    case DiagnosticCode.ChangeSetVarToStartTask:
+                        actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'setvar', 'start task'));
                         break;
                 }
             });
@@ -248,6 +259,10 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
                     action.edit = new WorkspaceEdit();
                     action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
+                    if (getOptions()['diagnostics']['hintTaskActivationForm']) {
+                        TemplateCodeActionProvider.changeTextEdits(document,
+                            TemplateReferenceProvider.taskReferences(quest, task, false), 'setvar', 'start task', action.edit);
+                    }
                     actions.push(action);
                 }
 
@@ -287,5 +302,21 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
         action.edit = new WorkspaceEdit();
         action.edit.replace(document.uri, range, value);
         return action;
+    }
+
+    private static changeText(document: vscode.TextDocument, range: vscode.Range, from: string, to: string) {
+        const action = new CodeAction(`Change to ${to}`, CodeActionKind.QuickFix);
+        action.edit = new WorkspaceEdit();
+        action.edit.replace(document.uri, wordRange(document.lineAt(range.start.line), from), to);
+        return action;
+    }
+
+    private static changeTextEdits(document: vscode.TextDocument, locations: vscode.Location[], from: string, to: string, edit: WorkspaceEdit) {
+        for (const location of locations) {
+            const range = wordRange(document.lineAt(location.range.start.line), from);
+            if (!range.isEmpty) {
+                edit.replace(document.uri, range, to);
+            }
+        }
     }
 }

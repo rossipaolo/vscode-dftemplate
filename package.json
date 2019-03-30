@@ -124,6 +124,11 @@
                     "default": 2500,
                     "description": "The number of milliseconds to delay before execution of live diagnostics. Key input restart the timer."
                 },
+                "dftemplate.diagnostics.hintTaskActivationForm": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Suggest usage of 'start task' and 'setvar' when appropriate."
+                },
                 "dftemplate.tablesPath": {
                     "type": "string",
                     "default": null,
