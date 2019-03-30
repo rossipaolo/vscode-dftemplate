@@ -175,6 +175,21 @@ export class Task implements QuestResource {
     }
 
     /**
+     * Checks if at least one action is fully within the given range
+     * and there are no actions which are only partially inside.
+     * @example 
+     * 'clicked item _item_'  // true
+     * 'cked item _item_'     // false
+     */
+    public isValidSubRange(range: Range): boolean {
+        const first = this.actions.find(x => x.line.lineNumber === range.start.line);
+        const last = this.actions.find(x => x.line.lineNumber === range.end.line);
+
+        return first !== undefined && range.start.character <= first.line.firstNonWhitespaceCharacterIndex &&
+            last !== undefined && /^\s*$/.test(last.line.text.substring(range.end.character));
+    }
+
+    /**
      * Attempts to parse a task definition.
      * @param line A text line with a task definition.
      * @returns A `Task` instance if parse operation was successful, `undefined` otherwise.
