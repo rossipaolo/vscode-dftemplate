@@ -13,7 +13,7 @@ import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { QuestResource } from '../language/common';
+import { QuestResource, Task } from '../language/common';
 import { Quest } from '../language/quest';
 import { DiagnosticCode } from '../diagnostics/common';
 import { symbols, wordRange } from '../parser';
@@ -24,6 +24,22 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
         vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
             if (vscode.window.activeTextEditor) {
                 vscode.window.activeTextEditor.insertSnippet(new vscode.SnippetString(snippet), range);
+            }
+        });
+
+        vscode.commands.registerTextEditorCommand('dftemplate.extractTask', async (textEditor: vscode.TextEditor, _, origin: Task, range: vscode.Range) => {
+            const replaceRange = new vscode.Range(new vscode.Position(range.start.line, 0), range.end);
+            const line = textEditor.document.lineAt(range.start.line);
+            const actionText = `${line.text.substring(0, line.firstNonWhitespaceCharacterIndex)}start task _taskName_`;
+
+            if (await textEditor.edit(editBuilder => {
+                editBuilder.replace(replaceRange, actionText);
+                editBuilder.insert(new vscode.Position(origin.blockRange.end.line + 2, 0),
+                    `_taskName_ task:\n${textEditor.document.getText(replaceRange)}\n\n`);
+            })) {
+                const pos = new vscode.Position(replaceRange.start.line, actionText.length - 1);
+                textEditor.selection = new vscode.Selection(pos, pos);
+                vscode.commands.executeCommand('editor.action.rename').then(undefined, () => { });
             }
         });
     }
@@ -233,6 +249,18 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     action.edit = new WorkspaceEdit();
                     action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
                     actions.push(action);
+                }
+
+                for (const task of quest.qbn.iterateTasks()) {
+                    if (task.isValidSubRange(range)) {
+                        const action = new CodeAction('Extract to new task', CodeActionKind.RefactorExtract);
+                        action.command = {
+                            title: action.title,
+                            command: 'dftemplate.extractTask',
+                            arguments: [task, range]
+                        };
+                        actions.push(action);
+                    }
                 }
             }
 
