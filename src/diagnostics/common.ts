@@ -35,6 +35,8 @@ export enum DiagnosticCode {
     SymbolNamingConvention,
     UseAliasForStaticMessage,
     ConvertTaskToVariable,
+    ChangeStartTastToSetVar,
+    ChangeSetVarToStartTask
 }
 
 export const Errors = {
@@ -104,7 +106,11 @@ export const Hints = {
     SymbolVariation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint),
     convertTaskToVariable: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.ConvertTaskToVariable, 'Empty task can be converted to variable.', DiagnosticSeverity.Hint)  
+        makeDiagnostic(range, DiagnosticCode.ConvertTaskToVariable, 'Empty task can be converted to variable.', DiagnosticSeverity.Hint),
+    changeStartTaskToSetVar: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.ChangeStartTastToSetVar, 'Variable can be activated with setvar.', DiagnosticSeverity.Hint),
+    changeSetVarToStartTask: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.ChangeSetVarToStartTask, 'Task can be activated with start task.', DiagnosticSeverity.Hint)
 };
 
 /**

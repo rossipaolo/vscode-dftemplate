@@ -237,7 +237,7 @@ export class Action {
      * @param index The index of a parameter.
      */
     public getRange(index?: number): Range {
-        if (index && this.signature.length > index) {
+        if (index !== undefined && this.signature.length > index) {
             return wordRange(this.line, this.signature[index].value);
         }
 
@@ -263,6 +263,15 @@ export class Action {
 
         return this.signature.length === other.signature.length &&
             !this.signature.find((parameter, index) => parameter.type !== other.signature[index].type);
+    }
+
+    /**
+     * Compares the parameter types of this action with the given words.
+     * @param args An array of words.
+     */
+    public isInvocationOf(...args: string[]) {
+        return args.length <= this.signature.length &&
+            args.find((arg, index) => arg !== this.signature[index].type) === undefined;
     }
 }
 
