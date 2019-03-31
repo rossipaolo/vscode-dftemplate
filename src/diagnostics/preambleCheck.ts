@@ -16,7 +16,7 @@ import { Quest } from '../language/quest';
  */
 export function* analysePreamble(context: Quest): Iterable<vscode.Diagnostic> {
     for (const action of context.preamble.directives) {
-        yield* analyseSignature(context, action.line, action.signature, true);
+        yield* analyseSignature(context, action.line, [action.parameter], false);
     }
 
     for (const line of context.preamble.failedParse) {

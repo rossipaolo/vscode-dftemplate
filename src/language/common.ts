@@ -5,7 +5,7 @@
 'use strict';
 
 import * as parser from '../parser';
-import { Range, TextLine } from "vscode";
+import { TextDocument, TextLine, Range } from "vscode";
 import { tasks, wordRange } from "../parser";
 import { QuestResourceCategory, SymbolType } from "./static/common";
 import { Modules } from "./static/modules";
@@ -33,6 +33,62 @@ export interface QuestResource {
 export interface Parameter {
     type: string;
     value: string;
+}
+
+/**
+ * A directive inside the quest preamble.
+ */
+export class Directive implements QuestResource {
+
+    public get blockRange(): Range {
+        return this.line.range;
+    }
+
+    private constructor(
+
+        /**
+         * The name of this directive, for example `Quest` in `Quest: name`.
+         */
+        public readonly name: string,
+
+        /**
+         * The single parameter of the directive, for example `name` in `Quest: name`.
+         */
+        public readonly parameter: Parameter,
+
+        /**
+         * The range of the directive name.
+         */
+        public readonly range: Range,
+
+        /**
+         * The line where the directive is defined.
+         */
+        public readonly line: TextLine
+    ) {
+    }
+
+    /**
+     * Attempts to parse a directive inside the preamble.
+     * @param line A text line with a directive.
+     * @returns A `Directive` instance if parse operation was successful, `undefined` otherwise.
+     */
+    public static parse(line: TextLine): Directive | undefined {
+        const split = line.text.trim().split(':', 2);
+        if (split.length === 2) {
+            const result = Language.getInstance().findKeyword(split[0]);
+            if (result) {
+                const match = result.signature.match(/[a-zA-Z]+: \${1:([a-zA-Z]+)}/);
+                if (match) {
+                    const parameter = {
+                        type: `\${${match[1]}}`,
+                        value: split[1].trim()
+                    };
+                    return new Directive(split[0].trim(), parameter, wordRange(line, split[0]), line);
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -205,12 +261,26 @@ export class Task implements QuestResource {
 /**
  * An action that belongs to a task and perform a specific function when task is active and conditions are met.
  */
-export class Action {
+export class Action implements QuestResource {
 
     public line: TextLine;
     public signature: Parameter[];
 
-    public constructor(line: TextLine, signature: string) {
+    /**
+     * The range of the first word that is not a parameter.
+     */
+    public get range(): Range {
+        return this.getRange(Math.max(this.signature.findIndex(x => !x.type.startsWith('$')), 0));
+    }
+
+    /**
+     * The range of the entire action.
+     */
+    public get blockRange(): Range {
+        return this.getRange();
+    }
+
+    private constructor(line: TextLine, signature: string) {
 
         function doParams(signatureItems: string[], lineItems: string[]): string[] {
             if (signatureItems[signatureItems.length - 1].indexOf('${...') !== -1) {
@@ -272,6 +342,18 @@ export class Action {
     public isInvocationOf(...args: string[]) {
         return args.length <= this.signature.length &&
             args.find((arg, index) => arg !== this.signature[index].type) === undefined;
+    }
+
+    /**
+     * Attempts to parse an action inside a task.
+     * @param line A text line with an action.
+     * @returns An `Action` instance if parse operation was successful, `undefined` otherwise.
+     */
+    public static parse(line: TextLine): Action | undefined {
+        const result = Modules.getInstance().findAction(line.text);
+        if (result) {
+            return new Action(line, result.getSignature());
+        }
     }
 }
 
@@ -347,21 +429,70 @@ export class Message implements QuestResource {
     }
 }
 
+export enum QuestBlockKind {
+    Preamble,
+    QRC,
+    QBN
+}
+
+export interface QuestParseContext {
+    document: TextDocument;
+    block: QuestBlock;
+    blockStart: number;
+    currentMessageBlock?: parser.messages.MessageBlock;
+    currentActionsBlock?: Action[];
+}
+
 /**
  * A block of a quest.
  */
 export abstract class QuestBlock {
-    public start: number | undefined;
-    public end: number | undefined;
+
+    private _range: Range | undefined;
+
+    /**
+     * Which block is this?
+     */
+    public abstract get kind(): QuestBlockKind;
+
+    /**
+     * Lines which can't be parsed as any known quest object.
+     */
     public readonly failedParse: TextLine[] = [];
 
+    /**
+     * True if this block has been found and parsed. Any line for which parse 
+     * operation was unsuccessful can be retrieved from `failedParse`.
+     */
     public get found(): boolean {
-        return this.start !== undefined;
+        return this._range !== undefined;
     }
 
+    /**
+     * The range of the entire block.
+     */
     public get range(): Range | undefined {
-        if (this.start !== undefined && this.end !== undefined) {
-            return new Range(this.start, 0, this.end, 0);
+        return this._range;
+    }
+
+    /**
+     * Parses a line of a document.
+     * @param line The line to parse.
+     * @param context Data for the current parse operation.
+     */
+    public abstract parse(line: TextLine, context: QuestParseContext): void;
+
+    /**
+     * Sets the range of this block in the parsed document.
+     * @param document The document where this block is found.
+     * @param start The first line number of this block.
+     * @param end The last line number of this block.
+     */
+    public setRange(document: TextDocument, start: number, end: number) {
+        if (this._range !== undefined) {
+            throw new Error('Quest block range is already set!');
         }
+
+        this._range = document.validateRange(new Range(start, 0, end, Infinity));
     }
 }

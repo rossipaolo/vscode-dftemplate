@@ -6,7 +6,7 @@
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
-import { getWord, makeSummary, isQuestReference, questIndexToName } from '../parser';
+import { getWord, makeSummary, isQuestReference } from '../parser';
 import { QuestResourceCategory } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
@@ -101,7 +101,7 @@ export class TemplateHoverProvider implements HoverProvider {
 
                 // Seek quest
                 if (isQuestReference(document.lineAt(position.line).text, word)) {
-                    const questName = !isNaN(Number(word)) ? questIndexToName(word) : word;
+                    const questName = Quest.indexToName(word);
                     return Quest.getAll(token).then(quests => {
                         const quest = quests.find(x => x.getName() === questName);
                         if (quest) {

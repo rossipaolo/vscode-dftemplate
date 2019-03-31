@@ -6,15 +6,13 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parser';
-
 import { TextDocument, Position, Location } from 'vscode';
 import { Quest } from '../language/quest';
-import { questIndexToName } from '../parser';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
     public provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Thenable<Location> {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
             const word = parser.getWord(document, position);
             if (word) {
 
@@ -22,9 +20,9 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
                     // Quest
                     return Quest.getAll(token).then(quests => {
-                        const questName = !isNaN(Number(word)) ? questIndexToName(word) : word;
+                        const questName = Quest.indexToName(word);
                         const found = quests.find(x => x.getName() === questName);
-                        return found ? resolve(found.getNameLocation()) : reject();
+                        return resolve(found ? found.getNameLocation() : undefined);
                     });
                 } else {
 
@@ -51,7 +49,7 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
                 }
             }
 
-            return reject();
+            return resolve();
         });
     }
 }

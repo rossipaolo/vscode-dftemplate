@@ -9,13 +9,13 @@ import { ReferenceProvider, TextDocument, Position, Location, CancellationToken,
 import { Quest } from '../language/quest';
 import { Symbol, Message, Task, Action } from '../language/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { questIndexToName, wordRange } from '../parser';
+import { wordRange } from '../parser';
 import { first } from '../extension';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
 
     public provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Thenable<Location[]> {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
             const line = document.lineAt(position.line);
             const word = parser.getWord(document, position);
             if (word) {
@@ -65,7 +65,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 }
             }
 
-            return reject();
+            return resolve();
         });
     }
 
@@ -204,7 +204,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     public static async questReferences(questNameOrId: string, includeDeclaration: boolean = true, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
         
-        questNameOrId = !isNaN(Number(questNameOrId)) ? questIndexToName(questNameOrId) : questNameOrId;
+        questNameOrId = Quest.indexToName(questNameOrId);
 
         const quests = await Quest.getAll(token);
         for (const quest of quests) { 
@@ -224,7 +224,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                                 locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
                             }
                         } else if (parameter.type === ParameterTypes.questID) {
-                            if (questIndexToName(parameter.value) === questNameOrId) {
+                            if (Quest.indexToName(parameter.value) === questNameOrId) {
                                 locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
                             }
                         }

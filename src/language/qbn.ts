@@ -7,14 +7,14 @@
 import * as parser from '../parser';
 import { TextLine, Range } from 'vscode';
 import { first } from '../extension';
-import { Symbol, QuestBlock, Task, Action, Parameter } from './common';
-import { QuestParseContext } from './quest';
-import { Modules } from './static/modules';
+import { QuestParseContext, QuestBlock, QuestBlockKind, Symbol, Task, Action, Parameter } from './common';
 
 /**
  * Quest resources and operation: the quest block that holds resources definition and tasks.
  */
 export class Qbn extends QuestBlock {
+
+    public readonly kind = QuestBlockKind.QBN;
 
     /**
      * Symbols that reference the resources used by the quest.
@@ -63,12 +63,12 @@ export class Qbn extends QuestBlock {
         }
 
         // Action invocation
-        const actionResult = Modules.getInstance().findAction(line.text);
-        if (actionResult) {
+        const action = Action.parse(line);
+        if (action) {
             if (!context.currentActionsBlock) {
                 context.currentActionsBlock = this.entryPoint;
             }
-            context.currentActionsBlock.push(new Action(line, actionResult.getSignature()));
+            context.currentActionsBlock.push(action);
             return;
         }
 
