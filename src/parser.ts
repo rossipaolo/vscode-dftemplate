@@ -76,13 +76,6 @@ export function isQuestReference(line: string, name: string) {
 }
 
 /**
- * Gets the name of a S000nnnn family quest from its index.
- */
-export function questIndexToName(index: string): string {
-    return 'S' + '0'.repeat(7 - index.length) + index;
-}
-
-/**
  * Parses a quest file to retrieve the ranges of **QRC** and **QBN** blocks.
  * @param document A quest document.
  */

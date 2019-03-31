@@ -5,15 +5,16 @@
 'use strict';
 
 import * as parser from '../parser';
-import { TextLine, TextDocument, Range, Position } from 'vscode';
-import { QuestBlock, Message, ContextMacro } from './common';
-import { QuestParseContext } from './quest';
+import { TextLine, Range, Position } from 'vscode';
 import { Tables } from './static/tables';
+import { QuestParseContext, QuestBlock, QuestBlockKind, Message, ContextMacro } from './common';
 
 /**
  * The quest block that holds text messages used by QBN resources.
  */
 export class Qrc extends QuestBlock {
+
+    public readonly kind = QuestBlockKind.QRC;
 
     /**
      * Messages definitions in this QRC block.
@@ -30,7 +31,7 @@ export class Qrc extends QuestBlock {
     * @param document A quest document.
     * @param line A line in QRC block.
     */
-    public parse(document: TextDocument, line: TextLine, context: QuestParseContext): void {
+    public parse(line: TextLine, context: QuestParseContext): void {
 
         // Inside a message block
         if (this.messages.length > 0 && context.currentMessageBlock && context.currentMessageBlock.isInside(line.lineNumber)) {
@@ -42,7 +43,7 @@ export class Qrc extends QuestBlock {
         const message = Message.parse(line);
         if (message) {
             this.messages.push(message);
-            context.currentMessageBlock = new parser.messages.MessageBlock(document, line.lineNumber);
+            context.currentMessageBlock = new parser.messages.MessageBlock(context.document, line.lineNumber);
             return;
         }   
 

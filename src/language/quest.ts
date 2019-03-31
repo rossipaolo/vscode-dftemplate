@@ -7,22 +7,10 @@
 import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { Action } from './common';
+import { QuestParseContext, QuestBlockKind } from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
-
-enum QuestBlock {
-    Preamble,
-    QRC,
-    QBN
-}
-
-export interface QuestParseContext {
-    block: QuestBlock;
-    currentMessageBlock?: parser.messages.MessageBlock;
-    currentActionsBlock?: Action[];
-}
 
 /**
  * A quest that corresponds to a text file.
@@ -51,45 +39,32 @@ export class Quest {
     private constructor(public readonly document: vscode.TextDocument) {
 
         const context: QuestParseContext = {
-            block: QuestBlock.Preamble
+            document: document,
+            block: this.preamble,
+            blockStart: 0
         };
-        this.preamble.start = 0;
 
         for (let index = 0; index < this.document.lineCount; index++) {
             const line = this.document.lineAt(index);
-    
+
             // Skip comments and empty lines
             if (parser.isEmptyOrComment(line.text)) {
                 continue;
             }
 
             // Parse blocks separated by QRC and QBN directives
-            switch (context.block) {
-                case QuestBlock.Preamble:
-                    if (line.text.indexOf('QRC:') !== -1) {
-                        context.block = QuestBlock.QRC;
-                        this.preamble.end = (this.qrc.start = line.lineNumber) - 1;
-                    } else {
-                        this.preamble.parse(line);
-                    }
-                    break;
-                case QuestBlock.QRC:
-                    if (line.text.indexOf('QBN:') !== -1) {
-                        context.block = QuestBlock.QBN;
-                        this.qrc.end = (this.qbn.start = line.lineNumber) - 1;
-                    } else {
-                        this.qrc.parse(this.document, line, context);
-                    }
-                    break;
-                case QuestBlock.QBN:
-                    this.qbn.parse(line, context);
-                    break;
+            if (context.block.kind === QuestBlockKind.Preamble && line.text.indexOf('QRC:') !== -1) {
+                context.block.setRange(document, 0, (context.blockStart = line.lineNumber) - 1);
+                context.block = this.qrc;
+            } else if (context.block.kind === QuestBlockKind.QRC && line.text.indexOf('QBN:') !== -1) {
+                context.block.setRange(document, 0, (context.blockStart = line.lineNumber) - 1);
+                context.block = this.qbn;
+            } else {
+                context.block.parse(line, context);
             }
         }
 
-        if (this.qbn.start) {
-            this.qbn.end = this.document.lineCount - 1;
-        }
+        context.block.setRange(document, context.blockStart, document.lineCount - 1);
         
         this.version = document.version;
     }
@@ -98,9 +73,9 @@ export class Quest {
      * Gets the name of this quest.
      */
     public getName(): string | undefined {
-        const nameDirective = this.preamble.questName;
-        if (nameDirective && nameDirective.signature.length > 1) {
-            return nameDirective.signature[1].value;
+        const directive = this.preamble.questName;
+        if (directive) {
+            return directive.parameter.value;
         }
     }
 
@@ -118,7 +93,7 @@ export class Quest {
      */
     public getNameLocation(): vscode.Location {
         const directive = this.preamble.questName;
-        const range = directive ? directive.getRange(1) : new vscode.Range(0, 0, 0, 0);
+        const range = directive ? directive.range : new vscode.Range(0, 0, 0, 0);
         return new vscode.Location(this.document.uri, this.document.validateRange(range));
     }
 
@@ -154,5 +129,14 @@ export class Quest {
         const documents = await Promise.all(uris.map(uri => vscode.workspace.openTextDocument(uri)));
         const quests = documents.filter(document => document.languageId === TEMPLATE_LANGUAGE);
         return quests.map(document => Quest.get(document));
+    }
+
+    /**
+     * Gets the name of a S000nnnn family quest from its index.
+     * @param idOrName Quest index or name.
+     * @returns The quest name if `idOrName` is actually an index, otherwise the string as is.
+     */
+    public static indexToName(idOrName: string) {
+        return !isNaN(Number(idOrName)) ? 'S' + '0'.repeat(7 - idOrName.length) + idOrName : idOrName;
     }
 }

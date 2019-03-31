@@ -97,8 +97,6 @@ function doDiagnostics(document: vscode.TextDocument) {
 function* failedAnalysis(context: Quest, name: string): Iterable<vscode.Diagnostic> {
     const questName = context.preamble.questName;
     if (questName) {
-        yield Errors.blockMissing(questName.line.range, name);
+        yield Errors.blockMissing(questName.range, name);
     }
-
-    return;
 }

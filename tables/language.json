@@ -171,11 +171,11 @@
         },
         "Quest": {
             "signature": "Quest: ${1:pattern}",
-            "summary": "`pattern` is the desired quest file name pattern."
+            "summary": "A short quest file name pattern. For example `_BRISIEN`."
         },
         "DisplayName": {
-            "signature": "DisplayName: ${1:ww}",
-            "summary": "A readable name for this quest."
+            "signature": "DisplayName: ${1:name}",
+            "summary": "An optional readable name for the quest used by the quest journal. For example `Lady Brisienna`."
         },
         "QRC": {
             "signature": "QRC:",
