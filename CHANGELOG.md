@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+### Fixed
+- Fixed formatting of `DisplayName` directive.
+
 ## 0.9.0
 
 ### Added

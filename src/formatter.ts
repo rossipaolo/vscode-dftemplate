@@ -40,10 +40,15 @@ export class Formatter {
             text: "Quest: $"
         },
         {
+            match: /^\s*DisplayName:\s*([^\s].*[^\s])\s*$/,
+            wanted: /^DisplayName:\s[^\s].*[^\s]+$/,
+            text: "DisplayName: $"
+        },
+        {
             match: /^\s*(QRC|QBN)\s*:\s*$/,
             wanted: /^(QRC|QBN):$/,
             text: "$:"
-        },
+        }
     ];
 
     private readonly document: TextDocument;
