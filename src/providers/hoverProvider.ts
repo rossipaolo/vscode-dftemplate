@@ -101,17 +101,14 @@ export class TemplateHoverProvider implements HoverProvider {
 
                 // Seek quest
                 if (isQuestReference(document.lineAt(position.line).text, word)) {
-                    const questName = Quest.indexToName(word);
                     return Quest.getAll(token).then(quests => {
+                        const questName = Quest.indexToName(word);
                         const quest = quests.find(x => x.getName() === questName);
-                        if (quest) {
-                            const item = {
-                                category: 'quest',
-                                signature: 'Quest: ' + quest.getName(),
-                                summary: quest.preamble.getDisplayName() || quest.getName()
-                            };
-                            return resolve(TemplateHoverProvider.makeHover(item));
-                        }
+                        return resolve(quest ? TemplateHoverProvider.makeHover({
+                            category: 'quest',
+                            signature: 'Quest: ' + quest.getName(),
+                            summary: quest.preamble.getDisplayName() || quest.getName()
+                        }) : undefined);
                     });
                 }
 
