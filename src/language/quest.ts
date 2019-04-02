@@ -98,6 +98,19 @@ export class Quest {
     }
 
     /**
+     * Registers to documents events.
+     */
+    public static initialize(): vscode.Disposable {
+        const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.txt', true, true, false);
+        fsWatcher.onDidDelete(uri => {
+            if (Quest.quests.has(uri.fsPath)) {
+                Quest.quests.delete(uri.fsPath);
+            }
+        });
+        return fsWatcher;
+    }
+    
+    /**
      * Gets a `Quest` instance for the given document.
      * @param document A text document with a quest to be parsed.
      */
@@ -111,24 +124,26 @@ export class Quest {
     }
 
     /**
-     * Deletes the stored `Quest` instance associated to the given document.
-     * @param document A document whose corresponding quest is to be deleted.
-     */
-    public static delete(document: vscode.TextDocument): void {
-        if (Quest.quests.has(document.uri.fsPath)) {
-            Quest.quests.delete(document.uri.fsPath);
-        }
-    }
-
-    /**
      * Gets all quests in the current workspace.
      * @param token An optional cancellation token.
      */
     public static async getAll(token?: vscode.CancellationToken): Promise<Quest[]> {
+        const quests: Quest[] = [];
+
         const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
-        const documents = await Promise.all(uris.map(uri => vscode.workspace.openTextDocument(uri)));
-        const quests = documents.filter(document => document.languageId === TEMPLATE_LANGUAGE);
-        return quests.map(document => Quest.get(document));
+        for (const uri of uris.filter(x => !Quest.isTable(x))) {
+            const quest = Quest.quests.get(uri.fsPath);
+            if (quest) {
+                quests.push(quest);
+            } else {
+                const document = await vscode.workspace.openTextDocument(uri);
+                if (document && document.languageId === TEMPLATE_LANGUAGE) {
+                    quests.push(Quest.get(document));
+                }
+            }
+        }
+
+        return quests;
     }
 
     /**
@@ -138,5 +153,13 @@ export class Quest {
      */
     public static indexToName(idOrName: string) {
         return !isNaN(Number(idOrName)) ? 'S' + '0'.repeat(7 - idOrName.length) + idOrName : idOrName;
+    }
+    
+    /**
+     * Checks if the given uri corresponds to a quests table.
+     * @param uri A document uri.
+     */
+    public static isTable(uri: vscode.Uri): boolean {
+        return /Quest(s|List)-[a-zA-Z]+\.txt$/.test(uri.fsPath);
     }
 }

@@ -5,8 +5,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
-
 import { TEMPLATE_LANGUAGE, getOptions } from '../extension';
 import { analysePreamble } from './preambleCheck';
 import { analyseQrc } from './qrcCheck';
@@ -78,7 +76,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
  */
 function doDiagnostics(document: vscode.TextDocument) {
 
-    if (parser.isQuestTable(document)) {
+    if (Quest.isTable(document.uri)) {
         
         // Analyse table
         return Array.from(tableCheck(document));
