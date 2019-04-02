@@ -7,7 +7,8 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 1. Install the Template extension for Visual Studio Code from **Extensions > drop-down > [Install from VSIX](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix)**.
 2. Open **Preferences > Settings > User Settings** and set **dftemplate.tablesPath** to point to _StreamingAssets/Tables_.
 3. Open the project folder or workspace, then from **Preferences > Settings > Workspace Settings** set files associations. For example, it may looks like this:
-    ```
+
+    ```json
     "files.associations": {
         "**/Quests/**/*.txt": "dftemplate"
     }
@@ -19,28 +20,28 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 * Snippets
 * Smart bracket matching
 * Show Hovers
-    + Show informations for symbols
-    + Use comment block above symbol as a summary
+    * Show informations for symbols
+    * Use comment block above symbol as a summary
 * Completion proposals
-    + Keywords, symbol definitions and action/condition invocations
-    + Symbols based on action signature
-    + Constants from quest tables
+    * Keywords, symbol definitions and action/condition invocations
+    * Symbols based on action signature
+    * Constants from quest tables
 * Help with symbol and action/condition signatures
 * Go to definition/Peek definition/Find all references
-    + Symbols in quest file
-    + Seek other quests in workspace
+    * Symbols in quest file
+    * Seek other quests in workspace
 * Show all symbol and task definitions
 * Show all quests in workspace
 * CodeLenses with references and other details
 * Rename symbols
-    + Keep symbol variations (prefixes) in QRC block
+    * Keep symbol variations (prefixes) in QRC block
 * Format source code
-    + Auto indent centered messages and tasks
-    + Support format on type
+    * Auto indent centered messages and tasks
+    * Support format on type
 * Diagnostics and action suggestions
-    + Find issues with symbol definitions and action/condition invocations
-    + Suggest symbol variations in QRC block
-    + Find duplicated or unused declarations
+    * Find issues with symbol definitions and action/condition invocations
+    * Suggest symbol variations in QRC block
+    * Find duplicated or unused declarations
 
 ## Language Data
 
