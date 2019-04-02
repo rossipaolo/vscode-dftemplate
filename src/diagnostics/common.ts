@@ -24,6 +24,7 @@ export enum DiagnosticCode {
     UndefinedSymbol,
     UndefinedTask,
     UndefinedAttribute,
+    UndefinedQuest,
     MissingPositiveSign,
     GenericWarning,
     UnusedDeclarationMessage,
@@ -66,6 +67,8 @@ export const Errors = {
         makeDiagnostic(range, DiagnosticCode.UndefinedSymbol, 'Reference to undefined symbol: ' + symbol + '.', DiagnosticSeverity.Error),
     undefinedTask: (range: Range, symbol: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedTask, 'Reference to undefined task: ' + symbol + '.', DiagnosticSeverity.Error),
+    undefinedQuest: (range: Range, name: string) =>
+        makeDiagnostic(range, DiagnosticCode.UndefinedQuest, 'Reference to undefined quest: ' + name + '.', DiagnosticSeverity.Error),
     undefinedAttribute: (range: Range, name: string, group: string) =>
         makeDiagnostic(range, DiagnosticCode.UndefinedAttribute, "The name '" + name + "' doesn't exist in the attribute group '" + group + "'.", DiagnosticSeverity.Error),
     undefinedExpression: (range: Range, block: string) =>
