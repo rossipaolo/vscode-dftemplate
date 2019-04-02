@@ -45,242 +45,241 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
         });
     }
 
-    public provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext):
-        Thenable<vscode.CodeAction[]> {
+    public async provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext):
+        Promise<vscode.CodeAction[]> {
 
-        return new Promise(resolve => {
+        const quest = Quest.get(document);
+        const actions: vscode.CodeAction[] = [];
 
-            const quest = Quest.get(document);
-            const actions: vscode.CodeAction[] = [];
-
-            context.diagnostics.filter(x => range.intersection(x.range)).forEach(diagnostic => {
-                let action: CodeAction | undefined;
-                switch (diagnostic.code) {
-                    case DiagnosticCode.DuplicatedMessageNumber:
-                        const duplicatedMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
-                        if (duplicatedMessage) {
-                            const newMessageID = quest.qrc.getAvailableId(duplicatedMessage.id);
-                            action = new CodeAction(`Change ${duplicatedMessage.id} to ${newMessageID}`);
-                            action.kind = CodeActionKind.QuickFix;
-                            action.edit = new WorkspaceEdit();
-                            action.edit.replace(document.uri, diagnostic.range, String(newMessageID));
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.UnusedDeclarationMessage:
-                        action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qrc.messages);
-                        if (action) {
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.UnusedDeclarationSymbol:
-                        action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qbn.iterateSymbols());
-                        if (action) {
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.UnusedDeclarationTask:
-                        action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qbn.iterateTasks());
-                        if (action) {
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedExpression:
-                        const prefix = parser.getFirstWord((document.lineAt(diagnostic.range.start.line).text));
-                        if (prefix) {
-                            for (const signature of [
-                                ...Language.getInstance().caseInsensitiveSeek(prefix),
-                                ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
-                                action = new CodeAction(`Change to '${StaticData.prettySignature(signature)}'`);
-                                action.command = {
-                                    title: action.title,
-                                    command: 'dftemplate.insertSnippetAtRange',
-                                    arguments: [signature, diagnostic.range]
-                                };
-                                actions.push(action);
-                            }
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedStaticMessage:
-                        const message = quest.qrc.getMessage(diagnostic.range);
-                        if (message && message.alias) {
-                            const aliasRange = wordRange(document.lineAt(diagnostic.range.start.line), message.alias);
-                            for (const [name, id] of Tables.getInstance().staticMessagesTable.messages) {
-                                if (id === message.id) {
-                                    action = new CodeAction(`Change to '${name}'`, CodeActionKind.QuickFix);
-                                    action.edit = new WorkspaceEdit();
-                                    action.edit.replace(document.uri, aliasRange, name);
-                                    actions.push(action);
-                                }
-                            }
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedMessage:
-                        const messageParameter = quest.qbn.getParameter(diagnostic.range);
-                        if (messageParameter) {
-                            let messages: string[] = [];
-                            if (messageParameter.type !== ParameterTypes.messageName) {
-                                messages = messages.concat(quest.qrc.messages.map(x => String(x.id)));
-                            }
-                            if (messageParameter.type !== ParameterTypes.messageID) {
-                                messages = messages.concat(quest.qrc.messages.filter(x => x.alias).map(x => x.alias) as string[]);
-                            }
-
-                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, messages);
-                            if (action) {
-                                actions.push(action);
-                            }
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedContextMacro:
-                        action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, Language.getInstance().contextMacros);
-                        if (action) {
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedSymbol:
-                        const symbolParameter = quest.qbn.getParameter(diagnostic.range);
-                        if (symbolParameter) {
-                            const symbolNames = Array.from(quest.qbn.iterateSymbols())
-                                .filter(x => x.type === symbols.symbolPlaceholderToType(symbolParameter.type))
-                                .map(x => x.name);
-                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
-                        } else if (quest.qrc.range && quest.qrc.range.contains(diagnostic.range)) {
-                            const symbol = document.getText(diagnostic.range);
-                            const name = parser.symbols.getSymbolName(symbol);
-                            const symbolNames = Array.from(quest.qbn.iterateSymbols())
-                                .map(x => symbol.replace(name, parser.symbols.getSymbolName(x.name)));
-                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
-                        }
-                        if (action) {
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedTask:
-                        const taskParameter = quest.qbn.getParameter(diagnostic.range);
-                        if (taskParameter) {
-                            const taskNames = Array.from(quest.qbn.iterateTasks()).map(x => x.definition.symbol);
-                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames);
-                            if (action) {
-                                actions.push(action);
-                            }
-                        }
-                        break;
-                    case DiagnosticCode.UndefinedAttribute:
-                        const parameter = quest.qbn.getParameter(diagnostic.range);
-                        if (parameter) {
-                            const values = Tables.getInstance().getValues(parameter.type);
-                            if (values) {
-                                action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, values);
-                                if (action) {
-                                    actions.push(action);
-                                }
-                            }
-                        }
-                        break;
-                    case DiagnosticCode.ClockWithoutTask:
-                        const clockName = document.getText(diagnostic.range);
-                        const clockTaskPos = document.lineAt(document.lineCount - 1).rangeIncludingLineBreak.end;
-                        action = new CodeAction('Make clock task', CodeActionKind.QuickFix);   
+        for (const diagnostic of context.diagnostics) {
+            let action: CodeAction | undefined;
+            switch (diagnostic.code) {
+                case DiagnosticCode.DuplicatedMessageNumber:
+                    const duplicatedMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
+                    if (duplicatedMessage) {
+                        const newMessageID = quest.qrc.getAvailableId(duplicatedMessage.id);
+                        action = new CodeAction(`Change ${duplicatedMessage.id} to ${newMessageID}`);
+                        action.kind = CodeActionKind.QuickFix;
                         action.edit = new WorkspaceEdit();
-                        action.edit.insert(document.uri, clockTaskPos, `\n\n${clockName} task:`);
+                        action.edit.replace(document.uri, diagnostic.range, String(newMessageID));
                         actions.push(action);
-                        action = new CodeAction('Make clock variable', CodeActionKind.QuickFix);
-                        action.edit = new WorkspaceEdit();
-                        action.edit.insert(document.uri, clockTaskPos, `\n\nvariable ${clockName}`);
+                    }
+                    break;
+                case DiagnosticCode.UnusedDeclarationMessage:
+                    action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qrc.messages);
+                    if (action) {
                         actions.push(action);
-                        break;
-                    case DiagnosticCode.IncorrectSymbolVariation:
-                        const currentSymbol = document.getText(diagnostic.range);
-                        const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
-                        if (symbolDefinition) {
-                            Language.getInstance().getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
-                                const title = `Change ${currentSymbol} to ${newSymbol.word} (${newSymbol.description})`;
-                                const action = new vscode.CodeAction(title);
-                                action.kind = diagnostic.severity === DiagnosticSeverity.Hint ? CodeActionKind.Empty : CodeActionKind.QuickFix;
-                                action.edit = new vscode.WorkspaceEdit();
-                                action.edit.replace(document.uri, diagnostic.range, newSymbol.word);
-                                actions.push(action);
-                            });
+                    }
+                    break;
+                case DiagnosticCode.UnusedDeclarationSymbol:
+                    action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qbn.iterateSymbols());
+                    if (action) {
+                        actions.push(action);
+                    }
+                    break;
+                case DiagnosticCode.UnusedDeclarationTask:
+                    action = TemplateCodeActionProvider.removeUnusedResource(document, diagnostic, quest.qbn.iterateTasks());
+                    if (action) {
+                        actions.push(action);
+                    }
+                    break;
+                case DiagnosticCode.UndefinedExpression:
+                    const prefix = parser.getFirstWord((document.lineAt(diagnostic.range.start.line).text));
+                    if (prefix) {
+                        for (const signature of [
+                            ...Language.getInstance().caseInsensitiveSeek(prefix),
+                            ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
+                            action = new CodeAction(`Change to '${StaticData.prettySignature(signature)}'`);
+                            action.command = {
+                                title: action.title,
+                                command: 'dftemplate.insertSnippetAtRange',
+                                arguments: [signature, diagnostic.range]
+                            };
+                            actions.push(action);
                         }
-                        break;
-                    case DiagnosticCode.MissingPositiveSign:
-                        action = new vscode.CodeAction(`Change to +${document.getText(diagnostic.range)}`, vscode.CodeActionKind.QuickFix);
-                        action.edit = new vscode.WorkspaceEdit();
-                        action.edit.insert(document.uri, diagnostic.range.start, '+');
+                    }
+                    break;
+                case DiagnosticCode.UndefinedStaticMessage:
+                    const message = quest.qrc.getMessage(diagnostic.range);
+                    if (message && message.alias) {
+                        const aliasRange = wordRange(document.lineAt(diagnostic.range.start.line), message.alias);
+                        for (const [name, id] of Tables.getInstance().staticMessagesTable.messages) {
+                            if (id === message.id) {
+                                action = new CodeAction(`Change to '${name}'`, CodeActionKind.QuickFix);
+                                action.edit = new WorkspaceEdit();
+                                action.edit.replace(document.uri, aliasRange, name);
+                                actions.push(action);
+                            }
+                        }
+                    }
+                    break;
+                case DiagnosticCode.UndefinedMessage:
+                    const messageParameter = quest.qbn.getParameter(diagnostic.range);
+                    if (messageParameter) {
+                        let messages: string[] = [];
+                        if (messageParameter.type !== ParameterTypes.messageName) {
+                            messages = messages.concat(quest.qrc.messages.map(x => String(x.id)));
+                        }
+                        if (messageParameter.type !== ParameterTypes.messageID) {
+                            messages = messages.concat(quest.qrc.messages.filter(x => x.alias).map(x => x.alias) as string[]);
+                        }
+
+                        action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, messages);
+                        if (action) {
+                            actions.push(action);
+                        }
+                    }
+                    break;
+                case DiagnosticCode.UndefinedContextMacro:
+                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, Language.getInstance().contextMacros);
+                    if (action) {
                         actions.push(action);
-                        break;
-                    case DiagnosticCode.SymbolNamingConvention:
+                    }
+                    break;
+                case DiagnosticCode.UndefinedSymbol:
+                    const symbolParameter = quest.qbn.getParameter(diagnostic.range);
+                    if (symbolParameter) {
+                        const symbolNames = Array.from(quest.qbn.iterateSymbols())
+                            .filter(x => x.type === symbols.symbolPlaceholderToType(symbolParameter.type))
+                            .map(x => x.name);
+                        action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
+                    } else if (quest.qrc.range && quest.qrc.range.contains(diagnostic.range)) {
                         const symbol = document.getText(diagnostic.range);
-                        const newName = parser.symbols.forceSymbolNamingConventions(symbol);
-                        action = new CodeAction(`Rename ${symbol} to ${newName}`, CodeActionKind.QuickFix);
-                        action.edit = new WorkspaceEdit();
-                        action.edit.replace(document.uri, diagnostic.range, newName);
+                        const name = parser.symbols.getSymbolName(symbol);
+                        const symbolNames = Array.from(quest.qbn.iterateSymbols())
+                            .map(x => symbol.replace(name, parser.symbols.getSymbolName(x.name)));
+                        action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, symbolNames);
+                    }
+                    if (action) {
                         actions.push(action);
-                        break;
-                    case DiagnosticCode.UseAliasForStaticMessage:
-                        const numericMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
-                        if (numericMessage) {
-                            for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
-                                if (id === numericMessage.id) {
-                                    action = new CodeAction(`Convert ${numericMessage.id} to ${alias}`, CodeActionKind.QuickFix);
-                                    action.edit = new WorkspaceEdit();
-                                    action.edit.replace(document.uri, document.lineAt(numericMessage.range.start.line).range, `${alias}:   [${numericMessage.id}]`);
-                                    actions.push(action);
-                                }
-                            }
+                    }
+                    break;
+                case DiagnosticCode.UndefinedTask:
+                    const taskNames = Array.from(quest.qbn.iterateTasks()).map(x => x.definition.symbol);
+                    actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames));
+                    break;
+                case DiagnosticCode.UndefinedQuest:
+                    const questNames = (await Quest.getAll()).reduce((names, quest) => {
+                        const name = quest.getName();
+                        if (name) {
+                            names.push(name);
                         }
-                        break;
-                    case DiagnosticCode.ConvertTaskToVariable:
-                        const task = quest.qbn.getTask(diagnostic.range);
-                        if (task) {
-                            action = new CodeAction('Convert to variable', CodeActionKind.QuickFix);
-                            action.edit = new WorkspaceEdit();
-                            action.edit.replace(document.uri, task.blockRange, `variable ${task.definition.symbol}`);
-                            if (getOptions()['diagnostics']['hintTaskActivationForm']) {
-                                TemplateCodeActionProvider.changeTextEdits(document,
-                                    TemplateReferenceProvider.taskReferences(quest, task, false), 'start task', 'setvar', action.edit);
-                            }
-                            actions.push(action);
-                        }
-                        break;
-                    case DiagnosticCode.ChangeStartTastToSetVar:
-                        actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'start task', 'setvar'));
-                        break;
-                    case DiagnosticCode.ChangeSetVarToStartTask:
-                        actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'setvar', 'start task'));
-                        break;
-                }
-            });
 
-            if (!range.isEmpty) {
-                const task = quest.qbn.getTask(range);
-                if (task && task.definition.type === parser.tasks.TaskType.Variable) {
-                    const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
+                        return names;
+                    }, [] as string[]);
+                    actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, questNames));
+                    break;
+                case DiagnosticCode.UndefinedAttribute:
+                    const parameter = quest.qbn.getParameter(diagnostic.range);
+                    if (parameter) {
+                        const values = Tables.getInstance().getValues(parameter.type);
+                        if (values) {
+                            actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, values));
+                        }
+                    }
+                    break;
+                case DiagnosticCode.ClockWithoutTask:
+                    const clockName = document.getText(diagnostic.range);
+                    const clockTaskPos = document.lineAt(document.lineCount - 1).rangeIncludingLineBreak.end;
+                    action = new CodeAction('Make clock task', CodeActionKind.QuickFix);
                     action.edit = new WorkspaceEdit();
-                    action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
-                    if (getOptions()['diagnostics']['hintTaskActivationForm']) {
-                        TemplateCodeActionProvider.changeTextEdits(document,
-                            TemplateReferenceProvider.taskReferences(quest, task, false), 'setvar', 'start task', action.edit);
-                    }
+                    action.edit.insert(document.uri, clockTaskPos, `\n\n${clockName} task:`);
                     actions.push(action);
-                }
-
-                for (const task of quest.qbn.iterateTasks()) {
-                    if (task.isValidSubRange(range)) {
-                        const action = new CodeAction('Extract to new task', CodeActionKind.RefactorExtract);
-                        action.command = {
-                            title: action.title,
-                            command: 'dftemplate.extractTask',
-                            arguments: [task, range]
-                        };
+                    action = new CodeAction('Make clock variable', CodeActionKind.QuickFix);
+                    action.edit = new WorkspaceEdit();
+                    action.edit.insert(document.uri, clockTaskPos, `\n\nvariable ${clockName}`);
+                    actions.push(action);
+                    break;
+                case DiagnosticCode.IncorrectSymbolVariation:
+                    const currentSymbol = document.getText(diagnostic.range);
+                    const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
+                    if (symbolDefinition) {
+                        Language.getInstance().getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
+                            const title = `Change ${currentSymbol} to ${newSymbol.word} (${newSymbol.description})`;
+                            const action = new vscode.CodeAction(title);
+                            action.kind = diagnostic.severity === DiagnosticSeverity.Hint ? CodeActionKind.Empty : CodeActionKind.QuickFix;
+                            action.edit = new vscode.WorkspaceEdit();
+                            action.edit.replace(document.uri, diagnostic.range, newSymbol.word);
+                            actions.push(action);
+                        });
+                    }
+                    break;
+                case DiagnosticCode.MissingPositiveSign:
+                    action = new vscode.CodeAction(`Change to +${document.getText(diagnostic.range)}`, vscode.CodeActionKind.QuickFix);
+                    action.edit = new vscode.WorkspaceEdit();
+                    action.edit.insert(document.uri, diagnostic.range.start, '+');
+                    actions.push(action);
+                    break;
+                case DiagnosticCode.SymbolNamingConvention:
+                    const symbol = document.getText(diagnostic.range);
+                    const newName = parser.symbols.forceSymbolNamingConventions(symbol);
+                    action = new CodeAction(`Rename ${symbol} to ${newName}`, CodeActionKind.QuickFix);
+                    action.edit = new WorkspaceEdit();
+                    action.edit.replace(document.uri, diagnostic.range, newName);
+                    actions.push(action);
+                    break;
+                case DiagnosticCode.UseAliasForStaticMessage:
+                    const numericMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
+                    if (numericMessage) {
+                        for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
+                            if (id === numericMessage.id) {
+                                action = new CodeAction(`Convert ${numericMessage.id} to ${alias}`, CodeActionKind.QuickFix);
+                                action.edit = new WorkspaceEdit();
+                                action.edit.replace(document.uri, document.lineAt(numericMessage.range.start.line).range, `${alias}:   [${numericMessage.id}]`);
+                                actions.push(action);
+                            }
+                        }
+                    }
+                    break;
+                case DiagnosticCode.ConvertTaskToVariable:
+                    const task = quest.qbn.getTask(diagnostic.range);
+                    if (task) {
+                        action = new CodeAction('Convert to variable', CodeActionKind.QuickFix);
+                        action.edit = new WorkspaceEdit();
+                        action.edit.replace(document.uri, task.blockRange, `variable ${task.definition.symbol}`);
+                        if (getOptions()['diagnostics']['hintTaskActivationForm']) {
+                            TemplateCodeActionProvider.changeTextEdits(document,
+                                TemplateReferenceProvider.taskReferences(quest, task, false), 'start task', 'setvar', action.edit);
+                        }
                         actions.push(action);
                     }
+                    break;
+                case DiagnosticCode.ChangeStartTastToSetVar:
+                    actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'start task', 'setvar'));
+                    break;
+                case DiagnosticCode.ChangeSetVarToStartTask:
+                    actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'setvar', 'start task'));
+                    break;
+            }
+        }
+
+        if (!range.isEmpty) {
+            const task = quest.qbn.getTask(range);
+            if (task && task.definition.type === parser.tasks.TaskType.Variable) {
+                const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
+                action.edit = new WorkspaceEdit();
+                action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
+                if (getOptions()['diagnostics']['hintTaskActivationForm']) {
+                    TemplateCodeActionProvider.changeTextEdits(document,
+                        TemplateReferenceProvider.taskReferences(quest, task, false), 'setvar', 'start task', action.edit);
                 }
+                actions.push(action);
             }
 
-            return resolve(actions);
-        });
+            for (const task of quest.qbn.iterateTasks()) {
+                if (task.isValidSubRange(range)) {
+                    const action = new CodeAction('Extract to new task', CodeActionKind.RefactorExtract);
+                    action.command = {
+                        title: action.title,
+                        command: 'dftemplate.extractTask',
+                        arguments: [task, range]
+                    };
+                    actions.push(action);
+                }
+            }
+        }
+
+        return actions;
     }
 
     private static removeUnusedResource(document: vscode.TextDocument, diagnostic: vscode.Diagnostic, resources: Iterable<QuestResource>):

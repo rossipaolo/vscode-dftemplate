@@ -4,6 +4,7 @@
 
 ### Added
 - Diagnostics for references to undefined quests.
+- QuickFix: suggest best match for reference to unknown quest.
 
 ### Fixed
 - Fixed formatting of `DisplayName` directive.
