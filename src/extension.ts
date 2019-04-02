@@ -70,7 +70,7 @@ export function activate(context: ExtensionContext) {
         }
 
         registerCommands(context);
-        context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(document => Quest.delete(document)));
+        context.subscriptions.push(Quest.initialize());
     }).catch(e => vscode.window.showErrorMessage(`Initialization failed: ${e}`));
 }
 

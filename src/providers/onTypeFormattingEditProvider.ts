@@ -5,9 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
-
 import { Formatter } from '../formatter';
+import { Quest } from '../language/quest';
 
 export class TemplateOnTypingFormatter implements vscode.OnTypeFormattingEditProvider {
 
@@ -16,7 +15,7 @@ export class TemplateOnTypingFormatter implements vscode.OnTypeFormattingEditPro
         return new Promise(resolve => {
             const formatter = new Formatter(document, options, false);
             const line = document.lineAt(position.line);
-            return resolve(parser.isQuestTable(document) ?
+            return resolve(Quest.isTable(document.uri) ?
             formatter.formatTable(line.rangeIncludingLineBreak) : formatter.formatQuest(line.rangeIncludingLineBreak));
         });
     }
