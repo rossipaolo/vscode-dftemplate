@@ -93,7 +93,7 @@ export class Quest {
      */
     public getNameLocation(): vscode.Location {
         const directive = this.preamble.questName;
-        const range = directive ? directive.range : new vscode.Range(0, 0, 0, 0);
+        const range = directive ? directive.valueRange : new vscode.Range(0, 0, 0, 0);
         return new vscode.Location(this.document.uri, this.document.validateRange(range));
     }
 

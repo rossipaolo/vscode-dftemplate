@@ -44,6 +44,13 @@ export class Directive implements QuestResource {
         return this.line.range;
     }
 
+    /**
+     * The range of the directive value.
+     */
+    public get valueRange(): Range {
+        return wordRange(this.line, this.parameter.value);
+    }
+
     private constructor(
 
         /**
