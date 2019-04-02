@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Diagnostics for references to undefined quests.
+
 ### Fixed
 - Fixed formatting of `DisplayName` directive.
 - Fixed hover when the symbol below the cursor is the name of a quest which is not found in the workspace.
