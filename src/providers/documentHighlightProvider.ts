@@ -5,59 +5,59 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
-import { first } from '../extension';
 
 export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlightProvider {
 
-    public provideDocumentHighlights(document: vscode.TextDocument, position: vscode.Position): Thenable<vscode.DocumentHighlight[]> {
-        return new Promise((resolve, reject) => {
+    public async provideDocumentHighlights(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.DocumentHighlight[] | undefined> {
 
-            const word = parser.getWord(document, position);
-            if (word) {
+        if (Quest.isTable(document.uri)) {
+            return;
+        }
 
-                const quest = Quest.get(document);
+        const range = document.getWordRangeAtPosition(position);
+        if (!range) {
+            return;
+        }
 
-                // Message
-                const message = quest.qrc.getMessage(word);
-                if (message) {
-                    return resolve(TemplateDocumentHighlightProvider.makeHighlights(
-                        TemplateReferenceProvider.messageReferences(quest, message, false), message.range));
-                }
+        const word = document.getText(range);
+        const quest = Quest.get(document);
 
-                // Symbol
-                const symbol = quest.qbn.getSymbol(word);
-                if (symbol) {
-                    return resolve(TemplateDocumentHighlightProvider.makeHighlights(
-                        TemplateReferenceProvider.symbolReferences(quest, symbol, false), symbol.range));
-                }
+        // Message
+        const message = quest.qrc.getMessage(word);
+        if (message) {
+            return TemplateDocumentHighlightProvider.makeHighlights(
+                TemplateReferenceProvider.messageReferences(quest, message, false), message.range);
+        }
 
-                // Task
-                const task = quest.qbn.getTask(word);
-                if (task) {
-                    return resolve(TemplateDocumentHighlightProvider.makeHighlights(
-                        TemplateReferenceProvider.taskReferences(quest, task, false), task.range));
-                }
+        // Symbol
+        const symbol = quest.qbn.getSymbol(word);
+        if (symbol) {
+            return TemplateDocumentHighlightProvider.makeHighlights(
+                TemplateReferenceProvider.symbolReferences(quest, symbol, false), symbol.range);
+        }
 
-                // Action
-                const action = first(quest.qbn.iterateActions(), x => x.line.lineNumber === position.line);
-                if (action && action.getName() === word) {
-                    return resolve(TemplateDocumentHighlightProvider.makeHighlights(
-                        TemplateReferenceProvider.actionReferences(quest, action)));
-                }
+        // Task
+        const task = quest.qbn.getTask(word);
+        if (task) {
+            return TemplateDocumentHighlightProvider.makeHighlights(
+                TemplateReferenceProvider.taskReferences(quest, task, false), task.range);
+        }
 
-                // Symbol macro
-                if (word.startsWith('%')) {
-                    return resolve(TemplateDocumentHighlightProvider.makeHighlights(
-                        TemplateReferenceProvider.symbolMacroReferences(quest, word)
-                    ));
-                }
-            }
+        // Action
+        const action = quest.qbn.getAction(range);
+        if (action) {
+            return TemplateDocumentHighlightProvider.makeHighlights(
+                TemplateReferenceProvider.actionReferences(quest, action));
+        }
 
-            return reject();
-        });
+        // Symbol macro
+        if (word.startsWith('%')) {
+            return TemplateDocumentHighlightProvider.makeHighlights(
+                TemplateReferenceProvider.symbolMacroReferences(quest, word)
+            );
+        }
     }
 
     private static makeHighlights(references: vscode.Location[], definition?: vscode.Range) {
