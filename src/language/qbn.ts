@@ -120,6 +120,14 @@ export class Qbn extends QuestBlock {
     }
 
     /**
+     * Gets an action.
+     * @param range A range in this QBN block.
+     */
+    public getAction(range: Range): Action | undefined {
+        return first(this.iterateActions(), x => x.range.isEqual(range));
+    }
+
+    /**
      * Gets a parameter of a symbol definition or an action.
      * @param range The range of the parameter in the document.
      */
