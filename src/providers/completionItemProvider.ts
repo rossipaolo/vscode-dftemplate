@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
+import { getTableSchema } from '../parser';
 import { QuestResourceCategory, SymbolType, QuestResourceInfo } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
@@ -21,6 +22,11 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         const line = document.lineAt(position.line);
         const text = line.text.substring(0, position.character - 2).trim();
         const prefix = TemplateCompletionItemProvider.getPrefix(line.text, position.character);
+
+        if (Quest.isTable(document.uri)) {
+            return TemplateCompletionItemProvider.tableCompletionItems(document, prefix);
+        }
+
         const quest = Quest.get(document);
 
         if (quest.preamble.range && quest.preamble.range.contains(position)) {
@@ -176,6 +182,23 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
 
         return items;
+    }
+
+    private static tableCompletionItems(document: TextDocument, prefix: string): CompletionItem[] {
+        if ('entry'.startsWith(prefix)) {
+            const schema = getTableSchema(document);
+            if (schema) {
+                const snippet = schema.map((value, index) => `\${${index + 1}:${value}}`).join(', ');
+                const completionItem = new CompletionItem('entry', vscode.CompletionItemKind.Snippet);
+                completionItem.detail = schema.join(', ');
+                completionItem.documentation = 'A new entry in this table following its schema.';
+                completionItem.insertText = new vscode.SnippetString(snippet);
+                completionItem.command = TemplateCompletionItemProvider.signatureInfoCommand;
+                return [completionItem];
+            }
+        }
+
+        return [];
     }
 
     private static signatureCompletionItem(resourceInfo: QuestResourceInfo): CompletionItem {

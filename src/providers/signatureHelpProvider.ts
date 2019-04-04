@@ -16,12 +16,28 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
 
     public async provideSignatureHelp(document: TextDocument, position: Position): Promise<SignatureHelp | undefined> {
 
-        if (Quest.isTable(document.uri)) {
+        const text = document.lineAt(position.line).text;
+        if (parser.isEmptyOrComment(text)) {
             return;
         }
 
-        const text = document.lineAt(position.line).text;
-        if (parser.isEmptyOrComment(text)) {
+        if (Quest.isTable(document.uri)) {
+
+            if (!/^\s*schema:/.test(text)) {
+                const schema = parser.getTableSchema(document);
+                if (schema) {
+                    const signatureHelp = new SignatureHelp();
+                    const signatureInformation = new vscode.SignatureInformation(schema.join(', '));
+                    signatureInformation.documentation = 'A new entry in this table following its schema.';
+                    signatureHelp.signatures = [signatureInformation];
+                    signatureHelp.activeSignature = 0;
+                    signatureInformation.parameters = schema.map(x => new vscode.ParameterInformation(x));
+                    const subText = document.getText(new vscode.Range(new Position(position.line, 0), position));
+                    signatureHelp.activeParameter = (subText.match(/,/g) || []).length;
+                    return signatureHelp;
+                }
+            }
+
             return;
         }
 

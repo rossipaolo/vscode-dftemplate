@@ -6,6 +6,7 @@
 
 - Diagnostics for references to undefined quests.
 - QuickFix: suggest best match for reference to unknown quest.
+- When `entry` is typed inside a table a snippet insertion and signature info following the table schema are prompted.
 
 ### Fixed
 
