@@ -105,6 +105,24 @@ export function getQuestBlocksRanges(document: TextDocument): { qrc: vscode.Rang
 }
 
 /**
+ * Gets the schema of a table.
+ * @param document A document with a table.
+ * @returns An array of schema items.
+ * @example
+ * // schema: id,*name
+ * ['id', '*name']
+ */
+export function getTableSchema(document: TextDocument): string[] | undefined {
+    for (let index = 0; index < document.lineCount; index++) {
+        const line = document.lineAt(index);
+        const schemaIndex = line.text.indexOf('schema:');
+        if (schemaIndex !== -1) {
+            return line.text.substring(schemaIndex + 'schema:'.length).split(',').map(x => x.trim());
+        }
+    }
+}
+
+/**
  * Gets the range of the given line without empty spaces at the borders.
  * @param line A document line.
  */
