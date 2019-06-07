@@ -18,6 +18,7 @@ import { Quest } from '../language/quest';
 import { DiagnosticCode } from '../diagnostics/common';
 import { symbols, wordRange } from '../parser';
 import { TemplateReferenceProvider } from './referenceProvider';
+import { TemplateRenameProvider } from './renameProvider';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
@@ -211,12 +212,15 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     actions.push(action);
                     break;
                 case DiagnosticCode.SymbolNamingConvention:
-                    const symbol = document.getText(diagnostic.range);
-                    const newName = parser.symbols.forceSymbolNamingConventions(symbol);
-                    action = new CodeAction(`Rename ${symbol} to ${newName}`, CodeActionKind.QuickFix);
-                    action.edit = new WorkspaceEdit();
-                    action.edit.replace(document.uri, diagnostic.range, newName);
-                    actions.push(action);
+                    const symbolName = document.getText(diagnostic.range);
+                    const symbol = quest.qbn.getSymbol(symbolName);
+                    if (symbol !== undefined) {
+                        const newName = parser.symbols.forceSymbolNamingConventions(symbolName);
+                        action = new CodeAction(`Rename ${symbolName} to ${newName}`, CodeActionKind.QuickFix);
+                        action.edit = new WorkspaceEdit();
+                        TemplateRenameProvider.renameSymbol(symbol, newName, quest, action.edit);
+                        actions.push(action);
+                    }
                     break;
                 case DiagnosticCode.UseAliasForStaticMessage:
                     const numericMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));

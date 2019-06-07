@@ -212,6 +212,12 @@ export class Task implements QuestResource {
     private constructor(
 
         /**
+        * The string that allows to reference this task, declared with the definition.
+        * It often includes a prefix and suffix: `_symbol_`.
+        */
+        public readonly name: string,
+
+        /**
          * The line where this task is declared.
          */
         public readonly line: TextLine,
@@ -260,7 +266,7 @@ export class Task implements QuestResource {
     public static parse(line: TextLine): Task | undefined {
         const task = parser.tasks.parseTask(line.text);
         if (task) {
-            return new Task(line, wordRange(line, task.symbol), task);
+            return new Task(task.symbol, line, wordRange(line, task.symbol), task);
         }
     }
 }
