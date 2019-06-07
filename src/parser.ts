@@ -281,7 +281,8 @@ export namespace symbols {
     }
 
     /**
-     * Checks if symbol is named as `_symbol_`.
+     * Checks if a symbol uses the standard `_symbol_` syntax, 
+     * which allows to use it inside messages with different prefixes and suffixes.
      * @param symbol A symbol name.
      */
     export function symbolFollowsNamingConventions(symbol: string): boolean {
