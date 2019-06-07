@@ -8,6 +8,10 @@
 - QuickFix: suggest best match for reference to unknown quest.
 - When `entry` is typed inside a table a snippet insertion and signature info following the table schema are prompted.
 
+### Improved
+
+- Go to Definition shows both symbol and task for clocks.
+
 ### Fixed
 
 - Fixed formatting of `DisplayName` directive.

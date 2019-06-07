@@ -6,12 +6,13 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parser';
-import { TextDocument, Position, Location } from 'vscode';
+import { TextDocument, Position, Definition } from 'vscode';
+import { SymbolType } from '../language/static/common';
 import { Quest } from '../language/quest';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
-    public provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Thenable<Location> {
+    public provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Thenable<Definition> {
         return new Promise(resolve => {
             const word = parser.getWord(document, position);
             if (word) {
@@ -31,6 +32,15 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
                     // Symbol
                     const symbol = quest.qbn.getSymbol(word);
                     if (symbol) {
+                        
+                        // Clocks are defined as a symbol for QRC substitution and a task for firing.
+                        if (symbol.type === SymbolType.Clock) {
+                            const clockTask = quest.qbn.getTask(parser.symbols.getBaseSymbol(word));
+                            if (clockTask) {
+                                return resolve([quest.getLocation(symbol.range), quest.getLocation(clockTask.range)]);
+                            }
+                        }
+
                         return resolve(quest.getLocation(symbol.range));
                     }
 
