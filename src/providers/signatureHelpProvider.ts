@@ -44,14 +44,14 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
         // Symbol definition
         const symbolType = parser.getFirstWord(text);
         if (symbolType) {
-            const overloads = Language.getInstance().getOverloads(symbolType);
-            if (overloads.length > 0) {
-                const definition = Language.getInstance().findDefinition(symbolType, text);
+            const symbolInfoOverload = Language.getInstance().matchSymbol(symbolType, text);
+            if (symbolInfoOverload) {
                 const signatureHelp = new SignatureHelp();
-                const summary = new vscode.MarkdownString(definition ? definition.summary : overloads[0].summary);
-                signatureHelp.signatures = overloads.map(definition =>
-                    new vscode.SignatureInformation(definition.signature, summary));
-                signatureHelp.activeSignature = definition ? overloads.indexOf(definition) : 0;
+                signatureHelp.signatures = symbolInfoOverload.all.map((symbolInfo, index) => {
+                    const summary = new vscode.MarkdownString(symbolInfoOverload.all[index].summary);
+                    return new vscode.SignatureInformation(symbolInfo.signature, summary);
+                });
+                signatureHelp.activeSignature = symbolInfoOverload.index !== -1 ? symbolInfoOverload.index : 0;
                 return signatureHelp;
             }
         }

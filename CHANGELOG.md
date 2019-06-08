@@ -18,6 +18,7 @@
 - Fixed hover when the symbol below the cursor is the name of a quest which is not found in the workspace.
 - Fixed quest rename.
 - Fixed symbol rename from `symbol` to `_symbol_` syntax.
+- Fixed an issue that caused all overloads to show the same description in the signature help window.
 
 ## 0.9.0
 

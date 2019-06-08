@@ -8,7 +8,7 @@ import * as path from 'path';
 import { ExtensionContext } from 'vscode';
 import { iterateAll, where, select, selectMany } from '../../extension';
 import { symbols } from '../../parser';
-import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo, SymbolVariation } from './common';
+import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo, SymbolVariation, Overload } from './common';
 import { StaticData } from "./staticData";
 import { Tables } from './tables';
 
@@ -295,15 +295,27 @@ export class Language extends StaticData {
         return 0;
     }
 
-    public getOverloads(symbolType: string): SymbolInfo[] {
-        if (this.definitions) {
-            const def = this.definitions.get(symbolType);
-            if (def) {
-                return def;
+    /**
+     * Finds a symbol definition used by a given invocation.
+     * @param type A symbol type like `Person`.
+     * @param invocation A line of code where a symbol is defined.
+     */
+    public matchSymbol(type: string, invocation: string): Overload<SymbolInfo> | undefined {
+        if (this.definitions !== null) {
+            const all = this.definitions.get(type);
+            if (all !== undefined) {
+                return {
+                    all: all,
+                    index: all.findIndex(symbol => {
+                        const regex = symbol.match ?
+                            new RegExp('^\\s*' + symbol.match + '\\s*$') :
+                            Language.makeRegexFromSignature(symbol.snippet);
+                        
+                        return regex.test(invocation);
+                    })
+                };
             }
         }
-
-        return [];
     }
 
     public static getInstance(): Language {
