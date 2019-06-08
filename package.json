@@ -61,9 +61,20 @@
             {
                 "command": "dftemplate.toggleCeToken",
                 "title": "Toggle center token"
+            },
+            {
+                "command": "dftemplate.generateMessages",
+                "title": "Generate messages",
+                "category": "DFTemplate"
             }
         ],
         "menus": {
+            "commandPalette": [
+                {
+                    "command": "dftemplate.generateMessages",
+                    "when": "!editorReadOnly && resourceLangId == dftemplate"
+                }
+            ],
             "editor/context": [
                 {
                     "when": "editorHasSelection && editorTextFocus && !editorReadOnly && resourceLangId == dftemplate",

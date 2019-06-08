@@ -57,7 +57,7 @@ export class Quest {
                 context.block.setRange(document, 0, (context.blockStart = line.lineNumber) - 1);
                 context.block = this.qrc;
             } else if (context.block.kind === QuestBlockKind.QRC && line.text.indexOf('QBN:') !== -1) {
-                context.block.setRange(document, 0, (context.blockStart = line.lineNumber) - 1);
+                context.block.setRange(document, context.blockStart, (context.blockStart = line.lineNumber) - 1);
                 context.block = this.qbn;
             } else {
                 context.block.parse(line, context);

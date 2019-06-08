@@ -7,6 +7,7 @@
 - Diagnostics for references to undefined quests.
 - QuickFix: suggest best match for reference to unknown quest.
 - When `entry` is typed inside a table a snippet insertion and signature info following the table schema are prompted.
+- Added command **Generate messages** (`dftemplate.generateMessages`), also available as a code action on the `QRC` directive, which generates missing messages selected from a prompt.
 
 ### Improved
 
