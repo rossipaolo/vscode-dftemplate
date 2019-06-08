@@ -94,6 +94,22 @@ export interface ParameterInfo {
 }
 
 /**
+ * A list of overloads where one is defined as selected.
+ */
+export interface Overload<T> {
+    
+    /**
+     * All the overloads.
+     */
+    readonly all: T[];
+
+    /**
+     * The index of the selected overload.
+     */
+    readonly index: number;
+}
+
+/**
  * A definition for a symbol type.
  */
 export interface SymbolInfo {
