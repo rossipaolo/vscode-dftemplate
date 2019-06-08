@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 
 import { DocumentFilter, ExtensionContext } from 'vscode';
+import { EOL } from 'os';
 import { Modules } from './language/static/modules';
 import { Language } from './language/static/language';
 import { makeDiagnosticCollection } from './diagnostics/diagnostics';
@@ -59,7 +60,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
         context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
         context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
-        context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider()));
+        context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(context)));
 
         if (getOptions()['codeLens']['enabled']) {
             context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider()));
@@ -143,22 +144,56 @@ function setLanguageConfiguration() {
 }
 
 function registerCommands(context: ExtensionContext) {
-    context.subscriptions.push(vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', textEditor => {
-        textEditor.edit(editBuilder => {
-            for (let line = textEditor.selection.start.line; line <= textEditor.selection.end.line; line++) {
-                const match = textEditor.document.lineAt(line).text.match(/(\s*<ce>\s*)[^\s]/);
-                if (match) {
-                    editBuilder.replace(new vscode.Range(line, 0, line, match[1].length), '');
+    context.subscriptions.push(
+
+        vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', textEditor => {
+            textEditor.edit(editBuilder => {
+                for (let line = textEditor.selection.start.line; line <= textEditor.selection.end.line; line++) {
+                    const match = textEditor.document.lineAt(line).text.match(/(\s*<ce>\s*)[^\s]/);
+                    if (match) {
+                        editBuilder.replace(new vscode.Range(line, 0, line, match[1].length), '');
+                    } else {
+                        editBuilder.insert(new vscode.Position(line, 0), '<ce>');
+                    }
+                }
+            }).then(success => {
+                if (success) {
+                    vscode.commands.executeCommand('editor.action.formatSelection');
                 } else {
-                    editBuilder.insert(new vscode.Position(line, 0), '<ce>');
+                    vscode.window.showInformationMessage('Failed to toggle ce tokens.');
+                }
+            });
+        }),
+
+        vscode.commands.registerTextEditorCommand('dftemplate.generateMessages', async textEditor => {
+
+            const quest = Quest.get(textEditor.document);
+
+            const messages = Tables.getInstance().staticMessagesTable.messages;
+            const entries: vscode.QuickPickItem[] = [];
+            for (const [alias, id] of messages) {
+                if (!quest.qrc.messages.find(x => x.id === id) && !entries.find(x => messages.get(x.label) === id)) {
+                    const message = Language.getInstance().findMessage(alias);
+                    entries.push({
+                        label: alias,
+                        detail: String(id),
+                        description: message !== undefined ? message.summary : undefined
+                    });
                 }
             }
-        }).then(success => {
-            if (success) {
-                vscode.commands.executeCommand('editor.action.formatSelection');
-            } else {
-                vscode.window.showInformationMessage('Failed to toggle ce tokens.');
+
+            const selection = await vscode.window.showQuickPick(entries, { canPickMany: true, matchOnDetail: true, ignoreFocusOut: true });
+            if (selection !== undefined && selection.length > 0) {
+                const text = selection.map(selected => {
+                    const id = Tables.getInstance().staticMessagesTable.messages.get(selected.label);
+                    return [`${selected.label}:  [${id}]`, 'UNDEFINED MESSAGE'].join(EOL);
+                }).join(EOL + EOL);
+
+                const qrcRange = quest.qrc.range;
+                if (qrcRange !== undefined) {
+                    textEditor.edit(editBuilder => editBuilder.insert(qrcRange.end, EOL + text + EOL));
+                }
             }
-        });
-    }));
+        })
+    );
 }

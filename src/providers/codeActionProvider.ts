@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parser';
-import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit } from 'vscode';
+import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit, ExtensionContext } from 'vscode';
 import { first, getOptions } from '../extension';
 import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
@@ -22,28 +22,31 @@ import { TemplateRenameProvider } from './renameProvider';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
-    public constructor() {
-        vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
-            if (vscode.window.activeTextEditor) {
-                vscode.window.activeTextEditor.insertSnippet(new vscode.SnippetString(snippet), range);
-            }
-        });
+    public constructor(context: ExtensionContext) {
+        context.subscriptions.push(
 
-        vscode.commands.registerTextEditorCommand('dftemplate.extractTask', async (textEditor: vscode.TextEditor, _, origin: Task, range: vscode.Range) => {
-            const replaceRange = new vscode.Range(new vscode.Position(range.start.line, 0), range.end);
-            const line = textEditor.document.lineAt(range.start.line);
-            const actionText = `${line.text.substring(0, line.firstNonWhitespaceCharacterIndex)}start task _taskName_`;
+            vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
+                if (vscode.window.activeTextEditor) {
+                    vscode.window.activeTextEditor.insertSnippet(new vscode.SnippetString(snippet), range);
+                }
+            }),
 
-            if (await textEditor.edit(editBuilder => {
-                editBuilder.replace(replaceRange, actionText);
-                editBuilder.insert(new vscode.Position(origin.blockRange.end.line + 2, 0),
-                    `_taskName_ task:\n${textEditor.document.getText(replaceRange)}\n\n`);
-            })) {
-                const pos = new vscode.Position(replaceRange.start.line, actionText.length - 1);
-                textEditor.selection = new vscode.Selection(pos, pos);
-                vscode.commands.executeCommand('editor.action.rename').then(undefined, () => { });
-            }
-        });
+            vscode.commands.registerTextEditorCommand('dftemplate.extractTask', async (textEditor: vscode.TextEditor, _, origin: Task, range: vscode.Range) => {
+                const replaceRange = new vscode.Range(new vscode.Position(range.start.line, 0), range.end);
+                const line = textEditor.document.lineAt(range.start.line);
+                const actionText = `${line.text.substring(0, line.firstNonWhitespaceCharacterIndex)}start task _taskName_`;
+
+                if (await textEditor.edit(editBuilder => {
+                    editBuilder.replace(replaceRange, actionText);
+                    editBuilder.insert(new vscode.Position(origin.blockRange.end.line + 2, 0),
+                        `_taskName_ task:\n${textEditor.document.getText(replaceRange)}\n\n`);
+                })) {
+                    const pos = new vscode.Position(replaceRange.start.line, actionText.length - 1);
+                    textEditor.selection = new vscode.Selection(pos, pos);
+                    vscode.commands.executeCommand('editor.action.rename').then(undefined, () => { });
+                }
+            })
+        );
     }
 
     public async provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext):
@@ -255,6 +258,16 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     actions.push(TemplateCodeActionProvider.changeText(document, diagnostic.range, 'setvar', 'start task'));
                     break;
             }
+        }
+
+        const qrcRange = quest.qrc.range;
+        if (qrcRange !== undefined && range.intersection(qrcRange.with(undefined, new vscode.Position(qrcRange.start.line + 1, 0))) !== undefined) {
+            const action = new CodeAction('Generate messages', CodeActionKind.RefactorRewrite);      
+            action.command = {
+                title: action.title,
+                command: 'dftemplate.generateMessages'
+            };
+            actions.push(action);
         }
 
         if (!range.isEmpty) {
