@@ -60,7 +60,9 @@
         "commands": [
             {
                 "command": "dftemplate.toggleCeToken",
-                "title": "Toggle center token"
+                "title": "Toggle center token",
+                "category": "DFTemplate",
+                "enablement": "editorHasSelection"
             },
             {
                 "command": "dftemplate.generateMessages",
@@ -76,6 +78,10 @@
         "menus": {
             "commandPalette": [
                 {
+                    "command": "dftemplate.toggleCeToken",
+                    "when": "editorHasSelection && !editorReadOnly && resourceLangId == dftemplate"
+                },
+                {
                     "command": "dftemplate.generateMessages",
                     "when": "!editorReadOnly && resourceLangId == dftemplate"
                 },
@@ -86,7 +92,7 @@
             ],
             "editor/context": [
                 {
-                    "when": "editorHasSelection && editorTextFocus && !editorReadOnly && resourceLangId == dftemplate",
+                    "when": "editorTextFocus && !editorReadOnly && resourceLangId == dftemplate",
                     "group": "1_modification",
                     "command": "dftemplate.toggleCeToken"
                 }

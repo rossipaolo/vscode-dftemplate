@@ -146,23 +146,35 @@ function setLanguageConfiguration() {
 function registerCommands(context: ExtensionContext) {
     context.subscriptions.push(
 
-        vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', textEditor => {
-            textEditor.edit(editBuilder => {
-                for (let line = textEditor.selection.start.line; line <= textEditor.selection.end.line; line++) {
-                    const match = textEditor.document.lineAt(line).text.match(/(\s*<ce>\s*)[^\s]/);
-                    if (match) {
-                        editBuilder.replace(new vscode.Range(line, 0, line, match[1].length), '');
+        vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', async textEditor => {
+
+            const messages = Quest.get(textEditor.document).qrc.messages;
+
+            for (const selection of textEditor.selections) {
+                const message = first(messages, x => x.blockRange.contains(selection));
+                if (message !== undefined) {
+                    const success = await textEditor.edit(editBuilder => {
+                        for (let line = textEditor.selection.start.line; line <= textEditor.selection.end.line; line++) {
+                            if (line !== message.range.start.line) {
+                                const match = textEditor.document.lineAt(line).text.match(/(\s*<ce>\s*)[^\s]/);
+                                if (match) {
+                                    editBuilder.delete(new vscode.Range(line, 0, line, match[1].length));
+                                } else {
+                                    editBuilder.insert(new vscode.Position(line, 0), '<ce>');
+                                }
+                            }
+                        }
+                    });
+
+                    if (success) {
+                        vscode.commands.executeCommand('editor.action.formatSelection');
                     } else {
-                        editBuilder.insert(new vscode.Position(line, 0), '<ce>');
+                        vscode.window.showErrorMessage('Failed to toggle ce tokens.');
                     }
-                }
-            }).then(success => {
-                if (success) {
-                    vscode.commands.executeCommand('editor.action.formatSelection');
                 } else {
-                    vscode.window.showInformationMessage('Failed to toggle ce tokens.');
+                    vscode.window.showErrorMessage('No message found at selection.');
                 }
-            });
+            }
         }),
 
         vscode.commands.registerTextEditorCommand('dftemplate.generateMessages', async textEditor => {
