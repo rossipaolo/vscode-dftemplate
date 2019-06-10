@@ -238,6 +238,14 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         }
                     }
                     break;
+                case DiagnosticCode.OrderMessages:
+                    action = new CodeAction('Order messages', CodeActionKind.RefactorRewrite);
+                    action.command = {
+                        title: action.title,
+                        command: 'dftemplate.orderMessages'
+                    };
+                    actions.push(action);
+                    break;
                 case DiagnosticCode.ConvertTaskToVariable:
                     const task = quest.qbn.getTask(diagnostic.range);
                     if (task) {

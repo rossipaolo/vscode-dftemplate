@@ -66,12 +66,21 @@
                 "command": "dftemplate.generateMessages",
                 "title": "Generate messages",
                 "category": "DFTemplate"
+            },
+            {
+                "command": "dftemplate.orderMessages",
+                "title": "Order messages",
+                "category": "DFTemplate"
             }
         ],
         "menus": {
             "commandPalette": [
                 {
                     "command": "dftemplate.generateMessages",
+                    "when": "!editorReadOnly && resourceLangId == dftemplate"
+                },
+                {
+                    "command": "dftemplate.orderMessages",
                     "when": "!editorReadOnly && resourceLangId == dftemplate"
                 }
             ],

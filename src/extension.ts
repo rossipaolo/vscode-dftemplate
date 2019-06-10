@@ -194,6 +194,18 @@ function registerCommands(context: ExtensionContext) {
                     textEditor.edit(editBuilder => editBuilder.insert(qrcRange.end, EOL + text + EOL));
                 }
             }
+        }),
+
+        vscode.commands.registerTextEditorCommand('dftemplate.orderMessages', async (textEditor, edit) => {
+            const messages = Quest.get(textEditor.document).qrc.messages;
+            const sortedMessages = messages.slice();
+            sortedMessages.sort((a, b) => a.id - b.id);
+
+            for (let index = 0; index < messages.length; index++) {
+                if (messages[index] !== sortedMessages[index]) {
+                    edit.replace(messages[index].blockRange, textEditor.document.getText(sortedMessages[index].blockRange));
+                }
+            }
         })
     );
 }
