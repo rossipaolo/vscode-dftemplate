@@ -35,6 +35,7 @@ export enum DiagnosticCode {
     GenericHint,
     SymbolNamingConvention,
     UseAliasForStaticMessage,
+    OrderMessages,
     ConvertTaskToVariable,
     ChangeStartTastToSetVar,
     ChangeSetVarToStartTask
@@ -104,7 +105,7 @@ export const Hints = {
     useAliasForStaticMessage: (range: Range, messageID: number) =>
         makeDiagnostic(range, DiagnosticCode.UseAliasForStaticMessage, 'Use text alias for static message ' + messageID + '.', DiagnosticSeverity.Hint),
     incorrectMessagePosition: (range: Range, current: number, previous: number, previousLocation: vscode.Location) =>
-        makeDiagnostic(range, DiagnosticCode.GenericHint, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint,
+        makeDiagnostic(range, DiagnosticCode.OrderMessages, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint,
             { locations: [previousLocation], label: 'message ' + previous }),
     SymbolVariation: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint),

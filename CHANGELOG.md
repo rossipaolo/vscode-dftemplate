@@ -9,6 +9,7 @@
 - When `entry` is typed inside a table a snippet insertion and signature info following the table schema are prompted.
 - Added command **Generate messages** (`dftemplate.generateMessages`), also available as a code action on the `QRC` directive, which generates missing messages selected from a prompt.
 - Refactoring: switch among message text aliases if more than one is available.
+- Added command **Order messages** (`dftemplate.orderMessages`), also available as a code action, which sorts messages by id.
 
 ### Improved
 
