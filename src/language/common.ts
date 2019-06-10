@@ -421,7 +421,12 @@ export class Message implements QuestResource {
         /**
          * A meaningful string that can be used to reference the message.
          */
-        public readonly alias?: string) {
+        public readonly alias?: string,
+    
+        /**
+         * The range of the message alias.
+         */
+        public readonly aliasRange?: Range) {
     }
 
     /**
@@ -437,7 +442,7 @@ export class Message implements QuestResource {
 
         const data = parser.messages.parseStaticMessage(line.text);
         if (data) {
-            return new Message(data.id, wordRange(line, String(data.id)), data.name);
+            return new Message(data.id, wordRange(line, String(data.id)), data.name, wordRange(line, data.name));
         }
     }
 }
