@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit, ExtensionContext } from 'vscode';
-import { first, getOptions } from '../extension';
+import { getOptions, first, where } from '../extension';
 import { Tables } from '../language/static/tables';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
@@ -268,6 +268,17 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                 command: 'dftemplate.generateMessages'
             };
             actions.push(action);
+        }
+
+        for (const message of where(quest.qrc.messages, x => x.aliasRange !== undefined && x.aliasRange.intersection(range) !== undefined)) {
+            for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
+                if (message.id === id && message.alias !== alias) {
+                    const action = new CodeAction(`Change to ${alias}`, CodeActionKind.RefactorRewrite);
+                    action.edit = new WorkspaceEdit();
+                    action.edit.replace(document.uri, message.aliasRange!, alias);
+                    actions.push(action);
+                }
+            }
         }
 
         if (!range.isEmpty) {
