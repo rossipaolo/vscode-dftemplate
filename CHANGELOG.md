@@ -14,6 +14,7 @@
 ### Improved
 
 - Go to Definition shows both symbol and task for clocks.
+- Improved documentation support for actions with multiple overloads.
 
 ### Fixed
 

@@ -83,7 +83,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     };
                     const overloads = Language.getInstance().numberOfOverloads(word) - 1;
                     if (overloads > 0) {
-                        item.signature += ' (+' + overloads + ' overloads)';
+                        item.signature += TemplateHoverProvider.makeOverloadsCountInfo(overloads);
                     }
                     item.summary = definition.summary;
                     item.parameters = definition.parameters;
@@ -116,18 +116,14 @@ export class TemplateHoverProvider implements HoverProvider {
                 const result = Modules.getInstance().findAction(document.lineAt(position.line).text, word);
                 if (result && Modules.isActionName(result, word)) {
                     let signature = result.moduleName + ' -> ' + result.getSignature();
-                    if (result.details.overloads.length > 1) {
-                        signature += '\n\nother overload(s):';
-                        for (let i = 0; i < result.details.overloads.length; i++) {
-                            if (i !== result.overload) {
-                                signature += '\n' + result.details.overloads[i];
-                            }
-                        }
+                    const otherOverloads = result.details.overloads.length - 1;
+                    if (otherOverloads > 0) {
+                        signature += TemplateHoverProvider.makeOverloadsCountInfo(otherOverloads);
                     }
                     const item = {
                         category: QuestResourceCategory[result.category].toLowerCase(),
                         signature: Modules.prettySignature(signature),
-                        summary: result.details.summary
+                        summary: result.getSummary()
                     };
                     return resolve(TemplateHoverProvider.makeHover(item));
                 }
@@ -176,5 +172,13 @@ export class TemplateHoverProvider implements HoverProvider {
         }
 
         return summary;
+    }
+
+    /**
+     * Makes a readable text showing the number of available overloads.
+     * @param others Overloads count minus one.
+     */
+    private static makeOverloadsCountInfo(others: number): string {
+        return others === 1 ? ` (+1 overload)` : ` (+${others} overloads)`;
     }
 }

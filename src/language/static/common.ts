@@ -169,7 +169,7 @@ export interface ActionDetails {
     /**
      * A short description for this action.
      */
-    readonly summary: string;
+    readonly summary: string | string[];
 
     /**
      * All variations of this action.
@@ -210,5 +210,15 @@ export class ActionInfo {
      */
     public getSignature() {
         return this.details.overloads[this.overload];
+    }
+
+    /**
+     * Gets the summary for this overload or a different overload for this action.
+     * @param overload The index of the overload or undefined.
+     */
+    public getSummary(overload?: number) {
+        return Array.isArray(this.details.summary) ?
+            this.details.summary[overload !== undefined ? overload : this.overload] :
+            this.details.summary;
     }
 }
