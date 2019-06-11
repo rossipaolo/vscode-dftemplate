@@ -161,12 +161,13 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         } else {
             // Actions/condition
             for (const result of Modules.getInstance().findActions(prefix)) {
-                for (const overload of result.details.overloads) {
+                for (let index = 0; index < result.details.overloads.length; index++) {
+                    const overload = result.details.overloads[index];
                     const signature = Modules.prettySignature(overload);
                     const item = new vscode.CompletionItem(signature, TemplateCompletionItemProvider.getCompletionItemKind(result.category));
                     item.insertText = new vscode.SnippetString(overload);
                     item.detail = result.moduleName + ' -> ' + signature;
-                    item.documentation = new vscode.MarkdownString(result.details.summary);
+                    item.documentation = new vscode.MarkdownString(result.getSummary(index));
                     item.command = TemplateCompletionItemProvider.signatureInfoCommand;
                     items.push(item);
                 }

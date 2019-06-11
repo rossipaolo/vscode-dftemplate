@@ -35,8 +35,19 @@
             "type": "object",
             "properties": {
                 "summary": {
-                    "type": "string",
-                    "description": "A short description for this action."
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        },
+                        {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "minItems": 1
+                            }
+                        }
+                    ],
+                    "description": "A short description for this action or a list of descriptions for each overload."
                 },
                 "overloads": {
                     "type": "array",

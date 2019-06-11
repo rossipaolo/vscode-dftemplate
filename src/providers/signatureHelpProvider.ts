@@ -60,9 +60,8 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
         const actionResult = Modules.getInstance().findAction(text);
         if (actionResult) {
             const signatureHelp = new SignatureHelp();
-            const summary = new vscode.MarkdownString(actionResult.details.summary);
             signatureHelp.signatures = actionResult.details.overloads.map((signature, index) => {
-
+                const summary = new vscode.MarkdownString(actionResult.getSummary(index));
                 const signatureInformation = new vscode.SignatureInformation(Modules.prettySignature(signature), summary);
                 const parameters = signature.split(' ');
                 signatureInformation.parameters = parameters.map(parameter => {
