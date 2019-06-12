@@ -197,7 +197,7 @@
             "parameters": [
                 {
                     "name": "face nn",
-                    "description": "(optional) Face index."
+                    "description": "(optional) Face index, actually ignored in favor of predefined face for named npc."
                 },
                 {
                     "name": "name",
@@ -247,7 +247,7 @@
             "parameters":[
                 {
                     "name": "face dd",
-                    "description": "(optional) Face index."
+                    "description": "(optional) Face index, actually ignored in favor of a random index."
                 },
                 {
                     "name": "name",
