@@ -10,6 +10,7 @@ import { tasks, wordRange } from "../parser";
 import { QuestResourceCategory, SymbolType } from "./static/common";
 import { Modules } from "./static/modules";
 import { Language } from "./static/language";
+import { EOL } from 'os';
 
 /**
  * A resource usable in a quest.
@@ -427,6 +428,23 @@ export class Message implements QuestResource {
          * The range of the message alias.
          */
         public readonly aliasRange?: Range) {
+    }
+
+    /**
+     * Gets the message block above this message and/or the general description if this is a static message. 
+     * @param document The document where this message is found.
+     */
+    public makeDocumentation(document: TextDocument): string | undefined {
+        let summary = parser.makeSummary(document, this.range.start.line);
+
+        if (this.alias) {
+            const details = Language.getInstance().findMessage(this.alias);
+            if (details) {
+                summary = summary ? details.summary + EOL.repeat(2) + summary : details.summary;
+            }
+        }
+
+        return summary;
     }
 
     /**
