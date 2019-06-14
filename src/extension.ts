@@ -218,6 +218,38 @@ function registerCommands(context: ExtensionContext) {
                     edit.replace(messages[index].blockRange, textEditor.document.getText(sortedMessages[index].blockRange));
                 }
             }
+        }),
+
+        vscode.commands.registerTextEditorCommand('dftemplate.generateGlobalVariables', async (textEditor, edit) => {
+            const qbn = Quest.get(textEditor.document).qbn;
+            if (qbn.range === undefined) {
+                return vscode.window.showErrorMessage('Failed to locate QBN block.');
+            }
+
+            const makeDescription = (alias: string) => {
+                let description = '';
+                for (const char of alias) {
+                    description += char !== char.toLowerCase() ? ' ' + char : char;
+                }
+                return description.trim();
+            };
+
+            const entries: vscode.QuickPickItem[] = [];
+            for (const [alias, id] of Tables.getInstance().globalVarsTable.globalVars) {
+                if (!/^Unused\d+$/.test(alias) && first(qbn.iterateTasks(), x => x.definition.globalVarName === alias) === undefined) {
+                    entries.push({
+                        label: alias,
+                        detail: String(id),
+                        description: makeDescription(alias)
+                    });
+                }
+            }
+
+            const selection = await vscode.window.showQuickPick(entries, { canPickMany: true, matchOnDetail: true, ignoreFocusOut: true });
+            if (selection !== undefined) {
+                textEditor.edit(editBuilder => editBuilder.insert(qbn.range!.end, EOL + selection.map(selected =>
+                    `${selected.label} _${selected.label.charAt(0).toLowerCase() + selected.label.slice(1)}_`).join(EOL)));
+            }
         })
     );
 }

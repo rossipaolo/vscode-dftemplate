@@ -73,6 +73,11 @@
                 "command": "dftemplate.orderMessages",
                 "title": "Order messages",
                 "category": "DFTemplate"
+            },
+            {
+                "command": "dftemplate.generateGlobalVariables",
+                "title": "Generate global variables",
+                "category": "DFTemplate"
             }
         ],
         "menus": {
@@ -87,6 +92,10 @@
                 },
                 {
                     "command": "dftemplate.orderMessages",
+                    "when": "!editorReadOnly && resourceLangId == dftemplate"
+                },
+                {
+                    "command": "dftemplate.generateGlobalVariables",
                     "when": "!editorReadOnly && resourceLangId == dftemplate"
                 }
             ],
