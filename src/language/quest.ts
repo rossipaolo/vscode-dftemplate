@@ -98,6 +98,16 @@ export class Quest {
     }
 
     /**
+     * Gets the comment block above the `Quest:` directive.
+     */
+    public makeDocumentation(): string | undefined {
+        const nameLocation = this.getNameLocation();
+        if (!nameLocation.range.isEmpty) {
+            return parser.makeSummary(this.document, nameLocation.range.start.line);
+        }
+    }
+
+    /**
      * Registers to documents events.
      */
     public static initialize(): vscode.Disposable {

@@ -56,23 +56,11 @@ export class TemplateHoverProvider implements HoverProvider {
 
                 const message = quest.qrc.getMessage(word);
                 if (message) {
-
-                    const item: TemplateDocumentationItem = {
+                    return resolve(TemplateHoverProvider.makeHover({
                         category: 'message',
                         signature: document.lineAt(message.range.start).text.trim(),
-                        summary: makeSummary(document, message.range.start.line)
-                    };
-
-                    if (message.alias) {
-                        const details = Language.getInstance().findMessage(message.alias);
-                        if (details) {
-                            item.summary = item.summary ?
-                                details.summary + EOL.repeat(2) + item.summary :
-                                details.summary;
-                        }
-                    }
-
-                    return resolve(TemplateHoverProvider.makeHover(item));
+                        summary: message.makeDocumentation(document)
+                    }));
                 }
 
                 // Seek word in documentation files
@@ -163,12 +151,9 @@ export class TemplateHoverProvider implements HoverProvider {
     private static getQuestDescription(quest: Quest): string | undefined {
         const displayName = quest.preamble.getDisplayName();
 
-        const nameLocation = quest.getNameLocation();
-        if (!nameLocation.range.isEmpty) {
-            const summary = makeSummary(quest.document, nameLocation.range.start.line);
-            if (summary) {
-                return displayName ? displayName + EOL.repeat(2) + summary : summary;
-            }
+        const documentation = quest.makeDocumentation();
+        if (documentation) {
+            return displayName ? displayName + EOL.repeat(2) + documentation : documentation;
         }
 
         return displayName;
