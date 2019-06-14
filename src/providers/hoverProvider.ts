@@ -108,7 +108,7 @@ export class TemplateHoverProvider implements HoverProvider {
                         return resolve(quest ? TemplateHoverProvider.makeHover({
                             category: 'quest',
                             signature: 'Quest: ' + quest.getName(),
-                            summary: quest.preamble.getDisplayName() || quest.getName()
+                            summary: TemplateHoverProvider.getQuestDescription(quest)
                         }) : undefined);
                     });
                 }
@@ -158,6 +158,20 @@ export class TemplateHoverProvider implements HoverProvider {
         }
 
         return new Hover(hovertext);
+    }
+
+    private static getQuestDescription(quest: Quest): string | undefined {
+        const displayName = quest.preamble.getDisplayName();
+
+        const nameLocation = quest.getNameLocation();
+        if (!nameLocation.range.isEmpty) {
+            const summary = makeSummary(quest.document, nameLocation.range.start.line);
+            if (summary) {
+                return displayName ? displayName + EOL.repeat(2) + summary : summary;
+            }
+        }
+
+        return displayName;
     }
 
     /**
