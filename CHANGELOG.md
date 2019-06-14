@@ -16,6 +16,7 @@
 - Go to Definition shows both symbol and task for clocks.
 - Improved documentation support for actions with multiple overloads.
 - Improved documentation for several actions.
+- Default name of global variables is formed from their aliases. For example the proposed name for `FinishedMantellanCrux` is `_finishedMantellanCrux_`.
 
 ### Fixed
 
