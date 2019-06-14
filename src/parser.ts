@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, Position, TextLine } from 'vscode';
+import { EOL } from 'os';
 
 /**
 * Gets a word from the given position of a document.
@@ -59,8 +60,8 @@ export function isEmptyOrComment(text: string): boolean {
 export function makeSummary(document: TextDocument, definitionLine: number): string {
     let summary: string = '';
     let text;
-    while (/^\s*-+/.test(text = document.lineAt(--definitionLine).text)) {
-        summary = text.replace(/^\s*-+\s*/, '') + ' ' + summary;
+    while (definitionLine > 0 && /^\s*-+/.test(text = document.lineAt(--definitionLine).text)) {
+        summary = (/^\s*-+\s*$/.test(text) ? EOL.repeat(2) : text.replace(/^\s*-+\s*/, '') + ' ') + summary;
     }
     return summary.trim();
 }
