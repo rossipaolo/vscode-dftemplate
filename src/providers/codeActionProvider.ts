@@ -289,6 +289,16 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
             }
         }
 
+        const qbnRange = quest.qbn.range;
+        if (qbnRange !== undefined && range.intersection(qbnRange.with(undefined, new vscode.Position(qbnRange.start.line + 1, 0))) !== undefined) {
+            const action = new CodeAction('Generate global variables', CodeActionKind.RefactorRewrite);      
+            action.command = {
+                title: action.title,
+                command: 'dftemplate.generateGlobalVariables'
+            };
+            actions.push(action);
+        }
+
         if (!range.isEmpty) {
             const task = quest.qbn.getTask(range);
             if (task && task.definition.type === parser.tasks.TaskType.Variable) {
