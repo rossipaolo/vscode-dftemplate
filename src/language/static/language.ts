@@ -207,13 +207,13 @@ export class Language extends StaticData {
     }
 
     public *findGlobalVariables(prefix: string): Iterable<QuestResourceInfo> {
-        for (const globalVar of Tables.getInstance().globalVarsTable.globalVars) {
-            if (globalVar["0"].startsWith(prefix)) {
+        for (const [alias, id] of Tables.getInstance().globalVarsTable.globalVars) {
+            if (alias.startsWith(prefix)) {
                 yield {
                     category: QuestResourceCategory.GlobalVar,
                     details: {
-                        summary: 'Global variable number ' + globalVar["1"] + '.',
-                        signature: globalVar["0"] + ' ${1:_varSymbol_}'
+                        summary: 'Global variable number ' + id + '.',
+                        signature: `${alias} \${1:_${alias.charAt(0).toLowerCase() + alias.slice(1)}_}`
                     }
                 };
             }
