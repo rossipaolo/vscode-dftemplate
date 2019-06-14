@@ -59,16 +59,17 @@ export class TemplateHoverProvider implements HoverProvider {
 
                     const item: TemplateDocumentationItem = {
                         category: 'message',
-                        signature: document.lineAt(message.range.start).text.trim()
+                        signature: document.lineAt(message.range.start).text.trim(),
+                        summary: makeSummary(document, message.range.start.line)
                     };
 
                     if (message.alias) {
                         const details = Language.getInstance().findMessage(message.alias);
                         if (details) {
-                            item.summary = details.summary;
+                            item.summary = item.summary ?
+                                details.summary + EOL.repeat(2) + item.summary :
+                                details.summary;
                         }
-                    } else {
-                        item.summary = makeSummary(document, message.range.start.line);
                     }
 
                     return resolve(TemplateHoverProvider.makeHover(item));
