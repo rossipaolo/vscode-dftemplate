@@ -6,12 +6,13 @@
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
-import { getWord, makeSummary, isQuestReference } from '../parser';
-import { QuestResourceCategory } from '../language/static/common';
+import { getWord, makeSummary, isQuestReference, tasks } from '../parser';
+import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
-import { Symbol } from '../language/common';
+import { Symbol, Task } from '../language/common';
 import { Quest } from '../language/quest';
+import { first } from '../extension';
 
 interface TemplateDocumentationParameter {
     name: string;
@@ -49,7 +50,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     const item = {
                         category: 'task',
                         signature: document.lineAt(task.range.start).text.trim(),
-                        summary: makeSummary(document, task.range.start.line)
+                        summary: TemplateHoverProvider.getTaskDescription(quest, task)
                     };
                     return resolve(TemplateHoverProvider.makeHover(item));
                 }
@@ -163,12 +164,38 @@ export class TemplateHoverProvider implements HoverProvider {
      * Gets the summary for a symbol and, if inside the `QRC` block, a description for its variation based on prefix and type.
      */
     private static getSymbolDescription(quest: Quest, name: string, symbol: Symbol, position: Position): string {
-        const summary = makeSummary(quest.document, symbol.range.start.line);
+        let summary = makeSummary(quest.document, symbol.range.start.line);
         
         if (quest.qrc.range && quest.qrc.range.contains(position)) {
             const variation = Language.getInstance().getSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
             const meaning = variation ? variation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
-            return summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
+            summary = summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
+        }
+
+        if (symbol.type === SymbolType.Clock) {
+            const task = quest.qbn.getTask(symbol.name);
+            if (task !== undefined) {
+                let taskSummary = makeSummary(quest.document, task.range.start.line);
+                if (taskSummary) {
+                    taskSummary = `*@onTimer* - ${taskSummary}`;
+                    summary = summary ? [summary, taskSummary].join(EOL.repeat(2)) : taskSummary;
+                }
+            }
+        }
+
+        return summary;
+    }
+
+    private static getTaskDescription(quest: Quest, task: Task): string {
+        let summary = makeSummary(quest.document, task.range.start.line);
+
+        const untilPerformed = first(quest.qbn.iterateTasks(), x => x.name === task.name && x.definition.type === tasks.TaskType.PersistUntil);
+        if (untilPerformed !== undefined) {
+            let untilPerformedSummary = makeSummary(quest.document, untilPerformed.range.start.line);
+            if (untilPerformedSummary) {
+                untilPerformedSummary = `*@untilPerformed* - ${untilPerformedSummary}`;
+                summary = summary ? [summary, untilPerformedSummary].join(EOL.repeat(2)) : untilPerformedSummary;
+            }
         }
 
         return summary;
