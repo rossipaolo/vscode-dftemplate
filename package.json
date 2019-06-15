@@ -115,7 +115,12 @@
         ],
         "configurationDefaults": {
             "[dftemplate]": {
-                "editor.suggest.snippetsPreventQuickSuggestions": false
+                "editor.suggest.snippetsPreventQuickSuggestions": false,
+                "editor.quickSuggestions": {
+                    "other": true,
+                    "comments": false,
+                    "strings": true
+                }
             }
         },
         "configuration": {
