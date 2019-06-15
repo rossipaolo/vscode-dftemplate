@@ -18,72 +18,67 @@
         </dict>
         <dict>
             <key>include</key>
-            <string>#literals</string>
+            <string>#directives</string>
         </dict>
         <dict>
             <key>include</key>
-            <string>#keywords</string>
+            <string>#messages</string>
         </dict>
         <dict>
             <key>include</key>
-            <string>#symbols</string>
-        </dict>
-        <dict>
-            <key>include</key>
-            <string>#symbol-definition</string>
+            <string>#symbol-definitions</string>
         </dict>
         <dict>
             <key>include</key>
             <string>#tasks</string>
+        </dict>
+        <dict>
+            <key>include</key>
+            <string>#actions</string>
+        </dict>
+        <dict>
+            <key>include</key>
+            <string>#numbers</string>
+        </dict>
+        <dict>
+            <key>include</key>
+            <string>#symbols</string>
         </dict>
     </array>
     <key>repository</key>
     <dict>
         <key>comments</key>
         <dict>
-            <key>patterns</key>
-            <array>
-                <dict>
-                    <key>match</key>
-                    <string>^\s*-+.*$</string>
-                    <key>name</key>
-                    <string>comment.line.double-dash.dftemplate</string>
-                </dict>
-            </array>
+            <key>match</key>
+            <string>^\s*-+.*$</string>
+            <key>name</key>
+            <string>comment.line.double-dash.dftemplate</string>
         </dict>
-        <key>literals</key>
+        <key>directives</key>
         <dict>
             <key>patterns</key>
             <array>
                 <dict>
                     <key>match</key>
-                    <string>\b([0-9_]+|([0-9_]+)?\.[0-9_]+)\b</string>
-                    <key>name</key>
-                    <string>constant.numeric.dftemplate</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>&lt;(ce|---)&gt;</string>
-                    <key>name</key>
-                    <string>string.unquoted.dftemplate</string>
-                </dict>
-            </array>
-        </dict>
-        <key>keywords</key>
-        <dict>
-            <key>patterns</key>
-            <array>
-                <dict>
-                    <key>match</key>
-                    <string>\b(Quest:)\s+(\w+)\b</string>
+                    <string>^(?:\((quest|keyword)\))?\s*(Quest|DisplayName)(:)\s*([^\s].*)?$</string>
                     <key>captures</key>
                     <dict>
                         <key>1</key>
                         <dict>
                             <key>name</key>
-                            <string>markup.heading.dftemplate</string>
+                            <string>storage.type.dftemplate</string>
                         </dict>
                         <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>variable.other.constant.directive.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                        <key>4</key>
                         <dict>
                             <key>name</key>
                             <string>string.unquoted.dftemplate</string>
@@ -92,59 +87,7 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>DisplayName:</string>
-                    <key>name</key>
-                    <string>markup.heading.dftemplate</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>(^|\s)(Messages:|QRC:|QBN:)\s</string>
-                    <key>name</key>
-                    <string>markup.heading.dftemplate</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>(?:^|\s)(.*:)\s*\[\s*(.*)\s*\]</string>
-                    <key>captures</key>
-                    <dict>
-                        <key>1</key>
-                        <dict>
-                            <key>name</key>
-                            <string>keyword.control.message.dftemplate</string>
-                        </dict>
-                        <key>2</key>
-                        <dict>
-                            <key>patterns</key>
-                            <array>
-                                <dict>
-                                    <key>include</key>
-                                    <string>#literals</string>
-                                </dict>
-                            </array>
-                        </dict>
-                    </dict>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>(^|\s)Message:</string>
-                    <key>name</key>
-                    <string>keyword.control.message.dftemplate</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>\((quest|keyword|message|definition|symbol|task)\)</string>
-                    <key>captures</key>
-                    <dict>
-                        <key>1</key>
-                        <dict>
-                            <key>name</key>
-                            <string>storage.type.dftemplate</string>
-                        </dict>
-                    </dict>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>\((condition|action)\)\s(\w+)\s-></string>
+                    <string>(?:\((keyword)\))?\s*(Messages|QRC|QBN)(:)\s</string>
                     <key>captures</key>
                     <dict>
                         <key>1</key>
@@ -155,51 +98,54 @@
                         <key>2</key>
                         <dict>
                             <key>name</key>
-                            <string>support.type.dftemplate</string>
+                            <string>variable.other.constant.directive.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
                         </dict>
                     </dict>
                 </dict>
             </array>
         </dict>
-        <key>symbols</key>
-        <dict>
-            <key>patterns</key>
-            <array>
-                <dict>
-                    <key>match</key>
-                    <string>((?&lt;=\s)|(?&lt;=^))%(\w|\.\d)+(?=\b)</string>
-                    <key>name</key>
-                    <string>variable.language.dftemplate</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>((?&lt;=\s)|(?&lt;=^))(_{1,4}|={1,2})(\w|\.\d)+_(?=\b)</string>
-                    <key>name</key>
-                    <string>variable.other.symbol.dftemplate</string>
-                </dict>
-                <dict>
-                    <key>match</key>
-                    <string>(?&lt;=\s)&amp;[0-9]+(?=\s)</string>
-                    <key>name</key>
-                    <string>variable.parameter.macro.dftemplate</string>
-                </dict>
-            </array>
-        </dict>
-        <key>symbol-definition</key>
+        <key>messages</key>
         <dict>
             <key>patterns</key>
             <array>
                 <dict>
                     <key>begin</key>
-                    <string>\b(Item|Person|Place|Clock|Foe|variable)\b</string>
+                    <string>^\s*([a-zA-Z]+)(:)\s+(\[)([0-9]+)(\])</string>
                     <key>beginCaptures</key>
+                    <dict>
+                        <key>1</key>
                         <dict>
-                            <key>0</key>
-                            <dict>
-                                <key>name</key>
-                                <string>storage.type.symbol.dftemplate</string>
-                            </dict>
+                            <key>name</key>
+                            <string>support.type.message.dftemplate</string>
                         </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.tag.message.dftemplate</string>
+                        </dict>
+                        <key>4</key>
+                        <dict>
+                            <key>name</key>
+                            <string>constant.numeric.dftemplate</string>
+                        </dict>
+                        <key>5</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.tag.message.dftemplate</string>
+                        </dict>
+                    </dict>
+                    <key>contentName</key>
+                    <string>string.unquoted.message.dftemplate</string>
                     <key>patterns</key>
                     <array>
                         <dict>
@@ -208,41 +154,271 @@
                         </dict>
                         <dict>
                             <key>include</key>
-                            <string>#literals</string>
+                            <string>#tokens</string>
                         </dict>
-                        <dict>
-                            <key>match</key>
-                            <string>\b(range|to|artifact|item|class|subclass|named|atHome|face|factionType|group|faction|male|female|permanent|local|remote|is)\b</string>
-                            <key>name</key>
-                            <string>support.type.attribute.dftemplate</string>
-                        </dict>	
-                        <dict>
-                            <key>match</key>
-                            <string>\b(global)\b</string>
-                            <key>name</key>
-                            <string>storage.modifier.global.dftemplate</string>
-                        </dict>	
                     </array>
                     <key>end</key>
-                    <string>$</string>
+                    <string>^$</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>^\s*\((message)\)\s*([a-zA-Z]+)(:)\s+(\[)([0-9]+)(\])</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>support.type.message.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                        <key>4</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.tag.message.dftemplate</string>
+                        </dict>
+                        <key>5</key>
+                        <dict>
+                            <key>name</key>
+                            <string>constant.numeric.dftemplate</string>
+                        </dict>
+                        <key>6</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.tag.message.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>
+                <dict>
+                    <key>begin</key>
+                    <string>^\s*(Message)(:)\s+([0-9]+)</string>
+                    <key>beginCaptures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>support.type.message.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>constant.numeric.dftemplate</string>
+                        </dict>
+                    </dict>
+                    <key>contentName</key>
+                    <string>string.unquoted.message.dftemplate</string>
+                    <key>patterns</key>
+                    <array>
+                        <dict>
+                            <key>include</key>
+                            <string>#symbols</string>
+                        </dict>
+                        <dict>
+                            <key>include</key>
+                            <string>#tokens</string>
+                        </dict>
+                    </array>
+                    <key>end</key>
+                    <string>^$</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>^\s*\((message)\)\s*(Message)(:)\s+([0-9]+)</string>                 
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>support.type.message.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                        <key>4</key>
+                        <dict>
+                            <key>name</key>
+                            <string>constant.numeric.dftemplate</string>
+                        </dict>
+                    </dict>
                 </dict>
             </array>
+            <key>repository</key>
+            <dict>
+                <key>tokens</key>
+                <dict>
+                    <key>match</key>
+                    <string>(?:(&lt;)(?:(ce|---)|(.+))(&gt;)\s?)+</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.tag.token.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.other.token.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>invalid.illegal.token.dftemplate</string>
+                        </dict>
+                        <key>4</key>
+                        <dict>
+                            <key>name</key>
+                            <string>punctuation.definition.tag.token.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>
+            </dict>
+        </dict>
+        <key>symbol-definitions</key>
+        <dict>
+            <key>begin</key>
+            <string>^(?:\((definition|symbol)\))?\s*(Item|Person|Place|Clock|Foe)\s</string>
+            <key>beginCaptures</key>
+            <dict>
+                <key>1</key>
+                <dict>
+                    <key>name</key>
+                    <string>storage.type.dftemplate</string>
+                </dict>
+                <key>2</key>
+                <dict>
+                    <key>name</key>
+                    <string>support.type.symbol.dftemplate</string>
+                </dict>
+            </dict>
+            <key>name</key>
+            <string>meta.definition.symbol.dftemplate</string>
+            <key>patterns</key>
+            <array>
+                <dict>
+                    <key>include</key>
+                    <string>#symbols</string>
+                </dict>
+                <dict>
+                    <key>include</key>
+                    <string>#numbers</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>\b(flag|range|to|artifact|item|class|subclass|named|atHome|face|factionType|group|faction|male|female|permanent|local|remote|is)\b</string>
+                    <key>name</key>
+                    <string>storage.modifier.attribute.dftemplate</string>
+                </dict>	
+                <dict>
+                    <key>match</key>
+                    <string>\b(global)\b</string>
+                    <key>name</key>
+                    <string>storage.modifier.global.dftemplate</string>
+                </dict>	
+            </array>
+            <key>end</key>
+            <string>$</string>
         </dict>
         <key>tasks</key>
         <dict>
             <key>patterns</key>
             <array>
                 <dict>
-                    <key>match</key>
-                    <string>^\s*until</string>
+                    <key>begin</key>
+                    <string>^(?:\((task)\))?\s*(variable|until)</string>
+                    <key>beginCaptures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.function.task.dftemplate</string>
+                        </dict>
+                    </dict>
                     <key>name</key>
-                    <string>support.function.task.dftemplate</string>
+                    <string>meta.definition.task.dftemplate</string>
+                    <key>patterns</key>
+                    <array>
+                        <dict>
+                            <key>include</key>
+                            <string>#symbols</string>
+                        </dict>
+                    </array>
+                    <key>end</key>
+                    <string>(?:(performed)(:))?\s*$</string>
+                    <key>endCaptures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.function.task.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                    </dict>
                 </dict>
                 <dict>
-                    <key>match</key>
-                    <string>(task|performed):(?=\s*$)</string>
+                    <key>begin</key>
+                    <string>^(?:\((task)\))?\s*(?=.*task:\s*$)</string>
+                    <key>beginCaptures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                    </dict>
                     <key>name</key>
-                    <string>support.function.task.dftemplate</string>
+                    <string>meta.definition.task.dftemplate</string>
+                    <key>patterns</key>
+                    <array>
+                        <dict>
+                            <key>include</key>
+                            <string>#symbols</string>
+                        </dict>
+                    </array>
+                    <key>end</key>
+                    <string>(task)(:)\s*$</string>
+                    <key>endCaptures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.function.task.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>keyword.operator.assignment.dftemplate</string>
+                        </dict>
+                    </dict>
                 </dict>
                 <dict>
                     <key>match</key>
@@ -273,6 +449,29 @@
                     <key>name</key>
                     <string>keyword.control.macro.dftemplate</string>
                 </dict>
+            </array>
+        </dict>
+        <key>actions</key>
+        <dict>
+            <key>patterns</key>
+            <array>
+                <dict>
+                    <key>match</key>
+                    <string>^\((condition|action)\)\s(\w+)\s-></string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>support.type.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>
                 <dict>
                     <key>begin</key>
                     <string>(?&lt;=->)|(?&lt;=^)\s*(?=when( not)? [a-zA-Z0-9_.]+( (and|or)( not)? [a-zA-Z0-9_.]+)*\s*$)</string>
@@ -286,7 +485,7 @@
                             <key>match</key>
                             <string>\s(and not|and|or not|or)\s</string>
                             <key>name</key>
-                            <string>keyword.control.operator.conditional.dftemplate</string>
+                            <string>keyword.control.operator.word.dftemplate</string>
                         </dict>	
                     </array>
                     <key>end</key>
@@ -294,7 +493,7 @@
                 </dict>
                 <dict>
                     <key>match</key>
-                    <string>\b(start\squest)\s([^\s]+(?:\s[^\s]+)?)\b</string>
+                    <string>\b(start\squest)\s(?:([0-9]+\s[0-9]+)|([^\s]+))\b</string>
                     <key>captures</key>
                     <dict>
                         <key>1</key>
@@ -305,7 +504,12 @@
                         <key>2</key>
                         <dict>
                             <key>name</key>
-                            <string>storage.type.class.quest.dftemplate</string>
+                            <string>constant.numeric.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>string.unquoted.dftemplate</string>
                         </dict>
                     </dict>
                 </dict>		
@@ -314,7 +518,38 @@
                     <string>\bend\squest\b</string>
                     <key>name</key>
                     <string>keyword.control.end-quest.dftemplate</string>
-                </dict>				
+                </dict>
+            </array>
+        </dict>
+        <key>numbers</key>
+        <dict>
+            <key>match</key>
+            <string>\b([0-9_]+|([0-9_]+)?\.[0-9_]+)\b</string>
+            <key>name</key>
+            <string>constant.numeric.dftemplate</string>
+        </dict>
+        <key>symbols</key>
+        <dict>
+            <key>patterns</key>
+            <array>
+                <dict>
+                    <key>match</key>
+                    <string>%[a-zA-Z0-9]+</string>
+                    <key>name</key>
+                    <string>variable.language.dftemplate</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>(\b|\s)(_{1,4}|={1,2})([a-zA-Z0-9_-]+\.)?[a-zA-Z0-9_-]+_\b</string>
+                    <key>name</key>
+                    <string>variable.other.symbol.dftemplate</string>
+                </dict>
+                <dict>
+                    <key>match</key>
+                    <string>(?&lt;=\s)&amp;[0-9]+(?=\s)</string>
+                    <key>name</key>
+                    <string>variable.parameter.macro.dftemplate</string>
+                </dict>
             </array>
         </dict>
     </dict>
