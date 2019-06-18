@@ -55,7 +55,9 @@ Modules are json files that provides signatures and documentation for actions, c
 
 -----------------------------------------------------------------------------------------------------------
 
-![Brisiens](images/brisien.png)
+![QRC](images/qrc.png)
+
+![QBN](images/qbn.png)
 
 -----------------------------------------------------------------------------------------------------------
 
