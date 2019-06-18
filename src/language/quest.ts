@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from '../parser';
+import { TextLine, Range } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { QuestParseContext, QuestBlockKind } from './common';
 import { Preamble } from './preamble';
@@ -34,6 +35,11 @@ export class Quest {
      */
     public readonly qbn = new Qbn();
 
+    /**
+     * Ranges of comment blocks, composed of one or more consecutive lines.
+     */
+    public readonly comments: Range[] = [];
+
     private readonly version: number;
 
     private constructor(public readonly document: vscode.TextDocument) {
@@ -47,8 +53,14 @@ export class Quest {
         for (let index = 0; index < this.document.lineCount; index++) {
             const line = this.document.lineAt(index);
 
-            // Skip comments and empty lines
-            if (parser.isEmptyOrComment(line.text)) {
+            // Skip empty lines
+            if (/^\s*$/.test(line.text)) {
+                continue;
+            }
+
+            // Store comments
+            if (/^\s*-/.test(line.text)) {
+                this.addComment(line);
                 continue;
             }
 
@@ -104,6 +116,18 @@ export class Quest {
         const nameLocation = this.getNameLocation();
         if (!nameLocation.range.isEmpty) {
             return parser.makeSummary(this.document, nameLocation.range.start.line);
+        }
+    }
+
+    /**
+     * Adds a comment to the previous comment block if is on a consecutive line, otherwise pushes a new comment block.
+     * @param line A new line with a comment.
+     */
+    private addComment(line: TextLine): void {
+        if (this.comments.length > 0 && line.lineNumber - this.comments[this.comments.length - 1].end.line === 1) {
+            this.comments[this.comments.length - 1] = this.comments[this.comments.length - 1].union(line.range);
+        } else {
+            this.comments.push(line.range);
         }
     }
 

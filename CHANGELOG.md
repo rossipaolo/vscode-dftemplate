@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Added
+
+- Implemented provider of folding ranges for QRC, QBN, message, task and comment blocks.
+
 ## 0.10.0
 
 ### Added

@@ -24,6 +24,7 @@ import { TemplateRenameProvider } from './providers/renameProvider';
 import { TemplateDocumentRangeFormattingEditProvider } from './providers/documentRangeFormattingEditProvider';
 import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
+import { TemplateFoldingRangeProvider } from './providers/foldingRangeProvider';
 import { Tables } from './language/static/tables';
 import { tasks } from './parser';
 import { Quest } from './language/quest';
@@ -61,6 +62,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
         context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
         context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(context)));
+        context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(TEMPLATE_MODE, new TemplateFoldingRangeProvider()));
 
         if (getOptions()['codeLens']['enabled']) {
             context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider()));
