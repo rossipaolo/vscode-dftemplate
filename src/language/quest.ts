@@ -5,10 +5,10 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
-import { TextLine, Range } from 'vscode';
+import { TextLine, Range, MarkdownString } from 'vscode';
+import { EOL } from 'os';
 import { TEMPLATE_LANGUAGE } from '../extension';
-import { QuestParseContext, QuestBlockKind } from './common';
+import { QuestParseContext, QuestBlockKind, QuestResource } from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
@@ -110,13 +110,36 @@ export class Quest {
     }
 
     /**
-     * Gets the comment block above the `Quest:` directive.
+     * Finds a comment block above the definition of a resource and returns its formatted content.
+     * If necessary, the resulting documentation will be further processed for the specific resource type.
+     * @param resource A resource defined in this quest or `undefined` for the quest itself.
+     * @param markdown If `true`, returns a markdown string instead of a string.
      */
-    public makeDocumentation(): string | undefined {
-        const nameLocation = this.getNameLocation();
-        if (!nameLocation.range.isEmpty) {
-            return parser.makeSummary(this.document, nameLocation.range.start.line);
+    public makeDocumentation(resource?: QuestResource, markdown?: false): string | undefined;
+    public makeDocumentation(resource: QuestResource | undefined, markdown: true): MarkdownString | undefined;
+    public makeDocumentation(resource: QuestResource | undefined, markdown: boolean | undefined): string | MarkdownString | undefined;
+    public makeDocumentation(resource: QuestResource | undefined, markdown: boolean | undefined): string | MarkdownString | undefined {
+        if (resource === undefined) {
+            const directive = this.preamble.questName;
+            return directive !== undefined ? this.makeDocumentation(directive, markdown) : undefined;
         }
+
+        const result = (summary?: string) => {
+            summary = resource.makeDocumentation ? resource.makeDocumentation(summary) : summary;
+            return markdown ? new MarkdownString(summary) : summary;
+        };
+
+        const range = this.comments.find(x => x.end.line === resource.range.start.line - 1);
+        if (range === undefined) {
+            return result();
+        }
+
+        let summary: string = '';
+        for (let index = range.start.line; index <= range.end.line; index++) {
+            const line = this.document.lineAt(index);
+            summary += /^\s*-+\s*$/.test(line.text) ? EOL.repeat(2) : line.text.replace(/^\s*-+/, '');
+        }
+        return result(summary.trim());
     }
 
     /**

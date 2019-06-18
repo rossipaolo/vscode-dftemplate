@@ -6,7 +6,7 @@
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
-import { getWord, makeSummary, isQuestReference, tasks } from '../parser';
+import { getWord, isQuestReference, tasks } from '../parser';
 import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
@@ -60,7 +60,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     return resolve(TemplateHoverProvider.makeHover({
                         category: 'message',
                         signature: document.lineAt(message.range.start).text.trim(),
-                        summary: message.makeDocumentation(document)
+                        summary: quest.makeDocumentation(message)
                     }));
                 }
 
@@ -164,7 +164,7 @@ export class TemplateHoverProvider implements HoverProvider {
      * Gets the summary for a symbol and, if inside the `QRC` block, a description for its variation based on prefix and type.
      */
     private static getSymbolDescription(quest: Quest, name: string, symbol: Symbol, position: Position): string {
-        let summary = makeSummary(quest.document, symbol.range.start.line);
+        let summary = quest.makeDocumentation(symbol) || '';
         
         if (quest.qrc.range && quest.qrc.range.contains(position)) {
             const variation = Language.getInstance().getSymbolVariations(name, symbol.type, x => '`' + x + '`').find(x => x.word === name);
@@ -175,7 +175,7 @@ export class TemplateHoverProvider implements HoverProvider {
         if (symbol.type === SymbolType.Clock) {
             const task = quest.qbn.getTask(symbol.name);
             if (task !== undefined) {
-                let taskSummary = makeSummary(quest.document, task.range.start.line);
+                let taskSummary = quest.makeDocumentation(task);
                 if (taskSummary) {
                     taskSummary = `*@onTimer* - ${taskSummary}`;
                     summary = summary ? [summary, taskSummary].join(EOL.repeat(2)) : taskSummary;
@@ -187,11 +187,11 @@ export class TemplateHoverProvider implements HoverProvider {
     }
 
     private static getTaskDescription(quest: Quest, task: Task): string {
-        let summary = makeSummary(quest.document, task.range.start.line);
+        let summary = quest.makeDocumentation(task) || '';
 
         const untilPerformed = first(quest.qbn.iterateTasks(), x => x.name === task.name && x.definition.type === tasks.TaskType.PersistUntil);
         if (untilPerformed !== undefined) {
-            let untilPerformedSummary = makeSummary(quest.document, untilPerformed.range.start.line);
+            let untilPerformedSummary = quest.makeDocumentation(untilPerformed);
             if (untilPerformedSummary) {
                 untilPerformedSummary = `*@untilPerformed* - ${untilPerformedSummary}`;
                 summary = summary ? [summary, untilPerformedSummary].join(EOL.repeat(2)) : untilPerformedSummary;
