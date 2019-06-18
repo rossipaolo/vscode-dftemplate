@@ -26,6 +26,11 @@ export interface QuestResource {
      * The range of the entire definition.
      */
     blockRange: Range;
+
+    /**
+     * Finalises the documentation for this resources.
+     */
+    makeDocumentation?: (summary?: string) => string | undefined;
 }
 
 /**
@@ -431,11 +436,10 @@ export class Message implements QuestResource {
     }
 
     /**
-     * Gets the message block above this message and/or the general description if this is a static message. 
-     * @param document The document where this message is found.
+     * Adds the general description to the summary if this is a static message. 
+     * @param summary The formatted comment block for this message.
      */
-    public makeDocumentation(document: TextDocument): string | undefined {
-        let summary = parser.makeSummary(document, this.range.start.line);
+    public makeDocumentation(summary?: string): string | undefined {
 
         if (this.alias) {
             const details = Language.getInstance().findMessage(this.alias);

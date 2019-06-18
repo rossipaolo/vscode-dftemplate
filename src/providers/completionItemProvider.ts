@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
-import { getTableSchema, makeSummary } from '../parser';
+import { getTableSchema } from '../parser';
 import { QuestResourceCategory, SymbolType, QuestResourceInfo } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
@@ -105,7 +105,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                         if (name && name.toUpperCase().startsWith(upperCasePrefix)) {
                             const item = new CompletionItem(name, vscode.CompletionItemKind.Class);
                             item.detail = quest.preamble.getDisplayName() || name;
-                            item.documentation = TemplateCompletionItemProvider.formatDoc(quest.makeDocumentation());
+                            item.documentation = quest.makeDocumentation(undefined, true);
                             items.push(item);
                         }
                     });
@@ -115,7 +115,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                         if (message.alias && message.alias.startsWith(prefix)) {
                             const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
                             item.detail = quest.document.lineAt(message.range.start.line).text.trim();
-                            item.documentation = TemplateCompletionItemProvider.formatDoc(message.makeDocumentation(quest.document));
+                            item.documentation = quest.makeDocumentation(message, true);
                             items.push(item);
                         }
                     }
@@ -143,7 +143,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                         const kind = task.isVariable ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Method;
                         const item = new vscode.CompletionItem(task.definition.symbol, kind);
                         item.detail = quest.document.lineAt(task.range.start.line).text.trim();
-                        item.documentation = TemplateCompletionItemProvider.formatDoc(makeSummary(quest.document, task.range.start.line));
+                        item.documentation = quest.makeDocumentation(task, true);
                         items.push(item);
                     }
                     break;
@@ -279,15 +279,6 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 return vscode.CompletionItemKind.Event;
             default:
                 return vscode.CompletionItemKind.Text;
-        }
-    }
-
-    /**
-     * Makes a markdown string from summary if available, otherwise returns undefined.
-     */
-    private static formatDoc(documentation: string | undefined): vscode.MarkdownString | undefined {
-        if (documentation) {
-            return new vscode.MarkdownString(documentation);
         }
     }
 }

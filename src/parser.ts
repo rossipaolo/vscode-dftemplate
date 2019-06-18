@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, Position, TextLine } from 'vscode';
-import { EOL } from 'os';
 
 /**
 * Gets a word from the given position of a document.
@@ -50,20 +49,6 @@ export function wordRange(line: vscode.TextLine, word: string): vscode.Range {
  */
 export function isEmptyOrComment(text: string): boolean {
     return /^\s*(-.*)?\s*$/.test(text);
-}
-
-/**
- * Finds a comment block above a definition and returns its content.
- * @param document A quest document.
- * @param definitionLine Line index of item whose summary is requested.
- */
-export function makeSummary(document: TextDocument, definitionLine: number): string {
-    let summary: string = '';
-    let text;
-    while (definitionLine > 0 && /^\s*-+/.test(text = document.lineAt(--definitionLine).text)) {
-        summary = (/^\s*-+\s*$/.test(text) ? EOL.repeat(2) : text.replace(/^\s*-+\s*/, '') + ' ') + summary;
-    }
-    return summary.trim();
 }
 
 /**
