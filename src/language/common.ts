@@ -89,7 +89,7 @@ export class Directive implements QuestResource {
     public static parse(line: TextLine): Directive | undefined {
         const split = line.text.trim().split(':', 2);
         if (split.length === 2) {
-            const result = Language.getInstance().findKeyword(split[0]);
+            const result = Language.getInstance().findDirective(split[0]);
             if (result) {
                 const match = result.signature.match(/[a-zA-Z]+: \${1:([a-zA-Z]+)}/);
                 if (match) {

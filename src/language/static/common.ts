@@ -8,7 +8,7 @@
  * Kinds of resources usable in a quest.
  */
 export enum QuestResourceCategory {
-    Keyword,
+    Directive,
     Message,
     Definition,
     Symbol,

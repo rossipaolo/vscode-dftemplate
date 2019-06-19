@@ -17,7 +17,7 @@ interface LanguageTable {
     symbolsVariations: Map<string, {
         word: string, description: string
     }[]>;
-    keywords: Map<string, QuestResourceDetails>;
+    directives: Map<string, QuestResourceDetails>;
     messages: Map<string, string>;
 }
 
@@ -51,7 +51,7 @@ export class Language extends StaticData {
                 instance.table = {
                     symbols: Language.objectToMap(obj.symbols),
                     symbolsVariations: Language.objectToMap(obj.symbolsVariations),
-                    keywords: Language.objectToMap(obj.keywords),
+                    directives: Language.objectToMap(obj.directives),
                     messages: Language.objectToMap(obj.messages),
                 };
             }),
@@ -65,7 +65,7 @@ export class Language extends StaticData {
      * Find an item with the given name.
      */
     public seekByName(name: string): QuestResourceInfo | undefined {
-        let symbol = this.findSymbol(name);
+        const symbol = this.findSymbol(name);
         if (symbol) {
             return {
                 category: QuestResourceCategory.Symbol,
@@ -75,15 +75,15 @@ export class Language extends StaticData {
             };
         }
 
-        let keyword = this.findKeyword(name);
-        if (keyword) {
+        const directive = this.findDirective(name);
+        if (directive) {
             return {
-                category: QuestResourceCategory.Keyword,
-                details: keyword
+                category: QuestResourceCategory.Directive,
+                details: directive
             };
         }
 
-        let message = this.findMessage(name);
+        const message = this.findMessage(name);
         if (message) {
             return {
                 category: QuestResourceCategory.Message,
@@ -107,7 +107,7 @@ export class Language extends StaticData {
      */
     public *seekByPrefix(prefix: string): Iterable<QuestResourceInfo> {
         for (const result of iterateAll(
-            this.findKeywords(prefix),
+            this.findDirectives(prefix),
             this.findMessages(prefix),
             this.findGlobalVariables(prefix),
             this.findDefinitions(prefix))) {
@@ -121,7 +121,7 @@ export class Language extends StaticData {
     public *caseInsensitiveSeek(prefix: string): Iterable<string> {
         prefix = prefix.toUpperCase();
         if (this.table && this.definitions) {
-            yield* select(where(this.table.keywords, x => x["1"].signature.toUpperCase().startsWith(prefix)), x => x["1"].signature);
+            yield* select(where(this.table.directives, x => x["1"].signature.toUpperCase().startsWith(prefix)), x => x["1"].signature);
             yield* selectMany(where(this.definitions, x => x["0"].toUpperCase().startsWith(prefix)), x => x["1"], x => x.snippet);
             yield* select(where(Tables.getInstance().globalVarsTable.globalVars, x => x["0"].toUpperCase().startsWith(prefix)), x => x["0"] + ' ${1:_varSymbol_}');
         }
@@ -133,9 +133,9 @@ export class Language extends StaticData {
         }
     }
 
-    public findKeyword(name: string): QuestResourceDetails | undefined {
-        if (this.table && this.table.keywords.has(name)) {
-            return this.table.keywords.get(name);
+    public findDirective(name: string): QuestResourceDetails | undefined {
+        if (this.table && this.table.directives.has(name)) {
+            return this.table.directives.get(name);
         }
     }
 
@@ -183,11 +183,11 @@ export class Language extends StaticData {
         }
     }
 
-    public *findKeywords(prefix: string): Iterable<QuestResourceInfo> {
-        if (this.table && this.table.keywords) {
-            for (const keyword of Language.filterItems(this.table.keywords, prefix)) {
+    public *findDirectives(prefix: string): Iterable<QuestResourceInfo> {
+        if (this.table && this.table.directives) {
+            for (const keyword of Language.filterItems(this.table.directives, prefix)) {
                 yield {
-                    category: QuestResourceCategory.Keyword, details: keyword
+                    category: QuestResourceCategory.Directive, details: keyword
                 };
             }
         }

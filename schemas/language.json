@@ -32,47 +32,24 @@
                 }
             }
         },
-        "keywords": {
+        "directives": {
             "type": "object",
-            "description": "Keywords.",
+            "description": "Directives that provide informations or delimit a block.",
             "additionalProperties": {
                 "type": "object",
-                "description": "An element",
+                "description": "A directive.",
                 "properties": {
-                    "category": {
-                        "type": "string",
-                        "description": "The category of the element."
-                    },
                     "signature": {
                         "type": "string",
-                        "description": "Signature of the element."
+                        "description": "Signature of the directive."
                     },
                     "summary": {
                         "type": "string",
-                        "description": "A short description of the element."
-                    },
-                    "parameters": {
-                        "type": "array",
-                        "description": "Parameters for a symbol definition.",
-                        "items": {
-                            "properties": {
-                                "name": {
-                                    "type": "string",
-                                    "description": "The name of the parameter."
-                                },
-                                "description": {
-                                    "type": "string",
-                                    "description": "A short description of the parameter."
-                                }
-                            },
-                            "required": [
-                                "name",
-                                "description"
-                            ]
-                        }
+                        "description": "A short description of the directive."
                     }
                 },
                 "required": [
+                    "signature",
                     "summary"
                 ]
             }
@@ -89,7 +66,7 @@
     "required": [
         "symbols",
         "symbolsVariations",
-        "keywords",
+        "directives",
         "messages"
     ],
     "default": {}

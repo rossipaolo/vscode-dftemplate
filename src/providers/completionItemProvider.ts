@@ -42,7 +42,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         const items: CompletionItem[] = [];
 
         // Directives
-        for (const directive of Language.getInstance().findKeywords(prefix)) {
+        for (const directive of Language.getInstance().findDirectives(prefix)) {
             items.push(TemplateCompletionItemProvider.signatureCompletionItem(directive));
         }
 
@@ -81,7 +81,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             // Directives and static messages
             for (const directive of [
-                ...Language.getInstance().findKeywords(prefix),
+                ...Language.getInstance().findDirectives(prefix),
                 ...Language.getInstance().findMessages(prefix)]) {
                 items.push(TemplateCompletionItemProvider.signatureCompletionItem(directive));
             }
@@ -178,7 +178,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             // Other signatures
             for (const resourceInfo of [
-                ...Language.getInstance().findKeywords(prefix),
+                ...Language.getInstance().findDirectives(prefix),
                 ...Language.getInstance().findDefinitions(prefix),
                 ...Language.getInstance().findGlobalVariables(prefix)]) {
                 items.push(TemplateCompletionItemProvider.signatureCompletionItem(resourceInfo));
@@ -265,7 +265,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
     private static getCompletionItemKind(category: QuestResourceCategory): vscode.CompletionItemKind {
         switch (category) {
-            case QuestResourceCategory.Keyword:
+            case QuestResourceCategory.Directive:
                 return vscode.CompletionItemKind.Keyword;
             case QuestResourceCategory.Message:
                 return vscode.CompletionItemKind.Struct;

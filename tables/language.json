@@ -164,7 +164,7 @@
         "1010": "The message inserted into the PC's log when the quest is accepted.",
         "1045": "Displayed when the PC fails to meet a quest with a dead-line."
     },
-    "keywords": {
+    "directives": {
         "Messages": {
             "signature": "Messages: ${1:nn}",
             "summary": "Number of messages the compiler ought to expect. This need not be exact, just a limit."
