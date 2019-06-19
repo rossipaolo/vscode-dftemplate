@@ -62,44 +62,19 @@ export class Language extends StaticData {
     }
 
     /**
-     * Find an item with the given name.
+     * Find informations for a language resource with the given name.
      */
     public seekByName(name: string): QuestResourceInfo | undefined {
-        const symbol = this.findSymbol(name);
-        if (symbol) {
-            return {
-                category: QuestResourceCategory.Symbol,
-                details: {
-                    summary: symbol, signature: ''
-                }
-            };
-        }
 
-        const directive = this.findDirective(name);
-        if (directive) {
-            return {
-                category: QuestResourceCategory.Directive,
-                details: directive
-            };
-        }
+        const makeInfo = (
+            category: QuestResourceCategory,
+            details: QuestResourceDetails | undefined): QuestResourceInfo | undefined =>
+            details !== undefined ? { category: category, details: details } : undefined;
 
-        const message = this.findMessage(name);
-        if (message) {
-            return {
-                category: QuestResourceCategory.Message,
-                details: message
-            };
-        }
-
-        const globalVar = this.findGlobalVariable(name);
-        if (globalVar) {
-            return {
-                category: QuestResourceCategory.Task,
-                details: {
-                    summary: 'Global variable number ' + globalVar + '.', signature: name
-                }
-            };
-        }
+        return makeInfo(QuestResourceCategory.Symbol, this.findSymbol(name)) ||
+            makeInfo(QuestResourceCategory.Directive, this.findDirective(name)) ||
+            makeInfo(QuestResourceCategory.Message, this.findMessage(name)) ||
+            makeInfo(QuestResourceCategory.Task, this.findGlobalVariable(name));
     }
 
     /**
@@ -127,9 +102,15 @@ export class Language extends StaticData {
         }
     }
 
-    public findSymbol(name: string): string | undefined {
+    public findSymbol(name: string): QuestResourceDetails | undefined {
         if (this.table && this.table.symbols.has(name)) {
-            return this.table.symbols.get(name);
+            const symbol = this.table.symbols.get(name);
+            if (symbol !== undefined) {
+                return {
+                    summary: symbol,
+                    signature: ''
+                };
+            }
         }
     }
 
@@ -164,18 +145,24 @@ export class Language extends StaticData {
         }
     }
 
-    public findGlobalVariable(name: string): number | undefined {
-        return Tables.getInstance().globalVarsTable.globalVars.get(name);
+    public findGlobalVariable(name: string): QuestResourceDetails | undefined {
+        const id = Tables.getInstance().globalVarsTable.globalVars.get(name);
+        if (id !== undefined) {
+            return {
+                summary: `Global variable number ${id}.`,
+                signature: name
+            };
+        }
     }
 
     public *findSymbols(prefix: string): Iterable<QuestResourceInfo> {
         if (this.table && this.table.symbols) {
-            for (const symbol of this.table.symbols) {
-                if (symbol["0"].startsWith(prefix)) {
+            for (const [signature, summary] of this.table.symbols) {
+                if (signature.startsWith(prefix)) {
                     yield {
                         category: QuestResourceCategory.Symbol,
                         details: {
-                            summary: symbol["1"], signature: symbol["0"]
+                            summary: summary, signature: signature
                         }
                     };
                 }
@@ -195,11 +182,11 @@ export class Language extends StaticData {
 
     public *findMessages(prefix: string): Iterable<QuestResourceInfo> {
         if (this.table) {
-            for (const message of Tables.getInstance().staticMessagesTable.messages) {
-                if (message["0"].startsWith(prefix)) {
+            for (const [name, id] of Tables.getInstance().staticMessagesTable.messages) {
+                if (name.startsWith(prefix)) {
                     yield {
                         category: QuestResourceCategory.Message,
-                        details: Language.makeMessageItem(this.table, message["1"], message["0"])
+                        details: Language.makeMessageItem(this.table, id, name)
                     };
                 }
             }
@@ -222,9 +209,9 @@ export class Language extends StaticData {
 
     public *findDefinitions(prefix: string): Iterable<QuestResourceInfo> {
         if (this.definitions) {
-            for (const definition of this.definitions) {
-                if (definition["0"].startsWith(prefix)) {
-                    for (const signature of definition["1"]) {
+            for (const [type, signatures] of this.definitions) {
+                if (type.startsWith(prefix)) {
+                    for (const signature of signatures) {
                         yield {
                             category: QuestResourceCategory.Definition,
                             details: signature
@@ -327,9 +314,9 @@ export class Language extends StaticData {
     }
 
     private static *filterItems(items: Map<string, QuestResourceDetails>, prefix: string): Iterable<QuestResourceDetails> {
-        for (const item of items) {
-            if (item["0"].startsWith(prefix)) {
-                yield item["1"];
+        for (const [name, detail] of items) {
+            if (name.startsWith(prefix)) {
+                yield detail;
             }
         }
     }
