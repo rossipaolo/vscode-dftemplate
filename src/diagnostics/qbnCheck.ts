@@ -5,11 +5,9 @@
 'use strict';
 
 import * as parser from '../parser';
-
-import { Diagnostic } from "vscode";
+import { Diagnostic } from 'vscode';
 import { Errors, Warnings, Hints, findParameter } from './common';
 import { analyseSignature } from './signatureCheck';
-import { tasks } from '../parser';
 import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
@@ -23,11 +21,10 @@ import { first, getOptions } from '../extension';
  */
 export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
-    for (const symbolCtx of context.qbn.symbols) {
-        const symbol = symbolCtx[1];
-        const symbolName = symbolCtx[0];
-        const symbolContext = Array.isArray(symbol) ? symbol[0] : symbol;
-        if (!symbolContext) {
+    for (const [name, symbols] of context.qbn.symbols) {
+
+        const firstSymbol = Array.isArray(symbols) ? symbols[0] : symbols;
+        if (!firstSymbol) {
             continue;
         }
 
@@ -38,77 +35,76 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         }
 
         // Invalid signature or parameters
-        if (!symbolContext.signature) {
-            const lineRange = parser.trimRange(symbolContext.line);
-            yield Errors.invalidDefinition(lineRange, symbolName, symbolContext.type);
+        if (!firstSymbol.signature) {
+            const lineRange = parser.trimRange(firstSymbol.line);
+            yield Errors.invalidDefinition(lineRange, name, firstSymbol.type);
         }
 
         // Duplicated definition
-        if (Array.isArray(symbol)) {
-            const allLocations = symbol.map(x => context.getLocation(x.range));
-            for (const symbolDefinition of symbol) {
-                yield Errors.duplicatedDefinition(symbolDefinition.range, symbolName, allLocations);
+        if (Array.isArray(symbols)) {
+            const allLocations = symbols.map(x => context.getLocation(x.range));
+            for (const symbolDefinition of symbols) {
+                yield Errors.duplicatedDefinition(symbolDefinition.range, name, allLocations);
             }
 
-            for (const signature of symbol) {
+            for (const signature of symbols) {
                 yield* checkSignature(signature);
             }
         } else {
-            yield* checkSignature(symbol);
+            yield* checkSignature(symbols);
         }
 
         // Unused
-        if (!symbolHasReferences(context, symbolName)) {
-            yield Warnings.unusedDeclarationSymbol(symbolContext.range, symbolName);
+        if (!symbolHasReferences(context, name)) {
+            yield Warnings.unusedDeclarationSymbol(firstSymbol.range, name);
         }
 
         // Clock
-        if (symbolContext.type === SymbolType.Clock) {
-            if (!first(context.qbn.iterateActions(), x => x.line.text.indexOf('start timer ' + symbolName) !== -1)) {
-                yield Warnings.unstartedClock(symbolContext.range, symbolName);
+        if (firstSymbol.type === SymbolType.Clock) {
+            if (!first(context.qbn.iterateActions(), x => x.line.text.indexOf('start timer ' + name) !== -1)) {
+                yield Warnings.unstartedClock(firstSymbol.range, name);
             }
-            if (!context.qbn.tasks.get(symbolName)) {
-                yield Warnings.unlinkedClock(symbolContext.range, symbolName);
+            if (!context.qbn.tasks.get(name)) {
+                yield Warnings.unlinkedClock(firstSymbol.range, name);
             }
         }
 
         // Naming convention violation
-        if (!parser.symbols.symbolFollowsNamingConventions(symbolName)) {
-            yield Hints.symbolNamingConventionViolation(symbolContext.range);
+        if (!parser.symbols.symbolFollowsNamingConventions(name)) {
+            yield Hints.symbolNamingConventionViolation(firstSymbol.range);
         }
     }
 
-    for (const task of context.qbn.tasks) {
-
-        const taskName = task[0];
-        const taskContext = Array.isArray(task[1]) ? task[1][0] : task[1];
-        if (!taskContext) {
+    for (const [name, tasks] of context.qbn.tasks) {
+        
+        const firstTask = Array.isArray(tasks) ? tasks[0] : tasks;
+        if (!firstTask) {
             continue;
         }
 
         // Duplicated definition
-        if (Array.isArray(task[1])) {
-            const allLocations = task[1].map(x => context.getLocation(x.range));
-            for (const definition of task[1] as Task[]) {
-                yield Errors.duplicatedDefinition(definition.range, taskName, allLocations);
+        if (Array.isArray(tasks)) {
+            const allLocations = tasks.map(x => context.getLocation(x.range));
+            for (const definition of tasks) {
+                yield Errors.duplicatedDefinition(definition.range, name, allLocations);
             }
         }
 
         // Unused      
-        if (!taskIsUsed(context, taskName, taskContext)) {
-            const definition = taskContext.definition;
-            const name = definition.type === tasks.TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
-            yield Warnings.unusedDeclarationTask(taskContext.range, name);
+        if (!taskIsUsed(context, name, firstTask)) {
+            const definition = firstTask.definition;
+            const name = definition.type === parser.tasks.TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
+            yield Warnings.unusedDeclarationTask(firstTask.range, name);
         }
 
         // Naming convention violation
-        if (!parser.symbols.symbolFollowsNamingConventions(taskName)) {
-            yield Hints.symbolNamingConventionViolation(taskContext.range);
+        if (!parser.symbols.symbolFollowsNamingConventions(name)) {
+            yield Hints.symbolNamingConventionViolation(firstTask.range);
         }
 
         // Convert to variable
-        if (taskContext.actions.length === 0 && !taskContext.isVariable) {
-            yield Hints.convertTaskToVariable(taskContext.range);
+        if (firstTask.actions.length === 0 && !firstTask.isVariable) {
+            yield Hints.convertTaskToVariable(firstTask.range);
         }
     }
 
