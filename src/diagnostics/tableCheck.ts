@@ -13,7 +13,7 @@ import { Errors } from './common';
  * @param document A document with table schema.
  */
 export function* tableCheck(document: vscode.TextDocument): Iterable<vscode.Diagnostic> {
-    //const tableKind = getTableKind(document.fileName);
+
     let schema: RegExp | null = null;
 
     for (let index = 0; index < document.lineCount; index++) {
