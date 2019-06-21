@@ -6,7 +6,7 @@
 
 import * as parser from '../parser';
 import { RenameProvider, TextDocument, Position, WorkspaceEdit, Range, CancellationToken } from 'vscode';
-import { Symbol, Task } from '../language/common';
+import { Symbol, Task, Message } from '../language/common';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { symbols } from '../parser';
@@ -22,12 +22,32 @@ export class TemplateRenameProvider implements RenameProvider {
         const resource = quest.getResource(position);
         if (resource) {
             switch (resource.kind) {
+                case 'message':
+                    return TemplateRenameProvider.renameMessage(quest, resource.value, newName);
                 case 'symbol':
                 case 'task':
                     return TemplateRenameProvider.renameSymbol(quest, resource.value, newName);
                 case 'quest':
                     return TemplateRenameProvider.renameQuest(resource.value, newName, token);
             }
+        }
+    }
+
+    /**
+     * Renames a message inside the given quest.
+     * @param quest The quest where the message is defined.
+     * @param message Message instance.
+     * @param newName The new name for the message.
+     */
+    public static renameMessage(quest: Quest, message: Message, newName: string): WorkspaceEdit | undefined {
+        if (message.alias === undefined) {
+            const edit = new WorkspaceEdit();
+
+            for (const location of TemplateReferenceProvider.messageReferences(quest, message, true)) {
+                edit.replace(location.uri, location.range, newName);
+            }
+
+            return edit;
         }
     }
 
