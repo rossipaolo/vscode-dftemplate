@@ -5,61 +5,44 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
 import { TextDocument, Position, Definition } from 'vscode';
 import { SymbolType } from '../language/static/common';
 import { Quest } from '../language/quest';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
-    public provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Thenable<Definition> {
-        return new Promise(resolve => {
-            const word = parser.getWord(document, position);
-            if (word) {
+    public async provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Promise<Definition | undefined> {
+        if (Quest.isTable(document.uri)) {
+            return undefined;
+        }
 
-                if (parser.isQuestReference(document.lineAt(position.line).text, word)) {
+        const quest = Quest.get(document);
+        const resource = quest.getResource(position);
+        if (resource) {
+            switch (resource.kind) {
+                case 'message':
+                case 'task':
+                    return quest.getLocation(resource.value.range);
+                case 'symbol':
+                    const symbol = resource.value;
 
-                    // Quest
-                    return Quest.getAll(token).then(quests => {
-                        const questName = Quest.indexToName(word);
-                        const found = quests.find(x => x.getName() === questName);
-                        return resolve(found ? found.getNameLocation() : undefined);
-                    });
-                } else {
-
-                    const quest = Quest.get(document);
-
-                    // Symbol
-                    const symbol = quest.qbn.getSymbol(word);
-                    if (symbol) {
-                        
-                        // Clocks are defined as a symbol for QRC substitution and a task for firing.
-                        if (symbol.type === SymbolType.Clock) {
-                            const clockTask = quest.qbn.getTask(parser.symbols.getBaseSymbol(word));
-                            if (clockTask) {
-                                return resolve([quest.getLocation(symbol.range), quest.getLocation(clockTask.range)]);
-                            }
+                    // Clocks are defined as a symbol for QRC substitution and a task for firing.
+                    if (symbol.type === SymbolType.Clock) {
+                        const clockTask = quest.qbn.getTask(symbol.name);
+                        if (clockTask) {
+                            return [quest.getLocation(symbol.range), quest.getLocation(clockTask.range)];
                         }
-
-                        return resolve(quest.getLocation(symbol.range));
                     }
 
-                    // Task
-                    const task = quest.qbn.getTask(word);
-                    if (task) {
-                        return resolve(quest.getLocation(task.range));
+                    return quest.getLocation(symbol.range);
+                case 'quest':
+                    const quests = await Quest.getAll(token);
+                    const questName = Quest.indexToName(resource.value);
+                    const found = quests.find(x => x.getName() === questName);
+                    if (found) {
+                        return found.getNameLocation();
                     }
-
-                    // Message
-                    const id = Number(word);
-                    const message = quest.qrc.messages.find(x => x.id === id || x.alias === word);
-                    if (message) {
-                        return resolve(quest.getLocation(message.range));
-                    }
-                }
             }
-
-            return resolve();
-        });
+        }
     }
 }

@@ -10,63 +10,34 @@ import { Quest } from '../language/quest';
 import { Symbol, Message, Task, Action } from '../language/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { wordRange } from '../parser';
-import { first } from '../extension';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
 
-    public provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Thenable<Location[]> {
-        return new Promise(resolve => {
-            const line = document.lineAt(position.line);
-            const word = parser.getWord(document, position);
-            if (word) {
+    public async provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Promise<Location[] | undefined> {
+        if (Quest.isTable(document.uri)) {
+            return undefined;
+        }
 
-                const quest = Quest.get(document);
-
-                // Message
-                const message = quest.qrc.getMessage(word);
-                if (message) {
-                    return resolve(TemplateReferenceProvider.messageReferences(quest, message, options.includeDeclaration));
-                }
-
-                // Symbol
-                const symbol = quest.qbn.getSymbol(word);
-                if (symbol) {
-                    return resolve(TemplateReferenceProvider.symbolReferences(quest, symbol, options.includeDeclaration));
-                }
-
-                // Task
-                const task = quest.qbn.getTask(word);
-                if (task) {
-                    return resolve(TemplateReferenceProvider.taskReferences(quest, task, options.includeDeclaration));
-                }
-
-                // Action
-                const action = first(quest.qbn.iterateActions(), x => x.line.lineNumber === line.lineNumber);
-                if (action && action.getName() === word) {
-                    return resolve(TemplateReferenceProvider.workspaceActionReferences(action, token));
-                }
-
-                // Symbol macro
-                if (word.startsWith('%')) {
-                    return resolve(TemplateReferenceProvider.workspaceSymbolMacroReferences(word, token));
-                }
-
-                // Quest
-                if (parser.isQuestReference(line.text, word)) {
-                    return TemplateReferenceProvider.questReferences(word, options.includeDeclaration, token).then(
-                        locations => resolve(locations));
-                }
-
-                // Global variables
-                const globalVar = first(quest.qbn.iterateTasks(), x => x.definition.globalVarName === word);
-                if (globalVar) {
-                    return TemplateReferenceProvider.globalVarReferences(globalVar, token).then(
-                        locations => resolve(locations));
-                }
+        const quest = Quest.get(document);
+        const resource = quest.getResource(position);
+        if (resource) {
+            switch (resource.kind) {
+                case 'message':
+                    return TemplateReferenceProvider.messageReferences(quest, resource.value, options.includeDeclaration);
+                case 'macro':
+                    return TemplateReferenceProvider.workspaceSymbolMacroReferences(resource.value, token);
+                case 'symbol':
+                    return TemplateReferenceProvider.symbolReferences(quest, resource.value, options.includeDeclaration);
+                case 'task':
+                    return TemplateReferenceProvider.taskReferences(quest, resource.value, options.includeDeclaration);
+                case 'action':
+                    return TemplateReferenceProvider.workspaceActionReferences(resource.value, token);
+                case 'quest':
+                    return TemplateReferenceProvider.questReferences(resource.value, options.includeDeclaration, token);
+                case 'globalVar':
+                    return TemplateReferenceProvider.globalVarReferences(resource.value, token);
             }
-
-            return resolve();
-        });
+        }
     }
 
     public static messageReferences(quest: Quest, message: Message, includeDeclaration: boolean = true): Location[] {
@@ -81,13 +52,13 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         for (const action of quest.qbn.iterateActions()) {
             for (const parameter of action.signature) {
                 if (parameter.type === ParameterTypes.message || parameter.type === ParameterTypes.messageID) {
-                    if (Number(parameter.value) === message.id)  {
+                    if (Number(parameter.value) === message.id) {
                         locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
                     }
                 }
 
                 if (parameter.type === ParameterTypes.message || parameter.type === ParameterTypes.messageName) {
-                    if (parameter.value === message.alias)  {
+                    if (parameter.value === message.alias) {
                         locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
                     }
                 }
@@ -165,7 +136,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 locations.push(quest.getLocation(wordRange(other.line, name)));
             }
         }
-        
+
         return locations;
     }
 
@@ -203,11 +174,11 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
     public static async questReferences(questNameOrId: string, includeDeclaration: boolean = true, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
-        
+
         questNameOrId = Quest.indexToName(questNameOrId);
 
         const quests = await Quest.getAll(token);
-        for (const quest of quests) { 
+        for (const quest of quests) {
             if (quest.getName() === questNameOrId) {
 
                 // Definition
@@ -236,14 +207,14 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
-    public static async globalVarReferences(task: Task, token?: CancellationToken): Promise<Location[]> {
+    public static async globalVarReferences(name: string, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
         const quests = await Quest.getAll(token);
         for (const quest of quests) {
             for (const other of quest.qbn.iterateTasks()) {
                 const globalVarName = other.definition.globalVarName;
-                if (globalVarName && task.definition.globalVarName === globalVarName) {
+                if (globalVarName && name === globalVarName) {
                     locations.push(quest.getLocation(wordRange(quest.document.lineAt(other.range.start.line), globalVarName)));
                 }
             }

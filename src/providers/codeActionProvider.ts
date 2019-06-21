@@ -220,8 +220,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     if (symbol !== undefined) {
                         const newName = parser.symbols.forceSymbolNamingConventions(symbolName);
                         action = new CodeAction(`Rename ${symbolName} to ${newName}`, CodeActionKind.QuickFix);
-                        action.edit = new WorkspaceEdit();
-                        TemplateRenameProvider.renameSymbol(symbol, newName, quest, action.edit);
+                        action.edit = TemplateRenameProvider.renameSymbol(quest, symbol, newName);
                         actions.push(action);
                     }
                     break;

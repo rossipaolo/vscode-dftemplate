@@ -6,6 +6,10 @@
 
 - Implemented provider of folding ranges for QRC, QBN, message, task and comment blocks.
 
+### Improved
+
+- Improved resource seeking at position. Now words inside messages or comments are not considered references to symbols with the same name but valid only in other parts of the file.
+
 ## 0.10.0
 
 ### Added
