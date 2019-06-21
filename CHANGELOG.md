@@ -5,6 +5,7 @@
 ### Added
 
 - Implemented provider of folding ranges for QRC, QBN, message, task and comment blocks.
+- Numeric identifiers of additional messages can now be "renamed". Static messages can't be renamed because id is associated to alias.
 
 ### Improved
 
