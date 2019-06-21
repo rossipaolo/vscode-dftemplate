@@ -13,6 +13,22 @@ import { Language } from "./static/language";
 import { EOL } from 'os';
 
 /**
+ * A quest resource with a tag that defines its category.
+ */
+export type CategorizedQuestResource = {
+    readonly kind: 'message'; readonly value: Message;
+} | {
+    readonly kind: 'symbol'; readonly value: Symbol; readonly variation?: string;
+} | {
+    readonly kind: 'task'; readonly value: Task;
+} | {
+    readonly kind: 'action'; readonly value: Action;
+} | {
+    readonly kind: 'quest' | 'directive' | 'type' | 'macro' | 'globalVar';
+    readonly value: string;
+};
+
+/**
  * A resource usable in a quest.
  */
 export interface QuestResource {

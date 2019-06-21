@@ -5,10 +5,11 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { TextLine, Range, MarkdownString } from 'vscode';
+import { TextLine, Range, MarkdownString, Position } from 'vscode';
 import { EOL } from 'os';
-import { TEMPLATE_LANGUAGE } from '../extension';
-import { QuestParseContext, QuestBlockKind, QuestResource } from './common';
+import { TEMPLATE_LANGUAGE, first } from '../extension';
+import { ParameterTypes } from './static/parameterTypes';
+import { QuestParseContext, QuestBlockKind, QuestResource, CategorizedQuestResource } from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
@@ -107,6 +108,101 @@ export class Quest {
         const directive = this.preamble.questName;
         const range = directive ? directive.valueRange : new vscode.Range(0, 0, 0, 0);
         return new vscode.Location(this.document.uri, this.document.validateRange(range));
+    }
+
+    /**
+     * Gets the resource defined or referenced at the given position.
+     * @param position A position inside this quest.
+     * @returns A resource or the name of a static item.
+     */
+    public getResource(position: Position): CategorizedQuestResource | undefined {
+
+        const range = this.document.getWordRangeAtPosition(position);
+        if (range === undefined) {
+            return undefined;
+        }
+
+        const word = this.document.getText(range);
+
+        const isInside = <T extends QuestResource>(resource: T) => resource.blockRange.contains(position);
+
+        if (this.preamble.range && this.preamble.range.contains(position)) {
+
+            const directive = this.preamble.directives.find(isInside);
+            if (directive !== undefined) {
+                if (directive.range.contains(position)) {
+                    return { kind: 'directive', value: directive.name };
+                }
+                else if (directive.name === 'Quest') {
+                    return { kind: 'quest', value: word };
+                }
+            }
+        } else if (this.qrc.range && this.qrc.range.contains(position)) {
+
+            if (word === 'QRC' && position.line === this.qrc.range.start.line) {
+                return { kind: 'directive', value: word };
+            }
+
+            const message = this.qrc.messages.find(isInside);
+            if (message !== undefined) {
+                if (message.range.contains(position) || (message.aliasRange !== undefined && message.aliasRange.contains(position))) {
+                    return { kind: 'message', value: message };
+                } else if (word.startsWith('%')) {
+                    const macro = this.qrc.macros.find(x => x.range.contains(position));
+                    if (macro !== undefined) {
+                        return { kind: 'macro', value: macro.symbol };
+                    }
+                } else {
+                    const symbol = this.qbn.getSymbol(word);
+                    if (symbol !== undefined) {
+                        return { kind: 'symbol', value: symbol, variation: word };
+                    }
+                }
+            }
+        } else if (this.qbn.range && this.qbn.range.contains(position)) {
+
+            if (word === 'QBN' && position.line === this.qbn.range.start.line) {
+                return { kind: 'directive', value: word };
+            }
+
+            for (const symbol of this.qbn.iterateSymbols()) {
+                if (symbol.name === word) {
+                    return { kind: 'symbol', value: symbol };
+                } else if (symbol.type === word) {
+                    return { kind: 'type', value: symbol.type };
+                }
+            }
+
+            for (const task of this.qbn.iterateTasks()) {
+                if (task.name === word) {
+                    return { kind: 'task', value: task };
+                } else if (task.definition.globalVarName === word) {
+                    return { kind: 'globalVar', value: word };
+                }
+            }
+
+            const action = first(this.qbn.iterateActions(), isInside);
+            if (action) {
+                if (action.range.contains(position)) {
+                    return { kind: 'action', value: action };
+                } else {
+
+                    const message = this.qrc.getMessage(word);
+                    if (message) {
+                        return { kind: 'message', value: message };
+                    }
+
+                    for (let index = 0; index < action.signature.length; index++) {
+                        const parameter = action.signature[index];
+                        if (parameter.value === word &&
+                            (parameter.type === ParameterTypes.questID || parameter.type === ParameterTypes.questName) &&
+                            action.getRange(index).contains(position)) {
+                            return { kind: 'quest', value: word };
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**

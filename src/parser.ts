@@ -5,19 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { TextDocument, Position, TextLine } from 'vscode';
-
-/**
-* Gets a word from the given position of a document.
-* @param document A quest document.
-* @param position The position in the document.
-*/
-export function getWord(document: TextDocument, position: Position): string | undefined {
-    const range = document.getWordRangeAtPosition(position);
-    if (range && !range.isEmpty) {
-        return document.getText(range);
-    }
-}
+import { TextDocument, TextLine } from 'vscode';
 
 /**
  * Gets the first word in a line.
