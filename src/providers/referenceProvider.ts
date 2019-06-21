@@ -8,6 +8,7 @@ import * as parser from '../parser';
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken, Range } from 'vscode';
 import { Quest } from '../language/quest';
 import { Symbol, Message, Task, Action } from '../language/common';
+import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { wordRange } from '../parser';
 
@@ -65,6 +66,18 @@ export class TemplateReferenceProvider implements ReferenceProvider {
             }
         }
 
+        return locations;
+    }
+
+    public static typeReferences(quest: Quest, type: SymbolType): Location[] {
+        const locations: Location[] = [];
+        
+        for (const symbol of quest.qbn.iterateSymbols()) {
+            if (symbol.type === type) {
+                locations.push(quest.getLocation(wordRange(symbol.line, type)));
+            }
+        }
+        
         return locations;
     }
 
