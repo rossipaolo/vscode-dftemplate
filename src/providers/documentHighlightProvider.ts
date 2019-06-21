@@ -7,6 +7,8 @@
 import * as vscode from 'vscode';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
+import { SymbolType } from '../language/static/common';
+import { CategorizedQuestResource } from '../language/common';
 
 export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlightProvider {
 
@@ -16,47 +18,30 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
             return;
         }
 
-        const range = document.getWordRangeAtPosition(position);
-        if (!range) {
-            return;
-        }
-
-        const word = document.getText(range);
         const quest = Quest.get(document);
-
-        // Message
-        const message = quest.qrc.getMessage(word);
-        if (message) {
-            return TemplateDocumentHighlightProvider.makeHighlights(
-                TemplateReferenceProvider.messageReferences(quest, message, false), message.range);
+        const resource = quest.getResource(position);
+        if (resource) {
+            const locations = TemplateDocumentHighlightProvider.findLocations(quest, resource);
+            if (locations) {
+                return TemplateDocumentHighlightProvider.makeHighlights(locations, (resource.value as any).range);
+            }
         }
+    }
 
-        // Symbol
-        const symbol = quest.qbn.getSymbol(word);
-        if (symbol) {
-            return TemplateDocumentHighlightProvider.makeHighlights(
-                TemplateReferenceProvider.symbolReferences(quest, symbol, false), symbol.range);
-        }
-
-        // Task
-        const task = quest.qbn.getTask(word);
-        if (task) {
-            return TemplateDocumentHighlightProvider.makeHighlights(
-                TemplateReferenceProvider.taskReferences(quest, task, false), task.range);
-        }
-
-        // Action
-        const action = quest.qbn.getAction(range);
-        if (action) {
-            return TemplateDocumentHighlightProvider.makeHighlights(
-                TemplateReferenceProvider.actionReferences(quest, action));
-        }
-
-        // Symbol macro
-        if (word.startsWith('%')) {
-            return TemplateDocumentHighlightProvider.makeHighlights(
-                TemplateReferenceProvider.symbolMacroReferences(quest, word)
-            );
+    private static findLocations(quest: Quest, resource: CategorizedQuestResource): vscode.Location[] | undefined {
+        switch (resource.kind) {
+            case 'message':
+                return TemplateReferenceProvider.messageReferences(quest, resource.value, false);
+            case 'macro':
+                return TemplateReferenceProvider.symbolMacroReferences(quest, resource.value);
+            case 'type':
+                return TemplateReferenceProvider.typeReferences(quest, resource.value as SymbolType);
+            case 'symbol':
+                return TemplateReferenceProvider.symbolReferences(quest, resource.value, false);
+            case 'task':
+                return TemplateReferenceProvider.taskReferences(quest, resource.value, false);
+            case 'action':
+                return TemplateReferenceProvider.actionReferences(quest, resource.value);
         }
     }
 
