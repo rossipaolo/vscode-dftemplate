@@ -28,8 +28,6 @@ export class Language extends StaticData {
     private table: LanguageTable | null = null;
     private definitions: Map<string, SymbolInfo[]> | null = null;
 
-    private static instance: Language | null;
-
     /**
      * Symbols used inside QRC message blocks to be expanded depending on context.
      */
@@ -264,7 +262,7 @@ export class Language extends StaticData {
     * @param type The type of the symbol.
     */
     public isSymbolVariationDefined(symbol: string, type: string): boolean {
-        return !!Language.getInstance().getSymbolVariations(symbol, type).find(x => x.word === symbol);
+        return !!this.getSymbolVariations(symbol, type).find(x => x.word === symbol);
     }
 
     /**
@@ -303,14 +301,6 @@ export class Language extends StaticData {
                 };
             }
         }
-    }
-
-    public static getInstance(): Language {
-        return Language.instance ? Language.instance : Language.instance = new Language();
-    }
-
-    public static release() {
-        Language.instance = null;
     }
 
     private static *filterItems(items: Map<string, QuestResourceDetails>, prefix: string): Iterable<QuestResourceDetails> {

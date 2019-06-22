@@ -12,11 +12,15 @@ import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
 import { ParameterTypes } from '../language/static/parameterTypes';
+import { Quests } from '../language/quests';
 import { Quest } from '../language/quest';
 
 export class TemplateCompletionItemProvider implements vscode.CompletionItemProvider {
 
     private static readonly signatureInfoCommand = { command: 'editor.action.triggerParameterHints', title: '' };
+
+    public constructor(private readonly language: Language, private readonly quests: Quests) {
+    }
 
     public async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken): Promise<CompletionItem[] | undefined> {
         const line = document.lineAt(position.line);
@@ -27,34 +31,34 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             return TemplateCompletionItemProvider.tableCompletionItems(document, prefix);
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
 
         if (quest.preamble.range && quest.preamble.range.contains(position)) {
-            return TemplateCompletionItemProvider.preambleCompletionItems(prefix);
+            return this.preambleCompletionItems(prefix);
         } else if (quest.qrc.range && quest.qrc.range.contains(position)) {
-            return TemplateCompletionItemProvider.qrcCompletionItems(quest, position, line, prefix);
+            return this.qrcCompletionItems(quest, position, line, prefix);
         } else if (quest.qbn.range && quest.qbn.range.contains(position)) {
-            return TemplateCompletionItemProvider.qbnCompletionItems(quest, line, text, prefix, token);
+            return this.qbnCompletionItems(quest, line, text, prefix, token);
         }
     }
 
-    private static preambleCompletionItems(prefix: string): CompletionItem[] {
+    private preambleCompletionItems(prefix: string): CompletionItem[] {
         const items: CompletionItem[] = [];
 
         // Directives
-        for (const directive of Language.getInstance().findDirectives(prefix)) {
-            items.push(TemplateCompletionItemProvider.signatureCompletionItem(directive));
+        for (const directive of this.language.findDirectives(prefix)) {
+            items.push(this.signatureCompletionItem(directive));
         }
 
         return items;
     }
 
-    private static qrcCompletionItems(quest: Quest, position: Position, line: vscode.TextLine, prefix: string): CompletionItem[] {
+    private qrcCompletionItems(quest: Quest, position: Position, line: vscode.TextLine, prefix: string): CompletionItem[] {
         const items: CompletionItem[] = [];
 
         if (line.text[position.character - 2] === '%') {
             // Context macros
-            for (const symbol of Language.getInstance().findSymbols('%' + prefix)) {
+            for (const symbol of this.language.findSymbols('%' + prefix)) {
                 const item = new vscode.CompletionItem(symbol.details.signature, vscode.CompletionItemKind.Property);
                 item.detail = symbol.details.signature;
                 item.documentation = symbol.details.summary;
@@ -63,7 +67,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         } else {
             // Symbols
             for (const symbol of quest.qbn.iterateSymbols()) {
-                Language.getInstance().getSymbolVariations(symbol.name, symbol.type).forEach(variation => {
+                this.language.getSymbolVariations(symbol.name, symbol.type).forEach(variation => {
                     const item = new vscode.CompletionItem(variation.word, vscode.CompletionItemKind.Field);
                     item.detail = `${symbol.line.text.trim()} (${variation.description})`;
                     items.push(item);
@@ -81,25 +85,25 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             // Directives and static messages
             for (const directive of [
-                ...Language.getInstance().findDirectives(prefix),
-                ...Language.getInstance().findMessages(prefix)]) {
-                items.push(TemplateCompletionItemProvider.signatureCompletionItem(directive));
+                ...this.language.findDirectives(prefix),
+                ...this.language.findMessages(prefix)]) {
+                items.push(this.signatureCompletionItem(directive));
             }
         }
 
         return items;
     }
 
-    private static async qbnCompletionItems(quest: Quest, line: vscode.TextLine, text: string, prefix: string, token: CancellationToken): Promise<CompletionItem[]> {
+    private async qbnCompletionItems(quest: Quest, line: vscode.TextLine, text: string, prefix: string, token: CancellationToken): Promise<CompletionItem[]> {
         const items: CompletionItem[] = [];
 
-        const param = TemplateCompletionItemProvider.findParamSignature(line, prefix, text);
+        const param = this.findParamSignature(line, prefix, text);
         if (param) {
             // Inside an invocation: suggests values according to parameter type
             switch (param) {
                 case ParameterTypes.questName:
                     const upperCasePrefix = prefix.toUpperCase();
-                    const quests = await Quest.getAll(token);
+                    const quests = await this.quests.getAll(token);
                     quests.forEach(quest => {
                         const name = quest.getName();
                         if (name && name.toUpperCase().startsWith(upperCasePrefix)) {
@@ -178,10 +182,10 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             // Other signatures
             for (const resourceInfo of [
-                ...Language.getInstance().findDirectives(prefix),
-                ...Language.getInstance().findDefinitions(prefix),
-                ...Language.getInstance().findGlobalVariables(prefix)]) {
-                items.push(TemplateCompletionItemProvider.signatureCompletionItem(resourceInfo));
+                ...this.language.findDirectives(prefix),
+                ...this.language.findDefinitions(prefix),
+                ...this.language.findGlobalVariables(prefix)]) {
+                items.push(this.signatureCompletionItem(resourceInfo));
             }
         }
 
@@ -205,11 +209,11 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         return [];
     }
 
-    private static signatureCompletionItem(resourceInfo: QuestResourceInfo): CompletionItem {
+    private signatureCompletionItem(resourceInfo: QuestResourceInfo): CompletionItem {
         const prettySignature = Language.prettySignature(resourceInfo.details.signature);
         const item = new vscode.CompletionItem(prettySignature, TemplateCompletionItemProvider.getCompletionItemKind(resourceInfo.category));
         const snippet = resourceInfo.category === QuestResourceCategory.Definition ?
-            Language.getInstance().getSymbolSnippet(resourceInfo.details.signature) :
+            this.language.getSymbolSnippet(resourceInfo.details.signature) :
             resourceInfo.details.signature;
         item.insertText = new vscode.SnippetString(snippet);
         item.detail = prettySignature;
@@ -228,14 +232,14 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
     }
 
-    private static findParamSignature(line: vscode.TextLine, prefix: string, previousText: string): string | undefined {
+    private findParamSignature(line: vscode.TextLine, prefix: string, previousText: string): string | undefined {
         const match = line.text.match(/^\s*([a-zA-Z]+)\s+/);
         if (!match) {
             return;
         }
 
         // Definition
-        const definition = Language.getInstance().findDefinition(match[1], line.text);
+        const definition = this.language.findDefinition(match[1], line.text);
         if (definition) {
             for (const signatureWord of definition.matches) {
                 const result = line.text.match(signatureWord.regex);

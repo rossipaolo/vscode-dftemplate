@@ -10,15 +10,19 @@ import { Symbol, Task, Message } from '../language/common';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { symbols } from '../parser';
+import { Quests } from '../language/quests';
 
 export class TemplateRenameProvider implements RenameProvider {
+
+    public constructor(private readonly quests: Quests) {
+    }
 
     public async provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): Promise<WorkspaceEdit | undefined> {
         if (Quest.isTable(document.uri)) {
             return;
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         const resource = quest.getResource(position);
         if (resource) {
             switch (resource.kind) {
@@ -28,7 +32,7 @@ export class TemplateRenameProvider implements RenameProvider {
                 case 'task':
                     return TemplateRenameProvider.renameSymbol(quest, resource.value, newName);
                 case 'quest':
-                    return TemplateRenameProvider.renameQuest(resource.value, newName, token);
+                    return TemplateRenameProvider.renameQuest(this.quests, resource.value, newName, token);
             }
         }
     }
@@ -85,14 +89,15 @@ export class TemplateRenameProvider implements RenameProvider {
 
     /**
      * Renames a quest inside the current workspace.
+     * @param quests Quests inside target workspace.
      * @param name The current name of the quest.
      * @param newName The new name for the quest.
      * @param token Optional cancellation token.
      */
-    public static async renameQuest(name: string, newName: string, token?: CancellationToken): Promise<WorkspaceEdit> {
+    public static async renameQuest(quests: Quests, name: string, newName: string, token?: CancellationToken): Promise<WorkspaceEdit> {
         const edit = new WorkspaceEdit();
 
-        for (const location of await TemplateReferenceProvider.questReferences(name, true, token)) {
+        for (const location of await TemplateReferenceProvider.questReferences(quests, name, true, token)) {
             edit.replace(location.uri, location.range, newName);
         }
 

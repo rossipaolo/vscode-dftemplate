@@ -6,13 +6,14 @@
 
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
+import { first } from '../extension';
 import { tasks } from '../parser';
 import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { Symbol, Task } from '../language/common';
+import { Quests } from '../language/quests';
 import { Quest } from '../language/quest';
-import { first } from '../extension';
 
 interface TemplateDocumentationParameter {
     name: string;
@@ -28,13 +29,16 @@ interface TemplateDocumentationItem {
 
 export class TemplateHoverProvider implements HoverProvider {
 
+    public constructor(private readonly language: Language, private readonly quests: Quests) {
+    }
+
     public async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | undefined> {
 
         if (Quest.isTable(document.uri)) {
             return undefined;
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         let item: TemplateDocumentationItem | undefined = undefined;
 
         const resource = quest.getResource(position);
@@ -48,13 +52,13 @@ export class TemplateHoverProvider implements HoverProvider {
                     };
                     break;
                 case 'type':
-                    const definition = Language.getInstance().findDefinition(resource.value, document.lineAt(position.line).text);
+                    const definition = this.language.findDefinition(resource.value, document.lineAt(position.line).text);
                     if (definition) {
                         item = {
                             category: 'definition',
                             signature: definition.signature
                         };
-                        const overloads = Language.getInstance().numberOfOverloads(resource.value) - 1;
+                        const overloads = this.language.numberOfOverloads(resource.value) - 1;
                         if (overloads > 0) {
                             item.signature += TemplateHoverProvider.makeOverloadsCountInfo(overloads);
                         }
@@ -66,7 +70,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     item = {
                         category: 'symbol',
                         signature: document.getText(resource.value.blockRange),
-                        summary: TemplateHoverProvider.getSymbolDescription(quest, resource.value, resource.variation)
+                        summary: this.getSymbolDescription(quest, resource.value, resource.variation)
                     };
                     break;
                 case 'task':
@@ -92,7 +96,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     }
                     break;
                 case 'quest':
-                    const quests = await Quest.getAll(token);
+                    const quests = await this.quests.getAll(token);
                     const questName = Quest.indexToName(resource.value);
                     const questMatch = quests.find(x => x.getName() === questName);
                     if (questMatch) {
@@ -105,7 +109,7 @@ export class TemplateHoverProvider implements HoverProvider {
                 case 'directive':
                 case 'macro':
                 case 'globalVar':
-                    const languageItem = Language.getInstance().seekByName(resource.value);
+                    const languageItem = this.language.seekByName(resource.value);
                     if (languageItem) {
                         item = {
                             category: QuestResourceCategory[languageItem.category].toLowerCase(),
@@ -162,11 +166,11 @@ export class TemplateHoverProvider implements HoverProvider {
     /**
      * Gets the summary for a symbol and, if inside the `QRC` block, a description for its variation based on prefix and type.
      */
-    private static getSymbolDescription(quest: Quest, symbol: Symbol, variation?: string): string {
+    private getSymbolDescription(quest: Quest, symbol: Symbol, variation?: string): string {
         let summary = quest.makeDocumentation(symbol) || '';
 
         if (variation !== undefined) {
-            const symbolVariation = Language.getInstance().getSymbolVariations(symbol.name, symbol.type, x => '`' + x + '`').find(x => x.word === variation);
+            const symbolVariation = this.language.getSymbolVariations(symbol.name, symbol.type, x => '`' + x + '`').find(x => x.word === variation);
             const meaning = symbolVariation ? symbolVariation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
             summary = summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
         }

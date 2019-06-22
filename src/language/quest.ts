@@ -7,7 +7,8 @@
 import * as vscode from 'vscode';
 import { TextLine, Range, MarkdownString, Position } from 'vscode';
 import { EOL } from 'os';
-import { TEMPLATE_LANGUAGE, first } from '../extension';
+import { first } from '../extension';
+import { Language } from './static/language';
 import { ParameterTypes } from './static/parameterTypes';
 import { QuestParseContext, QuestBlockKind, QuestResource, CategorizedQuestResource } from './common';
 import { Preamble } from './preamble';
@@ -18,8 +19,6 @@ import { Qrc } from './qrc';
  * A quest that corresponds to a text file.
  */
 export class Quest {
-    
-    private static readonly quests = new Map<string, Quest>();
 
     /**
      * The block that holds quest directives.
@@ -41,14 +40,15 @@ export class Quest {
      */
     public readonly comments: Range[] = [];
 
-    private readonly version: number;
+    public readonly version: number;
 
-    private constructor(public readonly document: vscode.TextDocument) {
+    public constructor(public readonly document: vscode.TextDocument, private readonly language: Language) {
 
         const context: QuestParseContext = {
             document: document,
             block: this.preamble,
-            blockStart: 0
+            blockStart: 0,
+            language: language
         };
 
         for (let index = 0; index < this.document.lineCount; index++) {
@@ -221,7 +221,7 @@ export class Quest {
         }
 
         const result = (summary?: string) => {
-            summary = resource.makeDocumentation ? resource.makeDocumentation(summary) : summary;
+            summary = resource.makeDocumentation ? resource.makeDocumentation(this.language, summary) : summary;
             return markdown ? new MarkdownString(summary) : summary;
         };
 
@@ -248,55 +248,6 @@ export class Quest {
         } else {
             this.comments.push(line.range);
         }
-    }
-
-    /**
-     * Registers to documents events.
-     */
-    public static initialize(): vscode.Disposable {
-        const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.txt', true, true, false);
-        fsWatcher.onDidDelete(uri => {
-            if (Quest.quests.has(uri.fsPath)) {
-                Quest.quests.delete(uri.fsPath);
-            }
-        });
-        return fsWatcher;
-    }
-    
-    /**
-     * Gets a `Quest` instance for the given document.
-     * @param document A text document with a quest to be parsed.
-     */
-    public static get(document: vscode.TextDocument): Quest {
-        let quest = Quest.quests.get(document.uri.fsPath);
-        if (!quest || document.version > quest.version) {
-            Quest.quests.set(document.uri.fsPath, quest = new Quest(document));
-        }
-
-        return quest;
-    }
-
-    /**
-     * Gets all quests in the current workspace.
-     * @param token An optional cancellation token.
-     */
-    public static async getAll(token?: vscode.CancellationToken): Promise<Quest[]> {
-        const quests: Quest[] = [];
-
-        const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
-        for (const uri of uris.filter(x => !Quest.isTable(x))) {
-            const quest = Quest.quests.get(uri.fsPath);
-            if (quest) {
-                quests.push(quest);
-            } else {
-                const document = await vscode.workspace.openTextDocument(uri);
-                if (document && document.languageId === TEMPLATE_LANGUAGE) {
-                    quests.push(Quest.get(document));
-                }
-            }
-        }
-
-        return quests;
     }
 
     /**

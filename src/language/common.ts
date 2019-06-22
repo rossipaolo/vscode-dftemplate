@@ -46,7 +46,7 @@ export interface QuestResource {
     /**
      * Finalises the documentation for this resources.
      */
-    makeDocumentation?: (summary?: string) => string | undefined;
+    makeDocumentation?: (language: Language, summary?: string) => string | undefined;
 }
 
 /**
@@ -102,10 +102,10 @@ export class Directive implements QuestResource {
      * @param line A text line with a directive.
      * @returns A `Directive` instance if parse operation was successful, `undefined` otherwise.
      */
-    public static parse(line: TextLine): Directive | undefined {
+    public static parse(line: TextLine, language: Language): Directive | undefined {
         const split = line.text.trim().split(':', 2);
         if (split.length === 2) {
-            const result = Language.getInstance().findDirective(split[0]);
+            const result = language.findDirective(split[0]);
             if (result) {
                 const match = result.signature.match(/[a-zA-Z]+: \${1:([a-zA-Z]+)}/);
                 if (match) {
@@ -168,12 +168,12 @@ export class Symbol implements QuestResource {
      * @param line A text line with a symbol definition.
      * @returns A `Symbol` instance if parse operation was successful, `undefined` otherwise.
      */
-    public static parse(line: TextLine): Symbol | undefined {
+    public static parse(line: TextLine, language: Language): Symbol | undefined {
         const name = parser.symbols.parseSymbol(line.text);
         if (name) {
             const text = line.text.trim();
             const type = text.substring(0, text.indexOf(' '));
-            const signature = Symbol.parseSignature(type, text);
+            const signature = Symbol.parseSignature(type, text, language);
             return new Symbol(type as SymbolType, wordRange(line, name), line, signature);
         }
     }
@@ -185,8 +185,8 @@ export class Symbol implements QuestResource {
      * @returns An array of parameters, which can be empty, if parse operation was successful,
      * `undefined` otherwise.
      */
-    private static parseSignature(type: string, text: string): Parameter[] | undefined {
-        const definition = Language.getInstance().findDefinition(type, text);
+    private static parseSignature(type: string, text: string, language: Language): Parameter[] | undefined {
+        const definition = language.findDefinition(type, text);
         if (definition) {
             if (definition.matches && definition.matches.length > 0) {
                 return definition.matches.reduce<Parameter[]>((parameters, word) => {
@@ -455,10 +455,10 @@ export class Message implements QuestResource {
      * Adds the general description to the summary if this is a static message. 
      * @param summary The formatted comment block for this message.
      */
-    public makeDocumentation(summary?: string): string | undefined {
+    public makeDocumentation(language: Language, summary?: string): string | undefined {
 
         if (this.alias) {
-            const details = Language.getInstance().findMessage(this.alias);
+            const details = language.findMessage(this.alias);
             if (details) {
                 summary = summary ? details.summary + EOL.repeat(2) + summary : details.summary;
             }
@@ -497,6 +497,7 @@ export interface QuestParseContext {
     blockStart: number;
     currentMessageBlock?: parser.messages.MessageBlock;
     currentActionsBlock?: Action[];
+    language: Language;
 }
 
 /**

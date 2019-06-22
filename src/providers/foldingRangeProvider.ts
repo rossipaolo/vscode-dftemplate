@@ -7,15 +7,19 @@
 import * as vscode from 'vscode';
 import { TextDocument, Range, ProviderResult, FoldingRange, FoldingRangeKind } from 'vscode';
 import { Quest } from '../language/quest';
+import { Quests } from '../language/quests';
 
 export class TemplateFoldingRangeProvider implements vscode.FoldingRangeProvider {
 
-    provideFoldingRanges(document: TextDocument): ProviderResult<FoldingRange[]> {
+    public constructor(private readonly quests: Quests) {
+    }
+
+    public provideFoldingRanges(document: TextDocument): ProviderResult<FoldingRange[]> {
         if (Quest.isTable(document.uri)) {
             return undefined;
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         const foldingRanges: FoldingRange[] = [];
 
         const makeFoldingRange = (range: Range, kind?: FoldingRangeKind) => new FoldingRange(range.start.line, range.end.line, kind);

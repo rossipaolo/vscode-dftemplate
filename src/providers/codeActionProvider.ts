@@ -14,7 +14,7 @@ import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { QuestResource, Task } from '../language/common';
-import { Quest } from '../language/quest';
+import { Quests } from '../language/quests';
 import { DiagnosticCode } from '../diagnostics/common';
 import { symbols, wordRange } from '../parser';
 import { TemplateReferenceProvider } from './referenceProvider';
@@ -22,7 +22,7 @@ import { TemplateRenameProvider } from './renameProvider';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
-    public constructor(context: ExtensionContext) {
+    public constructor(private readonly language: Language, private readonly quests: Quests, context: ExtensionContext) {
         context.subscriptions.push(
 
             vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
@@ -52,7 +52,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
     public async provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext):
         Promise<vscode.CodeAction[]> {
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         const actions: vscode.CodeAction[] = [];
 
         for (const diagnostic of context.diagnostics) {
@@ -91,7 +91,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     const prefix = parser.getFirstWord((document.lineAt(diagnostic.range.start.line).text));
                     if (prefix) {
                         for (const signature of [
-                            ...Language.getInstance().caseInsensitiveSeek(prefix),
+                            ...this.language.caseInsensitiveSeek(prefix),
                             ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
                             action = new CodeAction(`Change to '${StaticData.prettySignature(signature)}'`);
                             action.command = {
@@ -135,7 +135,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     }
                     break;
                 case DiagnosticCode.UndefinedContextMacro:
-                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, Language.getInstance().contextMacros);
+                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, this.language.contextMacros);
                     if (action) {
                         actions.push(action);
                     }
@@ -163,7 +163,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames));
                     break;
                 case DiagnosticCode.UndefinedQuest:
-                    const questNames = (await Quest.getAll()).reduce((names, quest) => {
+                    const questNames = (await this.quests.getAll()).reduce((names, quest) => {
                         const name = quest.getName();
                         if (name) {
                             names.push(name);
@@ -198,7 +198,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     const currentSymbol = document.getText(diagnostic.range);
                     const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
                     if (symbolDefinition) {
-                        Language.getInstance().getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
+                        this.language.getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
                             const title = `Change ${currentSymbol} to ${newSymbol.word} (${newSymbol.description})`;
                             const action = new vscode.CodeAction(title);
                             action.kind = diagnostic.severity === DiagnosticSeverity.Hint ? CodeActionKind.Empty : CodeActionKind.QuickFix;

@@ -18,7 +18,7 @@ import { Quest } from '../language/quest';
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
  */
-export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
+export function* analyseQrc(context: Quest, language: Language): Iterable<Diagnostic> {
 
     for (let index = 0; index < context.qrc.messages.length; index++) {
         const message = context.qrc.messages[index];
@@ -70,7 +70,7 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
                         symbolDefinition = symbolDefinition[0];
                     }
                     
-                    yield !Language.getInstance().isSymbolVariationDefined(symbol, symbolDefinition.type) ?
+                    yield !language.isSymbolVariationDefined(symbol, symbolDefinition.type) ?
                         Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolDefinition.type) :
                         Hints.SymbolVariation(wordRange(line, symbol));
                 }
@@ -80,7 +80,7 @@ export function* analyseQrc(context: Quest): Iterable<Diagnostic> {
 
     // Macros
     for (const macro of context.qrc.macros) {
-        if (!Language.getInstance().findSymbol(macro.symbol)) {
+        if (!language.findSymbol(macro.symbol)) {
             yield Errors.undefinedContextMacro(macro.range, macro.symbol);
         }
     }

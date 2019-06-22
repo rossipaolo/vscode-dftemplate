@@ -13,6 +13,8 @@ import { analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
+import { Language } from '../language/static/language';
+import { Quests } from '../language/quests';
 
 let timer: NodeJS.Timer | null = null;
 
@@ -20,7 +22,7 @@ let timer: NodeJS.Timer | null = null;
  * Makes a diagnostic collection and subscribes to events for diagnostic.
  * @param context Extension context.
  */
-export function makeDiagnosticCollection(context: vscode.ExtensionContext): vscode.DiagnosticCollection {
+export function makeDiagnosticCollection(context: vscode.ExtensionContext, language: Language, quests: Quests): vscode.DiagnosticCollection {
 
     const diagnosticsOption = getOptions()['diagnostics'];
     const liveDiagnostics = diagnosticsOption['live'];
@@ -31,14 +33,14 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
     if (vscode.window.activeTextEditor) {
         const document = vscode.window.activeTextEditor.document;
         if (document.languageId === TEMPLATE_LANGUAGE) {
-            updateDiagnostics(diagnosticCollection, document);
+            updateDiagnostics(diagnosticCollection, document, language, quests);
         }
     }
 
     // Do diagnostics for opened files
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
         if (document.languageId === TEMPLATE_LANGUAGE) {
-            updateDiagnostics(diagnosticCollection, document);
+            updateDiagnostics(diagnosticCollection, document, language, quests);
         }
     }));
 
@@ -53,7 +55,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
                 }
 
                 timer = setTimeout(() => {
-                    updateDiagnostics(diagnosticCollection, e.document);
+                    updateDiagnostics(diagnosticCollection, e.document, language, quests);
                     timer = null;
                 }, delay);
             }
@@ -64,7 +66,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
         // Do diagnostics only on save
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((document) => {
             if (document.languageId === TEMPLATE_LANGUAGE) {
-                updateDiagnostics(diagnosticCollection, document);
+                updateDiagnostics(diagnosticCollection, document, language, quests);
             }
         }));
     }
@@ -75,7 +77,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext): vsco
 /**
  * Makes diagostics for the given document.
  */
-async function updateDiagnostics(diagnosticCollection: vscode.DiagnosticCollection, document: vscode.TextDocument): Promise<void> {
+async function updateDiagnostics(diagnosticCollection: vscode.DiagnosticCollection, document: vscode.TextDocument, language: Language, quests: Quests): Promise<void> {
     let diagnostics: vscode.Diagnostic[];
 
     if (Quest.isTable(document.uri)) {
@@ -85,13 +87,13 @@ async function updateDiagnostics(diagnosticCollection: vscode.DiagnosticCollecti
     } else {
 
         // Analyse quest
-        const context = Quest.get(document);
+        const context = quests.get(document);
         diagnostics = [
             ...analysePreamble(context),
-            ...(context.qrc.found ? analyseQrc(context) : failedAnalysis(context, 'QRC')),
+            ...(context.qrc.found ? analyseQrc(context,language) : failedAnalysis(context, 'QRC')),
             ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN')),
         ];
-        await analyseQuestReferences(context, diagnostics);
+        await analyseQuestReferences(context, diagnostics, quests);
     }
 
     diagnosticCollection.set(document.uri, diagnostics);
@@ -102,17 +104,17 @@ async function updateDiagnostics(diagnosticCollection: vscode.DiagnosticCollecti
  * @param context The document to build diagnostics for.
  * @param diagnostics The array where diagnostics are pushed.
  */
-async function analyseQuestReferences(context: Quest, diagnostics: vscode.Diagnostic[]): Promise<void> {
-    let quests: Quest[] | undefined;
+async function analyseQuestReferences(context: Quest, diagnostics: vscode.Diagnostic[], quests: Quests): Promise<void> {
+    let cachedQuests: Quest[] | undefined;
     for (const action of context.qbn.iterateActions()) {
         const index = action.signature.findIndex(x => x.type === ParameterTypes.questName || x.type === ParameterTypes.questID);
         if (index !== -1) {
-            if (quests === undefined) {
-                quests = await Quest.getAll();
+            if (cachedQuests === undefined) {
+                cachedQuests = await quests.getAll();
             }
 
             const name = Quest.indexToName(action.signature[index].value);
-            if (!quests.find(x => x.getName() === name)) {
+            if (!cachedQuests.find(x => x.getName() === name)) {
                 diagnostics.push(Errors.undefinedQuest(action.getRange(index), name));
             }
         }

@@ -5,13 +5,13 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { TextDocument, CancellationToken, CodeLens } from 'vscode';
-import { Quest } from '../language/quest';
+import { TextDocument, CodeLens } from 'vscode';
+import { Quests } from '../language/quests';
 import { TemplateReferenceProvider } from './referenceProvider';
 
 export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
 
-    public constructor() {
+    public constructor(private readonly quests: Quests) {
         vscode.commands.registerCommand('dftemplate.revealRange', (range: vscode.Range) => {
             if (vscode.window.activeTextEditor) {
                 vscode.window.activeTextEditor.revealRange(range);
@@ -19,10 +19,10 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
         });
     }
 
-    public provideCodeLenses(document: TextDocument, token: CancellationToken): CodeLens[] | Thenable<CodeLens[]> {
-        
+    public provideCodeLenses(document: TextDocument): CodeLens[] | Thenable<CodeLens[]> {
+
         const codelenses: CodeLens[] = [];
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
 
         // Messages
         for (const message of quest.qrc.messages) {
@@ -38,7 +38,7 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
 
         // Tasks
         for (const task of quest.qbn.iterateTasks()) {
-            
+
             // References
             const references = TemplateReferenceProvider.taskReferences(quest, task, false);
             codelenses.push(TemplateCodeLensProvider.makeReferencesCodeLens(document, task.range, references));

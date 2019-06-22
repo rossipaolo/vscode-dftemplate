@@ -14,6 +14,9 @@ import { Quest } from '../language/quest';
 
 export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
 
+    public constructor(private readonly language: Language) {
+    }
+
     public async provideSignatureHelp(document: TextDocument, position: Position): Promise<SignatureHelp | undefined> {
 
         const text = document.lineAt(position.line).text;
@@ -44,7 +47,7 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
         // Symbol definition
         const symbolType = parser.getFirstWord(text);
         if (symbolType) {
-            const symbolInfoOverload = Language.getInstance().matchSymbol(symbolType, text);
+            const symbolInfoOverload = this.language.matchSymbol(symbolType, text);
             if (symbolInfoOverload) {
                 const signatureHelp = new SignatureHelp();
                 signatureHelp.signatures = symbolInfoOverload.all.map((symbolInfo, index) => {

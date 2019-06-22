@@ -43,7 +43,7 @@ export class Qbn extends QuestBlock {
     public parse(line: TextLine, context: QuestParseContext): void {
 
         // Symbol definition
-        const symbol = Symbol.parse(line);
+        const symbol = Symbol.parse(line, context.language);
         if (symbol) {
             Qbn.pushMapItem(this.symbols, symbol.name, symbol);
             return;

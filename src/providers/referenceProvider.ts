@@ -11,32 +11,36 @@ import { Symbol, Message, Task, Action } from '../language/common';
 import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { wordRange } from '../parser';
+import { Quests } from '../language/quests';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
+
+    public constructor(private readonly quests: Quests) {
+    }
 
     public async provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Promise<Location[] | undefined> {
         if (Quest.isTable(document.uri)) {
             return undefined;
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         const resource = quest.getResource(position);
         if (resource) {
             switch (resource.kind) {
                 case 'message':
                     return TemplateReferenceProvider.messageReferences(quest, resource.value, options.includeDeclaration);
                 case 'macro':
-                    return TemplateReferenceProvider.workspaceSymbolMacroReferences(resource.value, token);
+                    return TemplateReferenceProvider.workspaceSymbolMacroReferences(this.quests, resource.value, token);
                 case 'symbol':
                     return TemplateReferenceProvider.symbolReferences(quest, resource.value, options.includeDeclaration);
                 case 'task':
                     return TemplateReferenceProvider.taskReferences(quest, resource.value, options.includeDeclaration);
                 case 'action':
-                    return TemplateReferenceProvider.workspaceActionReferences(resource.value, token);
+                    return TemplateReferenceProvider.workspaceActionReferences(this.quests, resource.value, token);
                 case 'quest':
-                    return TemplateReferenceProvider.questReferences(resource.value, options.includeDeclaration, token);
+                    return TemplateReferenceProvider.questReferences(this.quests, resource.value, options.includeDeclaration, token);
                 case 'globalVar':
-                    return TemplateReferenceProvider.globalVarReferences(resource.value, token);
+                    return TemplateReferenceProvider.globalVarReferences(this.quests, resource.value, token);
             }
         }
     }
@@ -71,13 +75,13 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
     public static typeReferences(quest: Quest, type: SymbolType): Location[] {
         const locations: Location[] = [];
-        
+
         for (const symbol of quest.qbn.iterateSymbols()) {
             if (symbol.type === type) {
                 locations.push(quest.getLocation(wordRange(symbol.line, type)));
             }
         }
-        
+
         return locations;
     }
 
@@ -153,10 +157,10 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
-    public static async workspaceActionReferences(action: Action, token?: CancellationToken): Promise<Location[]> {
+    public static async workspaceActionReferences(quests: Quests, action: Action, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
-        for (const quest of await Quest.getAll(token)) {
+        for (const quest of await quests.getAll(token)) {
             locations.push(...TemplateReferenceProvider.actionReferences(quest, action));
         }
 
@@ -175,23 +179,22 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
-    public static async workspaceSymbolMacroReferences(symbol: string, token?: CancellationToken): Promise<Location[]> {
+    public static async workspaceSymbolMacroReferences(quests: Quests, symbol: string, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
-        for (const quest of await Quest.getAll(token)) {
+        for (const quest of await quests.getAll(token)) {
             locations.push(...TemplateReferenceProvider.symbolMacroReferences(quest, symbol));
         }
 
         return locations;
     }
 
-    public static async questReferences(questNameOrId: string, includeDeclaration: boolean = true, token?: CancellationToken): Promise<Location[]> {
+    public static async questReferences(quests: Quests, questNameOrId: string, includeDeclaration: boolean = true, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
         questNameOrId = Quest.indexToName(questNameOrId);
 
-        const quests = await Quest.getAll(token);
-        for (const quest of quests) {
+        for (const quest of await quests.getAll(token)) {
             if (quest.getName() === questNameOrId) {
 
                 // Definition
@@ -220,11 +223,10 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
-    public static async globalVarReferences(name: string, token?: CancellationToken): Promise<Location[]> {
+    public static async globalVarReferences(quests: Quests, name: string, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
-        const quests = await Quest.getAll(token);
-        for (const quest of quests) {
+        for (const quest of await quests.getAll(token)) {
             for (const other of quest.qbn.iterateTasks()) {
                 const globalVarName = other.definition.globalVarName;
                 if (globalVarName && name === globalVarName) {

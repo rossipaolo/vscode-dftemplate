@@ -27,7 +27,7 @@ import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { TemplateFoldingRangeProvider } from './providers/foldingRangeProvider';
 import { Tables } from './language/static/tables';
 import { tasks } from './parser';
-import { Quest } from './language/quest';
+import { Quests } from './language/quests';
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
@@ -43,42 +43,45 @@ export function activate(context: ExtensionContext) {
 
     setLanguageConfiguration();
 
+    const language = new Language();
+
     Promise.all([
-        Language.getInstance().load(context),
+        language.load(context),
         Modules.getInstance().load(context),
         Tables.getInstance().load()
     ]).then(() => {
         tasks.setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
 
-        context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider()));
-        context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider()));
-        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider()));
-        context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider()));
-        context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider()));
-        context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider()));
-        context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider()));
-        context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(new TemplateWorkspaceSymbolProvider()));
-        context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider()));
+        const quests = new Quests(language);
+
+        context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(language, quests)));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(language, quests)));
+        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider(language)));
+        context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(new TemplateWorkspaceSymbolProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider(quests)));
         context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
         context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
-        context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(context)));
-        context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(TEMPLATE_MODE, new TemplateFoldingRangeProvider()));
+        context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(language, quests, context)));
+        context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(TEMPLATE_MODE, new TemplateFoldingRangeProvider(quests)));
 
         if (getOptions()['codeLens']['enabled']) {
-            context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider()));
+            context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider(quests)));
         }
 
         if (getOptions()['diagnostics']['enabled']) {
-            context.subscriptions.push(makeDiagnosticCollection(context));
+            context.subscriptions.push(makeDiagnosticCollection(context, language, quests));
         }
 
-        registerCommands(context);
-        context.subscriptions.push(Quest.initialize());
+        registerCommands(context, language, quests);
+        context.subscriptions.push(quests.initialize());
     }).catch(e => vscode.window.showErrorMessage(`Initialization failed: ${e}`));
 }
 
 export function deactivate() {
-    Language.release();
     Modules.release();
     Tables.release();
 }
@@ -145,12 +148,12 @@ function setLanguageConfiguration() {
     });
 }
 
-function registerCommands(context: ExtensionContext) {
+function registerCommands(context: ExtensionContext, language: Language, quests: Quests) {
     context.subscriptions.push(
 
         vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', async textEditor => {
 
-            const messages = Quest.get(textEditor.document).qrc.messages;
+            const messages = quests.get(textEditor.document).qrc.messages;
 
             for (const selection of textEditor.selections) {
                 const message = first(messages, x => x.blockRange.contains(selection));
@@ -181,13 +184,13 @@ function registerCommands(context: ExtensionContext) {
 
         vscode.commands.registerTextEditorCommand('dftemplate.generateMessages', async textEditor => {
 
-            const quest = Quest.get(textEditor.document);
+            const quest = quests.get(textEditor.document);
 
             const messages = Tables.getInstance().staticMessagesTable.messages;
             const entries: vscode.QuickPickItem[] = [];
             for (const [alias, id] of messages) {
                 if (!quest.qrc.messages.find(x => x.id === id) && !entries.find(x => messages.get(x.label) === id)) {
-                    const message = Language.getInstance().findMessage(alias);
+                    const message = language.findMessage(alias);
                     entries.push({
                         label: alias,
                         detail: String(id),
@@ -211,7 +214,7 @@ function registerCommands(context: ExtensionContext) {
         }),
 
         vscode.commands.registerTextEditorCommand('dftemplate.orderMessages', async (textEditor, edit) => {
-            const messages = Quest.get(textEditor.document).qrc.messages;
+            const messages = quests.get(textEditor.document).qrc.messages;
             const sortedMessages = messages.slice();
             sortedMessages.sort((a, b) => a.id - b.id);
 
@@ -223,7 +226,7 @@ function registerCommands(context: ExtensionContext) {
         }),
 
         vscode.commands.registerTextEditorCommand('dftemplate.generateGlobalVariables', async (textEditor, edit) => {
-            const qbn = Quest.get(textEditor.document).qbn;
+            const qbn = quests.get(textEditor.document).qbn;
             if (qbn.range === undefined) {
                 return vscode.window.showErrorMessage('Failed to locate QBN block.');
             }
