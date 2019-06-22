@@ -21,30 +21,57 @@ let timer: NodeJS.Timer | null = null;
 /**
  * Makes a diagnostic collection and subscribes to events for diagnostic.
  * @param context Extension context.
+ * @param language Language data.
+ * @param quests Quests inside current workspace.
  */
 export function makeDiagnosticCollection(context: vscode.ExtensionContext, language: Language, quests: Quests): vscode.DiagnosticCollection {
 
-    const diagnosticsOption = getOptions()['diagnostics'];
-    const liveDiagnostics = diagnosticsOption['live'];
-    const delay = diagnosticsOption['delay'];
     const diagnosticCollection = vscode.languages.createDiagnosticCollection(TEMPLATE_LANGUAGE);
+
+    /**
+    * Makes diagnostics for the given document.
+    */
+    const updateDiagnostics = async (document: vscode.TextDocument) => {
+        let diagnostics: vscode.Diagnostic[];
+
+        if (Quest.isTable(document.uri)) {
+
+            // Analyse table
+            diagnostics = Array.from(tableCheck(document));
+        } else {
+
+            // Analyse quest
+            const context = quests.get(document);
+            diagnostics = [
+                ...analysePreamble(context),
+                ...(context.qrc.found ? analyseQrc(context, language) : failedAnalysis(context, 'QRC')),
+                ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN')),
+            ];
+            await analyseQuestReferences(context, diagnostics, quests);
+        }
+
+        diagnosticCollection.set(document.uri, diagnostics);
+    };
 
     // Do diagnostics for current file
     if (vscode.window.activeTextEditor) {
         const document = vscode.window.activeTextEditor.document;
         if (document.languageId === TEMPLATE_LANGUAGE) {
-            updateDiagnostics(diagnosticCollection, document, language, quests);
+            updateDiagnostics(document);
         }
     }
 
     // Do diagnostics for opened files
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
         if (document.languageId === TEMPLATE_LANGUAGE) {
-            updateDiagnostics(diagnosticCollection, document, language, quests);
+            updateDiagnostics(document);
         }
     }));
 
-    if (liveDiagnostics) {
+    const diagnosticsOption = getOptions()['diagnostics'];
+    if (diagnosticsOption['live']) {
+
+        const delay = diagnosticsOption['delay'];
 
         // Do live diagnostics
         context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
@@ -55,7 +82,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext, langu
                 }
 
                 timer = setTimeout(() => {
-                    updateDiagnostics(diagnosticCollection, e.document, language, quests);
+                    updateDiagnostics(e.document);
                     timer = null;
                 }, delay);
             }
@@ -66,37 +93,12 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext, langu
         // Do diagnostics only on save
         context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((document) => {
             if (document.languageId === TEMPLATE_LANGUAGE) {
-                updateDiagnostics(diagnosticCollection, document, language, quests);
+                updateDiagnostics(document);
             }
         }));
     }
 
     return diagnosticCollection;
-}
-
-/**
- * Makes diagostics for the given document.
- */
-async function updateDiagnostics(diagnosticCollection: vscode.DiagnosticCollection, document: vscode.TextDocument, language: Language, quests: Quests): Promise<void> {
-    let diagnostics: vscode.Diagnostic[];
-
-    if (Quest.isTable(document.uri)) {
-
-        // Analyse table
-        diagnostics = Array.from(tableCheck(document));
-    } else {
-
-        // Analyse quest
-        const context = quests.get(document);
-        diagnostics = [
-            ...analysePreamble(context),
-            ...(context.qrc.found ? analyseQrc(context,language) : failedAnalysis(context, 'QRC')),
-            ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN')),
-        ];
-        await analyseQuestReferences(context, diagnostics, quests);
-    }
-
-    diagnosticCollection.set(document.uri, diagnostics);
 }
 
 /**
