@@ -17,6 +17,7 @@ import { Quest } from '../language/quest';
  * Analyses the QRC section of a quest.
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
+ * @param language Language data.
  */
 export function* analyseQrc(context: Quest, language: Language): Iterable<Diagnostic> {
 
