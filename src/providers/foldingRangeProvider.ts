@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, Range, ProviderResult, FoldingRange, FoldingRangeKind } from 'vscode';
-import { Quest } from '../language/quest';
 import { Quests } from '../language/quests';
 
 export class TemplateFoldingRangeProvider implements vscode.FoldingRangeProvider {
@@ -15,7 +14,7 @@ export class TemplateFoldingRangeProvider implements vscode.FoldingRangeProvider
     }
 
     public provideFoldingRanges(document: TextDocument): ProviderResult<FoldingRange[]> {
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
             return undefined;
         }
 

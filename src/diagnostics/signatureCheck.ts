@@ -6,27 +6,27 @@
 
 import * as vscode from 'vscode';
 import { SymbolType } from '../language/static/common';
-import { Tables } from '../language/static/tables';
-import { Modules } from '../language/static/modules';
 import { Errors } from './common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Parameter } from '../language/common';
 import { Quest } from '../language/quest';
+import { LanguageData } from '../language/static/languageData';
 
 /**
 * Analyses the definition of a symbol or action.
 * @param context Context data for current diagnostics operation.
+* @param data Language data used for linting.
 * @param line The line where the definition is found.
 * @param signature Parameters of the symbol definition.
 * @param areOrdered Are the parameters ordered?
 * @returns Diagnostics for the signature words.
 */
-export function* analyseSignature(context: Quest, line: vscode.TextLine, signature: Parameter[], areOrdered: boolean): Iterable<vscode.Diagnostic> {
+export function* analyseSignature(context: Quest, data: LanguageData, line: vscode.TextLine, signature: Parameter[], areOrdered: boolean): Iterable<vscode.Diagnostic> {
 
     for (let index = 0; index < signature.length; index++) {
         const parameter = signature[index];
 
-        const diagnostic = analyseParameter(context, parameter, () => {
+        const diagnostic = analyseParameter(context, data, parameter, () => {
             const wordPosition = areOrdered ? findWordPosition(line.text, index) : line.text.indexOf(parameter.value);
             return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + parameter.value.length);
         });
@@ -39,12 +39,13 @@ export function* analyseSignature(context: Quest, line: vscode.TextLine, signatu
 
 /**
 * Analyses a parameter in a symbol or action signature.
-* @param document A quest document.
+* @param context The quest where this parameter is found.
+* @param data Language data used for linting.
 * @param parameter The parameter to analyse.
 * @param range Gets range of word.
 * @returns An error message for the parameter, undefined if there are no issues.
 */
-function analyseParameter(context: Quest, parameter: Parameter, range: () => vscode.Range): vscode.Diagnostic | undefined {
+function analyseParameter(context: Quest, data: LanguageData, parameter: Parameter, range: () => vscode.Range): vscode.Diagnostic | undefined {
     switch (parameter.type) {
         case ParameterTypes.naturalNumber:
             if (isNaN(Number(parameter.value))) {
@@ -73,14 +74,14 @@ function analyseParameter(context: Quest, parameter: Parameter, range: () => vsc
                 }
             }
             else {
-                const id = Tables.getInstance().staticMessagesTable.messages.get(parameter.value);
+                const id = data.tables.staticMessagesTable.messages.get(parameter.value);
                 if (!id || !context.qrc.messages.find(x => x.id === id)) {
                     return Errors.undefinedMessage(range(), parameter.value);
                 }
             }
             break;
         case ParameterTypes.messageName:
-            const id = Tables.getInstance().staticMessagesTable.messages.get(parameter.value);
+            const id = data.tables.staticMessagesTable.messages.get(parameter.value);
             if (!id || !context.qrc.messages.find(x => x.id === Number(parameter.value))) {
                 return Errors.undefinedMessage(range(), parameter.value);
             }
@@ -111,13 +112,13 @@ function analyseParameter(context: Quest, parameter: Parameter, range: () => vsc
             }
             break;
         case ParameterTypes.effectKey:
-            if (!Modules.getInstance().effectKeyExists(parameter.value)) {
+            if (!data.modules.effectKeyExists(parameter.value)) {
                 return Errors.undefinedAttribute(range(), parameter.value, parameter.type.replace('${', '').replace('}', ''));
             }
             break;
     }
 
-    const attributes = Tables.getInstance().getValues(parameter.type);
+    const attributes = data.tables.getValues(parameter.type);
     if (attributes && attributes.indexOf(parameter.value) === -1) {
         return Errors.undefinedAttribute(range(), parameter.value, parameter.type.replace('${', '').replace('}', ''));
     }

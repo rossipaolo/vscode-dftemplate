@@ -6,12 +6,13 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, CodeLens } from 'vscode';
+import { Modules } from '../language/static/modules';
 import { Quests } from '../language/quests';
 import { TemplateReferenceProvider } from './referenceProvider';
 
 export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
 
-    public constructor(private readonly quests: Quests) {
+    public constructor(private readonly modules: Modules, private readonly quests: Quests) {
         vscode.commands.registerCommand('dftemplate.revealRange', (range: vscode.Range) => {
             if (vscode.window.activeTextEditor) {
                 vscode.window.activeTextEditor.revealRange(range);
@@ -44,7 +45,7 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
             codelenses.push(TemplateCodeLensProvider.makeReferencesCodeLens(document, task.range, references));
 
             // Triggered by a condition
-            if (task.hasAnyCondition()) {
+            if (task.hasAnyCondition(this.modules)) {
                 codelenses.push(new CodeLens(task.range, { title: 'conditional execution', command: '' }));
             }
 

@@ -8,11 +8,9 @@ import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { CodeAction, CodeActionKind, DiagnosticSeverity, WorkspaceEdit, ExtensionContext } from 'vscode';
 import { getOptions, first, where } from '../extension';
-import { Tables } from '../language/static/tables';
-import { Modules } from '../language/static/modules';
-import { Language } from '../language/static/language';
 import { StaticData } from '../language/static/staticData';
 import { ParameterTypes } from '../language/static/parameterTypes';
+import { LanguageData } from '../language/static/languageData';
 import { QuestResource, Task } from '../language/common';
 import { Quests } from '../language/quests';
 import { DiagnosticCode } from '../diagnostics/common';
@@ -22,7 +20,8 @@ import { TemplateRenameProvider } from './renameProvider';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
-    public constructor(private readonly language: Language, private readonly quests: Quests, context: ExtensionContext) {
+    public constructor(private readonly data: LanguageData, private readonly quests: Quests, context: ExtensionContext) {
+
         context.subscriptions.push(
 
             vscode.commands.registerCommand('dftemplate.insertSnippetAtRange', (snippet: string, range: vscode.Range) => {
@@ -91,8 +90,8 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     const prefix = parser.getFirstWord((document.lineAt(diagnostic.range.start.line).text));
                     if (prefix) {
                         for (const signature of [
-                            ...this.language.caseInsensitiveSeek(prefix),
-                            ...Modules.getInstance().caseInsensitiveSeek(prefix)]) {
+                            ...this.data.language.caseInsensitiveSeek(prefix),
+                            ...this.data.modules.caseInsensitiveSeek(prefix)]) {
                             action = new CodeAction(`Change to '${StaticData.prettySignature(signature)}'`);
                             action.command = {
                                 title: action.title,
@@ -104,10 +103,10 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     }
                     break;
                 case DiagnosticCode.UndefinedStaticMessage:
-                    const message = quest.qrc.getMessage(diagnostic.range);
+                    const message = quest.qrc.getMessage(diagnostic.range, this.data.tables);
                     if (message && message.alias) {
                         const aliasRange = wordRange(document.lineAt(diagnostic.range.start.line), message.alias);
-                        for (const [name, id] of Tables.getInstance().staticMessagesTable.messages) {
+                        for (const [name, id] of this.data.tables.staticMessagesTable.messages) {
                             if (id === message.id) {
                                 action = new CodeAction(`Change to '${name}'`, CodeActionKind.QuickFix);
                                 action.edit = new WorkspaceEdit();
@@ -135,7 +134,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     }
                     break;
                 case DiagnosticCode.UndefinedContextMacro:
-                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, this.language.contextMacros);
+                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, this.data.language.contextMacros);
                     if (action) {
                         actions.push(action);
                     }
@@ -176,7 +175,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                 case DiagnosticCode.UndefinedAttribute:
                     const parameter = quest.qbn.getParameter(diagnostic.range);
                     if (parameter) {
-                        const values = Tables.getInstance().getValues(parameter.type);
+                        const values = this.data.tables.getValues(parameter.type);
                         if (values) {
                             actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, values));
                         }
@@ -198,7 +197,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     const currentSymbol = document.getText(diagnostic.range);
                     const symbolDefinition = quest.qbn.getSymbol(currentSymbol);
                     if (symbolDefinition) {
-                        this.language.getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
+                        this.data.language.getSymbolVariations(currentSymbol, symbolDefinition.type).forEach(newSymbol => {
                             const title = `Change ${currentSymbol} to ${newSymbol.word} (${newSymbol.description})`;
                             const action = new vscode.CodeAction(title);
                             action.kind = diagnostic.severity === DiagnosticSeverity.Hint ? CodeActionKind.Empty : CodeActionKind.QuickFix;
@@ -227,7 +226,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                 case DiagnosticCode.UseAliasForStaticMessage:
                     const numericMessage = quest.qrc.messages.find(x => x.range.isEqual(diagnostic.range));
                     if (numericMessage) {
-                        for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
+                        for (const [alias, id] of this.data.tables.staticMessagesTable.messages) {
                             if (id === numericMessage.id) {
                                 action = new CodeAction(`Convert ${numericMessage.id} to ${alias}`, CodeActionKind.QuickFix);
                                 action.edit = new WorkspaceEdit();
@@ -278,7 +277,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
         }
 
         for (const message of where(quest.qrc.messages, x => x.aliasRange !== undefined && x.aliasRange.intersection(range) !== undefined)) {
-            for (const [alias, id] of Tables.getInstance().staticMessagesTable.messages) {
+            for (const [alias, id] of this.data.tables.staticMessagesTable.messages) {
                 if (message.id === id && message.alias !== alias) {
                     const action = new CodeAction(`Change to ${alias}`, CodeActionKind.RefactorRewrite);
                     action.edit = new WorkspaceEdit();

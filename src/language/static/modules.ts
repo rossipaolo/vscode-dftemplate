@@ -29,8 +29,6 @@ export class Modules extends StaticData {
 
     private modules: Module[] = [];
 
-    private static instance: Modules | null;
-
     private static queries = [
         { fromModule: (module: Module) => module.conditions, kind: QuestResourceCategory.Condition },
         { fromModule: (module: Module) => module.actions, kind: QuestResourceCategory.Action }
@@ -115,14 +113,6 @@ export class Modules extends StaticData {
         for (const module of where(this.modules, x => x.effects !== undefined)) {
             yield* where(module.effects, x => x.toUpperCase().startsWith(prefix));
         }
-    }
-
-    public static getInstance(): Modules {
-        return Modules.instance ? Modules.instance : Modules.instance = new Modules();
-    }
-
-    public static release() {
-        Modules.instance = null;
     }
 
     /**

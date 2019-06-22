@@ -5,11 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-
 import { DocumentFilter, ExtensionContext } from 'vscode';
 import { EOL } from 'os';
-import { Modules } from './language/static/modules';
-import { Language } from './language/static/language';
 import { makeDiagnosticCollection } from './diagnostics/diagnostics';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
@@ -25,7 +22,7 @@ import { TemplateDocumentRangeFormattingEditProvider } from './providers/documen
 import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { TemplateFoldingRangeProvider } from './providers/foldingRangeProvider';
-import { Tables } from './language/static/tables';
+import { LanguageData } from './language/static/languageData';
 import { tasks } from './parser';
 import { Quests } from './language/quests';
 
@@ -43,20 +40,15 @@ export function activate(context: ExtensionContext) {
 
     setLanguageConfiguration();
 
-    const language = new Language();
+    LanguageData.load(context).then(data => {
+        tasks.setGlobalVariables(data.tables.globalVarsTable.globalVars);
 
-    Promise.all([
-        language.load(context),
-        Modules.getInstance().load(context),
-        Tables.getInstance().load()
-    ]).then(() => {
-        tasks.setGlobalVariables(Tables.getInstance().globalVarsTable.globalVars);
+        const quests = new Quests(data);
+        context.subscriptions.push(quests.initialize());
 
-        const quests = new Quests(language);
-
-        context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(language, quests)));
-        context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(language, quests)));
-        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider(language)));
+        context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(data, quests)));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(data, quests)));
+        context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider(data)));
         context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider(quests)));
         context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider(quests)));
         context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider(quests)));
@@ -65,25 +57,19 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider(quests)));
         context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
         context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
-        context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(language, quests, context)));
+        context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(data, quests, context)));
         context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(TEMPLATE_MODE, new TemplateFoldingRangeProvider(quests)));
 
         if (getOptions()['codeLens']['enabled']) {
-            context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider(quests)));
+            context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider(data.modules, quests)));
         }
 
         if (getOptions()['diagnostics']['enabled']) {
-            context.subscriptions.push(makeDiagnosticCollection(context, language, quests));
+            context.subscriptions.push(makeDiagnosticCollection(context, data, quests));
         }
 
-        registerCommands(context, language, quests);
-        context.subscriptions.push(quests.initialize());
+        registerCommands(context, data, quests);     
     }).catch(e => vscode.window.showErrorMessage(`Initialization failed: ${e}`));
-}
-
-export function deactivate() {
-    Modules.release();
-    Tables.release();
 }
 
 export function* iterateAll<T>(...iterables: Iterable<T>[]): Iterable<T> {
@@ -148,7 +134,7 @@ function setLanguageConfiguration() {
     });
 }
 
-function registerCommands(context: ExtensionContext, language: Language, quests: Quests) {
+function registerCommands(context: ExtensionContext, data: LanguageData, quests: Quests) {
     context.subscriptions.push(
 
         vscode.commands.registerTextEditorCommand('dftemplate.toggleCeToken', async textEditor => {
@@ -186,11 +172,11 @@ function registerCommands(context: ExtensionContext, language: Language, quests:
 
             const quest = quests.get(textEditor.document);
 
-            const messages = Tables.getInstance().staticMessagesTable.messages;
+            const messages = data.tables.staticMessagesTable.messages;
             const entries: vscode.QuickPickItem[] = [];
             for (const [alias, id] of messages) {
                 if (!quest.qrc.messages.find(x => x.id === id) && !entries.find(x => messages.get(x.label) === id)) {
-                    const message = language.findMessage(alias);
+                    const message = data.language.findMessage(alias);
                     entries.push({
                         label: alias,
                         detail: String(id),
@@ -202,7 +188,7 @@ function registerCommands(context: ExtensionContext, language: Language, quests:
             const selection = await vscode.window.showQuickPick(entries, { canPickMany: true, matchOnDetail: true, ignoreFocusOut: true });
             if (selection !== undefined && selection.length > 0) {
                 const text = selection.map(selected => {
-                    const id = Tables.getInstance().staticMessagesTable.messages.get(selected.label);
+                    const id = data.tables.staticMessagesTable.messages.get(selected.label);
                     return [`${selected.label}:  [${id}]`, 'UNDEFINED MESSAGE'].join(EOL);
                 }).join(EOL + EOL);
 
@@ -240,7 +226,7 @@ function registerCommands(context: ExtensionContext, language: Language, quests:
             };
 
             const entries: vscode.QuickPickItem[] = [];
-            for (const [alias, id] of Tables.getInstance().globalVarsTable.globalVars) {
+            for (const [alias, id] of data.tables.globalVarsTable.globalVars) {
                 if (!/^Unused\d+$/.test(alias) && first(qbn.iterateTasks(), x => x.definition.globalVarName === alias) === undefined) {
                     entries.push({
                         label: alias,

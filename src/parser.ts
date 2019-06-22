@@ -40,16 +40,6 @@ export function isEmptyOrComment(text: string): boolean {
 }
 
 /**
- * Checks if `line` has a reference to the quest `name`.
- * This is the quest directive in the preamble or the `start quest` action.
- * @param line A line in a quest file.
- * @param name The name of the referenced quest.
- */
-export function isQuestReference(line: string, name: string) {
-    return new RegExp('^\\s*(Quest:|start\\s+quest)\\s+' + name).test(line);
-}
-
-/**
  * Parses a quest file to retrieve the ranges of **QRC** and **QBN** blocks.
  * @param document A quest document.
  */
@@ -76,24 +66,6 @@ export function getQuestBlocksRanges(document: TextDocument): { qrc: vscode.Rang
         qrc: new vscode.Range(qrc ? qrc.lineNumber : 0, 0, qbn ? qbn.lineNumber - 1 : 0, 0),
         qbn: new vscode.Range(qbn ? qbn.lineNumber : 0, 0, document.lineCount, 0)
     };
-}
-
-/**
- * Gets the schema of a table.
- * @param document A document with a table.
- * @returns An array of schema items.
- * @example
- * // schema: id,*name
- * ['id', '*name']
- */
-export function getTableSchema(document: TextDocument): string[] | undefined {
-    for (let index = 0; index < document.lineCount; index++) {
-        const line = document.lineAt(index);
-        const schemaIndex = line.text.indexOf('schema:');
-        if (schemaIndex !== -1) {
-            return line.text.substring(schemaIndex + 'schema:'.length).split(',').map(x => x.trim());
-        }
-    }
 }
 
 /**

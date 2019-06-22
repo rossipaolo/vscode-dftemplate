@@ -11,9 +11,9 @@ import { analysePreamble } from './preambleCheck';
 import { analyseQrc } from './qrcCheck';
 import { analyseQbn } from './qbnCheck';
 import { tableCheck } from './tableCheck';
+import { LanguageData } from '../language/static/languageData';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
-import { Language } from '../language/static/language';
 import { Quests } from '../language/quests';
 
 let timer: NodeJS.Timer | null = null;
@@ -21,10 +21,10 @@ let timer: NodeJS.Timer | null = null;
 /**
  * Makes a diagnostic collection and subscribes to events for diagnostic.
  * @param context Extension context.
- * @param language Language data.
+ * @param data Language data used for linting.
  * @param quests Quests inside current workspace.
  */
-export function makeDiagnosticCollection(context: vscode.ExtensionContext, language: Language, quests: Quests): vscode.DiagnosticCollection {
+export function makeDiagnosticCollection(context: vscode.ExtensionContext, data: LanguageData, quests: Quests): vscode.DiagnosticCollection {
 
     const diagnosticCollection = vscode.languages.createDiagnosticCollection(TEMPLATE_LANGUAGE);
 
@@ -34,7 +34,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext, langu
     const updateDiagnostics = async (document: vscode.TextDocument) => {
         let diagnostics: vscode.Diagnostic[];
 
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
 
             // Analyse table
             diagnostics = Array.from(tableCheck(document));
@@ -43,9 +43,9 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext, langu
             // Analyse quest
             const context = quests.get(document);
             diagnostics = [
-                ...analysePreamble(context),
-                ...(context.qrc.found ? analyseQrc(context, language) : failedAnalysis(context, 'QRC')),
-                ...(context.qbn.found ? analyseQbn(context) : failedAnalysis(context, 'QBN')),
+                ...analysePreamble(context, data),
+                ...(context.qrc.found ? analyseQrc(context, data) : failedAnalysis(context, 'QRC')),
+                ...(context.qbn.found ? analyseQbn(context, data) : failedAnalysis(context, 'QBN')),
             ];
             await analyseQuestReferences(context, diagnostics, quests);
         }

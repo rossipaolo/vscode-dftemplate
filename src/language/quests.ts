@@ -5,9 +5,9 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { Quest } from './quest';
-import { Language } from './static/language';
 import { TEMPLATE_LANGUAGE } from '../extension';
+import { LanguageData } from './static/languageData';
+import { Quest } from './quest';
 
 /**
  * Manages quest files inside a workspace.
@@ -15,7 +15,7 @@ import { TEMPLATE_LANGUAGE } from '../extension';
 export class Quests {
     private readonly quests = new Map<string, Quest>();
 
-    public constructor(private readonly language: Language) {
+    public constructor(private readonly data: LanguageData) {
     }
 
     /**
@@ -38,7 +38,7 @@ export class Quests {
     public get(document: vscode.TextDocument): Quest {
         let quest = this.quests.get(document.uri.fsPath);
         if (!quest || document.version > quest.version) {
-            this.quests.set(document.uri.fsPath, quest = new Quest(document, this.language));
+            this.quests.set(document.uri.fsPath, quest = new Quest(document, this.data));
         }
 
         return quest;
@@ -52,7 +52,7 @@ export class Quests {
         const quests: Quest[] = [];
 
         const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
-        for (const uri of uris.filter(x => !Quest.isTable(x))) {
+        for (const uri of uris.filter(x => !Quests.isTable(x))) {
             const quest = this.quests.get(uri.fsPath);
             if (quest) {
                 quests.push(quest);
@@ -65,5 +65,31 @@ export class Quests {
         }
 
         return quests;
+    }
+
+    /**
+     * Checks if the given uri corresponds to a quests table.
+     * @param uri A document uri.
+     */
+    public static isTable(uri: vscode.Uri): boolean {
+        return /Quest(s|List)-[a-zA-Z]+\.txt$/.test(uri.fsPath);
+    }
+
+    /**
+     * Gets the schema of a table.
+     * @param document A document with a table.
+     * @returns An array of schema items.
+     * @example
+     * // schema: id,*name
+     * ['id', '*name']
+     */
+    public static getTableSchema(document: vscode.TextDocument): string[] | undefined {
+        for (let index = 0; index < document.lineCount; index++) {
+            const line = document.lineAt(index);
+            const schemaIndex = line.text.indexOf('schema:');
+            if (schemaIndex !== -1) {
+                return line.text.substring(schemaIndex + 'schema:'.length).split(',').map(x => x.trim());
+            }
+        }
     }
 }

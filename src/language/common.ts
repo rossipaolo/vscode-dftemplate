@@ -10,6 +10,7 @@ import { tasks, wordRange } from "../parser";
 import { QuestResourceCategory, SymbolType } from "./static/common";
 import { Modules } from "./static/modules";
 import { Language } from "./static/language";
+import { LanguageData } from './static/languageData';
 import { EOL } from 'os';
 
 /**
@@ -258,9 +259,9 @@ export class Task implements QuestResource {
     /**
      * Does this task have at least one condition?
      */
-    public hasAnyCondition(): boolean {
+    public hasAnyCondition(modules: Modules): boolean {
         return !!this.actions.find(action => {
-            const actionInfo = Modules.getInstance().findAction(action.line.text);
+            const actionInfo = modules.findAction(action.line.text);
             return !!(actionInfo && actionInfo.category === QuestResourceCategory.Condition);
         });
     }
@@ -382,10 +383,11 @@ export class Action implements QuestResource {
     /**
      * Attempts to parse an action inside a task.
      * @param line A text line with an action.
+     * @param modules Imported language data.
      * @returns An `Action` instance if parse operation was successful, `undefined` otherwise.
      */
-    public static parse(line: TextLine): Action | undefined {
-        const result = Modules.getInstance().findAction(line.text);
+    public static parse(line: TextLine, modules: Modules): Action | undefined {
+        const result = modules.findAction(line.text);
         if (result) {
             return new Action(line, result.getSignature());
         }
@@ -492,12 +494,12 @@ export enum QuestBlockKind {
 }
 
 export interface QuestParseContext {
+    data: LanguageData;
     document: TextDocument;
     block: QuestBlock;
     blockStart: number;
     currentMessageBlock?: parser.messages.MessageBlock;
     currentActionsBlock?: Action[];
-    language: Language;
 }
 
 /**

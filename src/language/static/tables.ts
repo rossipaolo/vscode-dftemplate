@@ -194,8 +194,6 @@ class SpellsEntityTable extends Table {
 }
 
 export class Tables {
-    private static instance: Tables | null;
-
     public readonly diseasesTable = new DiseasesTable();
     public readonly factionsTable = new FactionsTable();
     public readonly foesTable = new FoesTable();
@@ -206,9 +204,6 @@ export class Tables {
     public readonly spellsTable = new SpellsTable();
     public readonly staticMessagesTable = new StaticMessagesTable();
     public readonly spellsEntityTable = new SpellsEntityTable();
-
-    private constructor() {
-    }
 
     public async load(): Promise<void> {
 
@@ -265,14 +260,6 @@ export class Tables {
             case ParameterTypes.skillName:
                 return this.spellsEntityTable.skills;
         }
-    }
-
-    public static getInstance(): Tables {
-        return this.instance || (this.instance = new Tables());
-    }
-
-    public static release() {
-        this.instance = null;
     }
 
     /**

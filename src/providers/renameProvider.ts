@@ -18,7 +18,7 @@ export class TemplateRenameProvider implements RenameProvider {
     }
 
     public async provideRenameEdits(document: TextDocument, position: Position, newName: string, token: CancellationToken): Promise<WorkspaceEdit | undefined> {
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
             return;
         }
 
