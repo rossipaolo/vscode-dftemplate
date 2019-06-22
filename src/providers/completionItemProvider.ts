@@ -6,11 +6,10 @@
 
 import * as vscode from 'vscode';
 import { TextDocument, Position, CompletionItem, CancellationToken } from 'vscode';
-import { getTableSchema } from '../parser';
 import { QuestResourceCategory, SymbolType, QuestResourceInfo } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
-import { Tables } from '../language/static/tables';
+import { LanguageData } from '../language/static/languageData';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quests } from '../language/quests';
 import { Quest } from '../language/quest';
@@ -19,7 +18,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
     private static readonly signatureInfoCommand = { command: 'editor.action.triggerParameterHints', title: '' };
 
-    public constructor(private readonly language: Language, private readonly quests: Quests) {
+    public constructor(private readonly data: LanguageData, private readonly quests: Quests) {
     }
 
     public async provideCompletionItems(document: TextDocument, position: Position, token: CancellationToken): Promise<CompletionItem[] | undefined> {
@@ -27,7 +26,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         const text = line.text.substring(0, position.character - 2).trim();
         const prefix = TemplateCompletionItemProvider.getPrefix(line.text, position.character);
 
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
             return TemplateCompletionItemProvider.tableCompletionItems(document, prefix);
         }
 
@@ -46,7 +45,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         const items: CompletionItem[] = [];
 
         // Directives
-        for (const directive of this.language.findDirectives(prefix)) {
+        for (const directive of this.data.language.findDirectives(prefix)) {
             items.push(this.signatureCompletionItem(directive));
         }
 
@@ -58,7 +57,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
         if (line.text[position.character - 2] === '%') {
             // Context macros
-            for (const symbol of this.language.findSymbols('%' + prefix)) {
+            for (const symbol of this.data.language.findSymbols('%' + prefix)) {
                 const item = new vscode.CompletionItem(symbol.details.signature, vscode.CompletionItemKind.Property);
                 item.detail = symbol.details.signature;
                 item.documentation = symbol.details.summary;
@@ -67,7 +66,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         } else {
             // Symbols
             for (const symbol of quest.qbn.iterateSymbols()) {
-                this.language.getSymbolVariations(symbol.name, symbol.type).forEach(variation => {
+                this.data.language.getSymbolVariations(symbol.name, symbol.type).forEach(variation => {
                     const item = new vscode.CompletionItem(variation.word, vscode.CompletionItemKind.Field);
                     item.detail = `${symbol.line.text.trim()} (${variation.description})`;
                     items.push(item);
@@ -85,8 +84,8 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             // Directives and static messages
             for (const directive of [
-                ...this.language.findDirectives(prefix),
-                ...this.language.findMessages(prefix)]) {
+                ...this.data.language.findDirectives(prefix),
+                ...this.data.language.findMessages(prefix)]) {
                 items.push(this.signatureCompletionItem(directive));
             }
         }
@@ -152,12 +151,12 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                     }
                     break;
                 case ParameterTypes.effectKey:
-                    for (const effectKey of Modules.getInstance().getEffectKeys(prefix)) {
+                    for (const effectKey of this.data.modules.getEffectKeys(prefix)) {
                         items.push(new vscode.CompletionItem(effectKey, vscode.CompletionItemKind.EnumMember));
                     }
                     break;
                 default:
-                    const suggestions = Tables.getInstance().getValues(param);
+                    const suggestions = this.data.tables.getValues(param);
                     if (suggestions) {
                         suggestions.forEach(suggestion => {
                             items.push(new vscode.CompletionItem(suggestion, vscode.CompletionItemKind.EnumMember));
@@ -167,7 +166,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             }
         } else {
             // Actions/condition
-            for (const result of Modules.getInstance().findActions(prefix)) {
+            for (const result of this.data.modules.findActions(prefix)) {
                 for (let index = 0; index < result.details.overloads.length; index++) {
                     const overload = result.details.overloads[index];
                     const signature = Modules.prettySignature(overload);
@@ -182,9 +181,9 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
             // Other signatures
             for (const resourceInfo of [
-                ...this.language.findDirectives(prefix),
-                ...this.language.findDefinitions(prefix),
-                ...this.language.findGlobalVariables(prefix)]) {
+                ...this.data.language.findDirectives(prefix),
+                ...this.data.language.findDefinitions(prefix),
+                ...this.data.language.findGlobalVariables(prefix)]) {
                 items.push(this.signatureCompletionItem(resourceInfo));
             }
         }
@@ -194,7 +193,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
 
     private static tableCompletionItems(document: TextDocument, prefix: string): CompletionItem[] {
         if ('entry'.startsWith(prefix)) {
-            const schema = getTableSchema(document);
+            const schema = Quests.getTableSchema(document);
             if (schema) {
                 const snippet = schema.map((value, index) => `\${${index + 1}:${value}}`).join(', ');
                 const completionItem = new CompletionItem('entry', vscode.CompletionItemKind.Snippet);
@@ -213,7 +212,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         const prettySignature = Language.prettySignature(resourceInfo.details.signature);
         const item = new vscode.CompletionItem(prettySignature, TemplateCompletionItemProvider.getCompletionItemKind(resourceInfo.category));
         const snippet = resourceInfo.category === QuestResourceCategory.Definition ?
-            this.language.getSymbolSnippet(resourceInfo.details.signature) :
+            this.data.language.getSymbolSnippet(resourceInfo.details.signature) :
             resourceInfo.details.signature;
         item.insertText = new vscode.SnippetString(snippet);
         item.detail = prettySignature;
@@ -239,7 +238,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
 
         // Definition
-        const definition = this.language.findDefinition(match[1], line.text);
+        const definition = this.data.language.findDefinition(match[1], line.text);
         if (definition) {
             for (const signatureWord of definition.matches) {
                 const result = line.text.match(signatureWord.regex);
@@ -252,7 +251,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         }
 
         // Action/condition
-        const actionResult = Modules.getInstance().findAction(line.text, match[1]);
+        const actionResult = this.data.modules.findAction(line.text, match[1]);
         if (actionResult) {
             return Modules.getParameterAtPosition(actionResult, previousText.split(' ').length);
         }

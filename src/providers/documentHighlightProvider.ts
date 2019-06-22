@@ -18,7 +18,7 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
 
     public async provideDocumentHighlights(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.DocumentHighlight[] | undefined> {
 
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
             return;
         }
 

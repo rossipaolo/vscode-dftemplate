@@ -7,14 +7,14 @@
 import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { SignatureHelpProvider, TextDocument, Position, SignatureHelp } from 'vscode';
-import { Language } from '../language/static/language';
 import { Modules } from '../language/static/modules';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { Quest } from '../language/quest';
+import { LanguageData } from '../language/static/languageData';
+import { Quests } from '../language/quests';
 
 export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
 
-    public constructor(private readonly language: Language) {
+    public constructor(private readonly data: LanguageData) {
     }
 
     public async provideSignatureHelp(document: TextDocument, position: Position): Promise<SignatureHelp | undefined> {
@@ -24,10 +24,10 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
             return;
         }
 
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
 
             if (!/^\s*schema:/.test(text)) {
-                const schema = parser.getTableSchema(document);
+                const schema = Quests.getTableSchema(document);
                 if (schema) {
                     const signatureHelp = new SignatureHelp();
                     const signatureInformation = new vscode.SignatureInformation(schema.join(', '));
@@ -47,7 +47,7 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
         // Symbol definition
         const symbolType = parser.getFirstWord(text);
         if (symbolType) {
-            const symbolInfoOverload = this.language.matchSymbol(symbolType, text);
+            const symbolInfoOverload = this.data.language.matchSymbol(symbolType, text);
             if (symbolInfoOverload) {
                 const signatureHelp = new SignatureHelp();
                 signatureHelp.signatures = symbolInfoOverload.all.map((symbolInfo, index) => {
@@ -60,7 +60,7 @@ export class TemplateSignatureHelpProvider implements SignatureHelpProvider {
         }
 
         // Action/condition invocation
-        const actionResult = Modules.getInstance().findAction(text);
+        const actionResult = this.data.modules.findAction(text);
         if (actionResult) {
             const signatureHelp = new SignatureHelp();
             signatureHelp.signatures = actionResult.details.overloads.map((signature, index) => {

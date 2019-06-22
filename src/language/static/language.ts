@@ -35,6 +35,10 @@ export class Language extends StaticData {
         return this.table ? [...this.table.symbols.keys()] : [];
     }
 
+    public constructor(private readonly tables: Tables) {
+        super();
+    }
+
     /**
      * Load language tables.
      */
@@ -96,7 +100,7 @@ export class Language extends StaticData {
         if (this.table && this.definitions) {
             yield* select(where(this.table.directives, x => x["1"].signature.toUpperCase().startsWith(prefix)), x => x["1"].signature);
             yield* selectMany(where(this.definitions, x => x["0"].toUpperCase().startsWith(prefix)), x => x["1"], x => x.snippet);
-            yield* select(where(Tables.getInstance().globalVarsTable.globalVars, x => x["0"].toUpperCase().startsWith(prefix)), x => x["0"] + ' ${1:_varSymbol_}');
+            yield* select(where(this.tables.globalVarsTable.globalVars, x => x["0"].toUpperCase().startsWith(prefix)), x => x["0"] + ' ${1:_varSymbol_}');
         }
     }
 
@@ -119,7 +123,7 @@ export class Language extends StaticData {
     }
 
     public findMessage(name: string): QuestResourceDetails | undefined {
-        const id = Tables.getInstance().staticMessagesTable.messages.get(name);
+        const id = this.tables.staticMessagesTable.messages.get(name);
         if (id && this.table) {
             return Language.makeMessageItem(this.table, id, name);
         }
@@ -144,7 +148,7 @@ export class Language extends StaticData {
     }
 
     public findGlobalVariable(name: string): QuestResourceDetails | undefined {
-        const id = Tables.getInstance().globalVarsTable.globalVars.get(name);
+        const id = this.tables.globalVarsTable.globalVars.get(name);
         if (id !== undefined) {
             return {
                 summary: `Global variable number ${id}.`,
@@ -180,7 +184,7 @@ export class Language extends StaticData {
 
     public *findMessages(prefix: string): Iterable<QuestResourceInfo> {
         if (this.table) {
-            for (const [name, id] of Tables.getInstance().staticMessagesTable.messages) {
+            for (const [name, id] of this.tables.staticMessagesTable.messages) {
                 if (name.startsWith(prefix)) {
                     yield {
                         category: QuestResourceCategory.Message,
@@ -192,7 +196,7 @@ export class Language extends StaticData {
     }
 
     public *findGlobalVariables(prefix: string): Iterable<QuestResourceInfo> {
-        for (const [alias, id] of Tables.getInstance().globalVarsTable.globalVars) {
+        for (const [alias, id] of this.tables.globalVarsTable.globalVars) {
             if (alias.startsWith(prefix)) {
                 yield {
                     category: QuestResourceCategory.GlobalVar,

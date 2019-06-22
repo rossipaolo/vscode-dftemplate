@@ -57,15 +57,16 @@ export class Qrc extends QuestBlock {
     /**
      * Gets a message this QRC block.
      * @param arg A numeric id, text alias or range.
+     * @param tables Imported language tables.
      */
-    public getMessage(arg: string | Range): Message | undefined {
+    public getMessage(arg: string | Range, tables: Tables): Message | undefined {
         if (arg instanceof Range) {
             return this.messages.find(x => x.range.isEqual(arg));
         }
 
         let id: number | undefined = Number(arg);
         if (isNaN(id)) {
-            id = Tables.getInstance().staticMessagesTable.messages.get(arg);
+            id = tables.staticMessagesTable.messages.get(arg);
         }
 
         if (id) {

@@ -10,6 +10,8 @@ import { Errors, Warnings, Hints, findParameter } from './common';
 import { analyseSignature } from './signatureCheck';
 import { SymbolType } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
+import { Modules } from '../language/static/modules';
+import { LanguageData } from '../language/static/languageData';
 import { Quest } from '../language/quest';
 import { Symbol, Task } from '../language/common';
 import { first, getOptions } from '../extension';
@@ -18,8 +20,9 @@ import { first, getOptions } from '../extension';
  * Analyses the QBN section of a quest.
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
+ * @param data Language data used for linting.
  */
-export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
+export function* analyseQbn(context: Quest, data: LanguageData): Iterable<Diagnostic> {
 
     for (const [name, symbols] of context.qbn.symbols) {
 
@@ -30,7 +33,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
 
         function* checkSignature(symbol: Symbol): Iterable<Diagnostic> {
             if (symbol.signature) {
-                yield* analyseSignature(context, symbol.line, symbol.signature, false);
+                yield* analyseSignature(context, data, symbol.line, symbol.signature, false);
             }
         }
 
@@ -91,7 +94,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
         }
 
         // Unused      
-        if (!taskIsUsed(context, name, firstTask)) {
+        if (!taskIsUsed(context, name, firstTask, data.modules)) {
             const definition = firstTask.definition;
             const name = definition.type === parser.tasks.TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
             yield Warnings.unusedDeclarationTask(firstTask.range, name);
@@ -132,7 +135,7 @@ export function* analyseQbn(context: Quest): Iterable<Diagnostic> {
             }
         }
 
-        yield* analyseSignature(context, action.line, action.signature, true);
+        yield* analyseSignature(context, data, action.line, action.signature, true);
     }
 
     for (const line of context.qbn.failedParse) {
@@ -156,9 +159,9 @@ function symbolHasReferences(context: Quest, symbol: string): boolean {
     return false;
 }
 
-function taskIsUsed(context: Quest, taskName: string, task: Task): boolean {
+function taskIsUsed(context: Quest, taskName: string, task: Task, modules: Modules): boolean {
     // Started by trigger
-    if (task.hasAnyCondition()) {
+    if (task.hasAnyCondition(modules)) {
         return true;
     }
 

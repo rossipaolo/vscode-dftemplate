@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import { TextLine, Range, MarkdownString, Position } from 'vscode';
 import { EOL } from 'os';
 import { first } from '../extension';
-import { Language } from './static/language';
+import { LanguageData } from './static/languageData';
 import { ParameterTypes } from './static/parameterTypes';
 import { QuestParseContext, QuestBlockKind, QuestResource, CategorizedQuestResource } from './common';
 import { Preamble } from './preamble';
@@ -42,13 +42,13 @@ export class Quest {
 
     public readonly version: number;
 
-    public constructor(public readonly document: vscode.TextDocument, private readonly language: Language) {
+    public constructor(public readonly document: vscode.TextDocument, private readonly data: LanguageData) {
 
         const context: QuestParseContext = {
+            data: data,
             document: document,
             block: this.preamble,
-            blockStart: 0,
-            language: language
+            blockStart: 0
         };
 
         for (let index = 0; index < this.document.lineCount; index++) {
@@ -187,7 +187,7 @@ export class Quest {
                     return { kind: 'action', value: action };
                 } else {
 
-                    const message = this.qrc.getMessage(word);
+                    const message = this.qrc.getMessage(word, this.data.tables);
                     if (message) {
                         return { kind: 'message', value: message };
                     }
@@ -221,7 +221,7 @@ export class Quest {
         }
 
         const result = (summary?: string) => {
-            summary = resource.makeDocumentation ? resource.makeDocumentation(this.language, summary) : summary;
+            summary = resource.makeDocumentation ? resource.makeDocumentation(this.data.language, summary) : summary;
             return markdown ? new MarkdownString(summary) : summary;
         };
 
@@ -257,13 +257,5 @@ export class Quest {
      */
     public static indexToName(idOrName: string) {
         return !isNaN(Number(idOrName)) ? 'S' + '0'.repeat(7 - idOrName.length) + idOrName : idOrName;
-    }
-    
-    /**
-     * Checks if the given uri corresponds to a quests table.
-     * @param uri A document uri.
-     */
-    public static isTable(uri: vscode.Uri): boolean {
-        return /Quest(s|List)-[a-zA-Z]+\.txt$/.test(uri.fsPath);
     }
 }

@@ -31,7 +31,7 @@ export class Preamble extends QuestBlock {
     * @param line A line in the preamble.
     */
     public parse(line: vscode.TextLine, context: QuestParseContext): void {
-        const directive = Directive.parse(line, context.language);
+        const directive = Directive.parse(line, context.data.language);
         if (directive) {
             this.directives.push(directive);
             return;

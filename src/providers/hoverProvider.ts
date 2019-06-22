@@ -11,6 +11,7 @@ import { tasks } from '../parser';
 import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
+import { LanguageData } from '../language/static/languageData';
 import { Symbol, Task } from '../language/common';
 import { Quests } from '../language/quests';
 import { Quest } from '../language/quest';
@@ -29,12 +30,12 @@ interface TemplateDocumentationItem {
 
 export class TemplateHoverProvider implements HoverProvider {
 
-    public constructor(private readonly language: Language, private readonly quests: Quests) {
+    public constructor(private readonly data: LanguageData, private readonly quests: Quests) {
     }
 
     public async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | undefined> {
 
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
             return undefined;
         }
 
@@ -52,13 +53,13 @@ export class TemplateHoverProvider implements HoverProvider {
                     };
                     break;
                 case 'type':
-                    const definition = this.language.findDefinition(resource.value, document.lineAt(position.line).text);
+                    const definition = this.data.language.findDefinition(resource.value, document.lineAt(position.line).text);
                     if (definition) {
                         item = {
                             category: 'definition',
                             signature: definition.signature
                         };
-                        const overloads = this.language.numberOfOverloads(resource.value) - 1;
+                        const overloads = this.data.language.numberOfOverloads(resource.value) - 1;
                         if (overloads > 0) {
                             item.signature += TemplateHoverProvider.makeOverloadsCountInfo(overloads);
                         }
@@ -81,7 +82,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     };
                     break;
                 case 'action':
-                    const actionInfo = Modules.getInstance().findAction(resource.value.line.text);
+                    const actionInfo = this.data.modules.findAction(resource.value.line.text);
                     if (actionInfo) {
                         let signature = actionInfo.moduleName + ' -> ' + actionInfo.getSignature();
                         const otherOverloads = actionInfo.details.overloads.length - 1;
@@ -109,7 +110,7 @@ export class TemplateHoverProvider implements HoverProvider {
                 case 'directive':
                 case 'macro':
                 case 'globalVar':
-                    const languageItem = this.language.seekByName(resource.value);
+                    const languageItem = this.data.language.seekByName(resource.value);
                     if (languageItem) {
                         item = {
                             category: QuestResourceCategory[languageItem.category].toLowerCase(),
@@ -170,7 +171,7 @@ export class TemplateHoverProvider implements HoverProvider {
         let summary = quest.makeDocumentation(symbol) || '';
 
         if (variation !== undefined) {
-            const symbolVariation = this.language.getSymbolVariations(symbol.name, symbol.type, x => '`' + x + '`').find(x => x.word === variation);
+            const symbolVariation = this.data.language.getSymbolVariations(symbol.name, symbol.type, x => '`' + x + '`').find(x => x.word === variation);
             const meaning = symbolVariation ? symbolVariation.description + '.' : 'Undefined value for the type `' + symbol.type + '`.';
             summary = summary ? [summary, meaning].join(EOL.repeat(2)) : meaning;
         }

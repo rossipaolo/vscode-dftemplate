@@ -8,8 +8,8 @@ import * as parser from '../parser';
 import { Diagnostic, } from "vscode";
 import { Errors, Warnings, Hints, findParameter } from './common';
 import { wordRange } from '../parser';
-import { Language } from '../language/static/language';
 import { Tables } from '../language/static/tables';
+import { LanguageData } from '../language/static/languageData';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Quest } from '../language/quest';
 
@@ -17,15 +17,15 @@ import { Quest } from '../language/quest';
  * Analyses the QRC section of a quest.
  * @param document The current open document.
  * @param context Diagnostic context for the current document.
- * @param language Language data.
+ * @param data Language data used for linting.
  */
-export function* analyseQrc(context: Quest, language: Language): Iterable<Diagnostic> {
+export function* analyseQrc(context: Quest, data: LanguageData): Iterable<Diagnostic> {
 
     for (let index = 0; index < context.qrc.messages.length; index++) {
         const message = context.qrc.messages[index];
 
         // Unused
-        if (!message.alias && !messageHasReferences(context, message.id)) {
+        if (!message.alias && !messageHasReferences(context, data.tables, message.id)) {
             yield Warnings.unusedDeclarationMessage(message.range, String(message.id));
         }
 
@@ -44,12 +44,12 @@ export function* analyseQrc(context: Quest, language: Language): Iterable<Diagno
 
         // Check or suggest alias
         if (message.alias) {
-            const id = Tables.getInstance().staticMessagesTable.messages.get(message.alias);
+            const id = data.tables.staticMessagesTable.messages.get(message.alias);
             if (!id || message.id !== id) {
                 yield Errors.invalidStaticMessageDefinition(message.range, message.id, message.alias);
             }
         } else {
-            for (const staticMessage of Tables.getInstance().staticMessagesTable.messages) {
+            for (const staticMessage of data.tables.staticMessagesTable.messages) {
                 if (staticMessage["1"] === message.id) {
                     yield Hints.useAliasForStaticMessage(message.range, message.id);
                     break;
@@ -71,7 +71,7 @@ export function* analyseQrc(context: Quest, language: Language): Iterable<Diagno
                         symbolDefinition = symbolDefinition[0];
                     }
                     
-                    yield !language.isSymbolVariationDefined(symbol, symbolDefinition.type) ?
+                    yield !data.language.isSymbolVariationDefined(symbol, symbolDefinition.type) ?
                         Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolDefinition.type) :
                         Hints.SymbolVariation(wordRange(line, symbol));
                 }
@@ -81,7 +81,7 @@ export function* analyseQrc(context: Quest, language: Language): Iterable<Diagno
 
     // Macros
     for (const macro of context.qrc.macros) {
-        if (!language.findSymbol(macro.symbol)) {
+        if (!data.language.findSymbol(macro.symbol)) {
             yield Errors.undefinedContextMacro(macro.range, macro.symbol);
         }
     }
@@ -91,14 +91,14 @@ export function* analyseQrc(context: Quest, language: Language): Iterable<Diagno
     }
 }
 
-function messageHasReferences(context: Quest, messageID: number): boolean {
+function messageHasReferences(context: Quest, tables: Tables, messageID: number): boolean {
     // Numeric ID
     if (findParameter(context, parameter => (parameter.type === ParameterTypes.messageID || parameter.type === ParameterTypes.message) && parameter.value === String(messageID))) {
         return true;
     }
 
     // Text Alias
-    for (const message of Tables.getInstance().staticMessagesTable.messages) {
+    for (const message of tables.staticMessagesTable.messages) {
         if (message[1] === messageID) {
             if (findParameter(context, parameter => (parameter.type === ParameterTypes.messageName || parameter.type === ParameterTypes.message) && parameter.value === message[0])) {
                 return true;

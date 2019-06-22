@@ -19,7 +19,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     }
 
     public async provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Promise<Location[] | undefined> {
-        if (Quest.isTable(document.uri)) {
+        if (Quests.isTable(document.uri)) {
             return undefined;
         }
 
