@@ -9,8 +9,12 @@ import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { SymbolType } from '../language/static/common';
 import { CategorizedQuestResource } from '../language/common';
+import { Quests } from '../language/quests';
 
 export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlightProvider {
+
+    public constructor(private readonly quests: Quests) {
+    }
 
     public async provideDocumentHighlights(document: vscode.TextDocument, position: vscode.Position): Promise<vscode.DocumentHighlight[] | undefined> {
 
@@ -18,7 +22,7 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
             return;
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         const resource = quest.getResource(position);
         if (resource) {
             const locations = TemplateDocumentHighlightProvider.findLocations(quest, resource);

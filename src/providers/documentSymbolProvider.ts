@@ -7,17 +7,19 @@
 import * as vscode from 'vscode';
 
 import { SymbolInformation, SymbolKind } from 'vscode';
-import { Quest } from '../language/quest';
-
+import { Quests } from '../language/quests';
 
 export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
+
+    public constructor(private readonly quests: Quests) {
+    }
 
     public provideDocumentSymbols(document: vscode.TextDocument): Thenable<SymbolInformation[]> {
 
         return new Promise(resolve => {
             const symbols: SymbolInformation[] = [];
 
-            const quest = Quest.get(document);
+            const quest = this.quests.get(document);
             const questName = quest.getName() || '<quest>';
 
             // Quest

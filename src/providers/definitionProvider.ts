@@ -7,16 +7,20 @@
 import * as vscode from 'vscode';
 import { TextDocument, Position, Definition } from 'vscode';
 import { SymbolType } from '../language/static/common';
+import { Quests } from '../language/quests';
 import { Quest } from '../language/quest';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
+
+    public constructor(private readonly quests: Quests) {
+    }
 
     public async provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Promise<Definition | undefined> {
         if (Quest.isTable(document.uri)) {
             return undefined;
         }
 
-        const quest = Quest.get(document);
+        const quest = this.quests.get(document);
         const resource = quest.getResource(position);
         if (resource) {
             switch (resource.kind) {
@@ -36,7 +40,7 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
                     return quest.getLocation(symbol.range);
                 case 'quest':
-                    const quests = await Quest.getAll(token);
+                    const quests = await this.quests.getAll(token);
                     const questName = Quest.indexToName(resource.value);
                     const found = quests.find(x => x.getName() === questName);
                     if (found) {

@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { QuestBlock, QuestBlockKind, Directive } from './common';
+import { QuestBlock, QuestBlockKind, Directive, QuestParseContext } from './common';
 
 /**
  * The first block of a quest.
@@ -30,8 +30,8 @@ export class Preamble extends QuestBlock {
     * Parses a line in the Preamble and build its diagnostic context.
     * @param line A line in the preamble.
     */
-    public parse(line: vscode.TextLine): void {
-        const directive = Directive.parse(line);
+    public parse(line: vscode.TextLine, context: QuestParseContext): void {
+        const directive = Directive.parse(line, context.language);
         if (directive) {
             this.directives.push(directive);
             return;
