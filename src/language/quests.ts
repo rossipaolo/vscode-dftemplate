@@ -13,7 +13,21 @@ import { Quest } from './quest';
  * Manages quest files inside a workspace.
  */
 export class Quests {
+
+    /**
+     * Cached quests with their uris.
+     */
     private readonly quests = new Map<string, Quest>();
+
+    /**
+     * Uris of all quest files or undefined if they need to be seeked.
+     */
+    private uris: vscode.Uri[] | undefined = undefined;
+
+    /**
+     * A loading operation in progress.
+     */
+    private loadingQuests: Promise<Quest[] | undefined> | undefined;
 
     public constructor(private readonly data: LanguageData) {
     }
@@ -22,8 +36,14 @@ export class Quests {
      * Registers to documents events.
      */
     public initialize(): vscode.Disposable {
-        const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.txt', true, true, false);
+        const fsWatcher = vscode.workspace.createFileSystemWatcher('**/*.txt', false, true, false);
+        fsWatcher.onDidCreate(uri => {
+            if (this.uris) {
+                this.uris.push(uri);
+            }
+        });
         fsWatcher.onDidDelete(uri => {
+            this.uris = undefined;
             if (this.quests.has(uri.fsPath)) {
                 this.quests.delete(uri.fsPath);
             }
@@ -47,19 +67,62 @@ export class Quests {
     /**
      * Gets all quests in the current workspace.
      * @param token An optional cancellation token.
+     * @returns A list of quests which is empty if operation was cancelled.
      */
     public async getAll(token?: vscode.CancellationToken): Promise<Quest[]> {
-        const quests: Quest[] = [];
 
-        const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
-        for (const uri of uris.filter(x => !Quests.isTable(x))) {
+        if (this.loadingQuests !== undefined) {
+            const quests = await this.loadingQuests;
+            if (token && token.isCancellationRequested) {
+                return [];
+            } else if (quests !== undefined) {
+                return quests;
+            }
+        }
+
+        const quests = await (this.loadingQuests = this.loadQuests(token));
+        this.loadingQuests = undefined;
+        return quests !== undefined ? quests : [];
+    }
+
+    /**
+     * Retrieves all quests in the current workspace. If not cached they will be opened and parsed.
+     * @param token An optional cancellation token.
+     * @returns A list of quests or undefined if operation was cancelled.
+     */
+    private async loadQuests(token?: vscode.CancellationToken): Promise<Quest[] | undefined> {
+        if (this.uris === undefined) {
+            const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
+            if (token && token.isCancellationRequested) {
+                return undefined;
+            }
+
+            this.uris = uris.filter(x => !Quests.isTable(x));
+        }
+
+        const quests: Quest[] = [];
+        let progressStatusBar: Thenable<any> | undefined;
+
+        for (const uri of this.uris) {
             const quest = this.quests.get(uri.fsPath);
             if (quest) {
                 quests.push(quest);
             } else {
+
                 const document = await vscode.workspace.openTextDocument(uri);
                 if (document && document.languageId === TEMPLATE_LANGUAGE) {
                     quests.push(this.get(document));
+                }
+
+                if (token && token.isCancellationRequested) {
+                    return undefined;
+                }
+
+                if (progressStatusBar === undefined) {
+                    progressStatusBar = vscode.window.withProgress({ location: vscode.ProgressLocation.Window }, async progress => {
+                        progress.report({ message: 'Analysing quests' });
+                        return this.loadingQuests;
+                    });
                 }
             }
         }
