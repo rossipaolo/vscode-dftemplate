@@ -4,6 +4,8 @@
 
 'use strict';
 
+import * as fs from 'fs';
+
 /**
  * Kinds of resources usable in a quest.
  */
@@ -221,4 +223,14 @@ export class ActionInfo {
             this.details.summary[overload !== undefined ? overload : this.overload] :
             this.details.summary;
     }
+}
+
+export async function readTextFile(path: string): Promise<string> {
+    const readFile = require('util').promisify(fs.readFile);
+    return await readFile(path, { encoding: 'utf8' });
+}
+
+export async function readTextFileLines(path: string): Promise<string[]> {
+    const text = await readTextFile(path);
+    return text.split(/\r?\n/);
 }

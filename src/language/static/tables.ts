@@ -7,25 +7,19 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getOptions, select, where } from '../../extension';
+import { readTextFileLines } from './common';
 import { ParameterTypes } from './parameterTypes';
 
 abstract class Table {
 
-    public load(path: string): Promise<void> {
-        return new Promise((resolve, reject) => {
-            const instance = this;
-            vscode.workspace.openTextDocument(path).then((document) => {
-                const table: string[][] = [];
-                for (let index = 0; index < document.lineCount; index++) {
-                    const line = document.lineAt(index).text;
-                    if (!/^\s*((-|schema).*)?$/.test(line)) {
-                        table.push(document.lineAt(index).text.split(',').map((w) => w.trim()));
-                    }
-                }
-                instance.set(table);
-                return resolve();
-            }, (e) => reject(e));
-        });
+    public async load(path: string): Promise<void> {
+        const textLines = await readTextFileLines(path);
+        this.set(textLines.reduce((table, textLine) => {
+            if (!/^\s*((-|schema).*)?$/.test(textLine)) {
+                table.push(textLine.split(',').map(w => w.trim()));
+            }
+            return table;
+        }, [] as string[][]));
     }
 
     protected abstract set(data: string[][]): void;
