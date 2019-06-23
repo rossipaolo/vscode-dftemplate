@@ -139,14 +139,14 @@ export class Modules extends StaticData {
                 // Standard modules provided by this extension
                 let modulePath = path.join(context.extensionPath, 'modules', name);
                 if (fs.existsSync(modulePath)) {
-                    return await Modules.parseFromJson(modulePath);
+                    return await Modules.parseFromJson<Module>(modulePath);
                 }
 
                 // Modules folder inside the workspace
                 if (vscode.workspace.workspaceFolders) {
                     modulePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'Modules', name);
                     if (fs.existsSync(modulePath)) {
-                        return await Modules.parseFromJson(modulePath);
+                        return await Modules.parseFromJson<Module>(modulePath);
                     }
                 }
 

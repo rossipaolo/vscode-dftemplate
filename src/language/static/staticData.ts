@@ -4,8 +4,7 @@
 
 'use strict';
 
-import * as vscode from 'vscode';
-import { ActionInfo } from './common';
+import { ActionInfo, readTextFile } from './common';
 
 /**
  * Manages tables with language data for intellisense features.
@@ -76,8 +75,7 @@ export abstract class StaticData {
         return new RegExp('^\\s*' + signature + '\\s*$');
     }
 
-    protected static async parseFromJson(fullPath: string): Promise<any> {
-        const document = await vscode.workspace.openTextDocument(fullPath);
-        return JSON.parse(document.getText());
+    protected static async parseFromJson<T = any>(path: string): Promise<T> {
+        return JSON.parse(await readTextFile(path));
     }
 }
