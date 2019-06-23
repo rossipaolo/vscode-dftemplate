@@ -5,6 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import { Uri } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { LanguageData } from './static/languageData';
 import { Quest } from './quest';
@@ -22,7 +23,7 @@ export class Quests {
     /**
      * Uris of all quest files or undefined if they need to be seeked.
      */
-    private uris: vscode.Uri[] | undefined = undefined;
+    private uris: Uri[] | undefined = undefined;
 
     /**
      * A loading operation in progress.
@@ -49,6 +50,14 @@ export class Quests {
             }
         });
         return fsWatcher;
+    }
+
+    /**
+     * Checks if a quest file exist within the current workspace.
+     * @param uri The uri of a quest file.
+     */
+    public async questExist(uri: vscode.Uri): Promise<boolean> {
+        return (await this.getUris()).find(x => x.fsPath === uri.fsPath) !== undefined;
     }
 
     /**
@@ -91,19 +100,15 @@ export class Quests {
      * @returns A list of quests or undefined if operation was cancelled.
      */
     private async loadQuests(token?: vscode.CancellationToken): Promise<Quest[] | undefined> {
-        if (this.uris === undefined) {
-            const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
-            if (token && token.isCancellationRequested) {
-                return undefined;
-            }
-
-            this.uris = uris.filter(x => !Quests.isTable(x));
+        const uris = await this.getUris(token);
+        if (uris === undefined) {
+            return undefined;
         }
 
         const quests: Quest[] = [];
         let progressStatusBar: Thenable<any> | undefined;
 
-        for (const uri of this.uris) {
+        for (const uri of uris) {
             const quest = this.quests.get(uri.fsPath);
             if (quest) {
                 quests.push(quest);
@@ -128,6 +133,24 @@ export class Quests {
         }
 
         return quests;
+    }
+
+    /**
+     * Gets cached uris of all quests in the workspace or find them.
+     */
+    private async getUris(): Promise<Uri[]>;
+    private async getUris(token?: vscode.CancellationToken): Promise<Uri[] | undefined>;
+    private async getUris(token?: vscode.CancellationToken): Promise<Uri[] | undefined> {
+        if (this.uris === undefined) {
+            const uris = await vscode.workspace.findFiles('**/*.txt', undefined, undefined, token);
+            if (token && token.isCancellationRequested) {
+                return undefined;
+            }
+
+            this.uris = uris.filter(x => !Quests.isTable(x));
+        }
+
+        return this.uris;
     }
 
     /**

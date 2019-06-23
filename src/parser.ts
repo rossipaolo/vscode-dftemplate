@@ -25,10 +25,29 @@ export function getFirstWord(text: string): string | undefined {
  * @returns The range of the first occurrence of the word if found, an empty range otherwise.
  */
 export function wordRange(line: vscode.TextLine, word: string): vscode.Range {
-    const index = line.text.indexOf(word);
-    return index !== -1 ?
-        new vscode.Range(line.lineNumber, index, line.lineNumber, index + word.length) :
-        new vscode.Range(line.lineNumber, 0, line.lineNumber, 0);
+    return subRange(line.range, line.text, word);
+}
+
+/**
+ * Gets the range of the first occurence of `subString` inside `text`.
+ * @param range The full range of `text`.
+ * @param text A string that contains `subString`.
+ * @param subString A string contained inside `text`.
+ */
+export function subRange(range: vscode.Range, text: string, subString: string): vscode.Range {
+    if (!range.isSingleLine) {
+        throw new Error('Range is not single line');
+    }
+
+    const index = text.indexOf(subString);
+    if (index === -1) {
+        throw new Error('Substring not found');
+    }
+
+    return new vscode.Range(
+        range.start.line, range.start.character + index,
+        range.end.line, range.start.character + index + subString.length
+    );
 }
 
 /**
