@@ -5,38 +5,38 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
+import { subRange } from '../parser';
 import { Errors } from './common';
+import { QuestTable } from '../language/questTable';
+import { Diagnostic } from 'vscode';
+import { Quests } from '../language/quests';
 
 /**
  * Do diagnostics for a quest table.
  * @param document A document with table schema.
  */
-export function* tableCheck(document: vscode.TextDocument): Iterable<vscode.Diagnostic> {
+export async function tableCheck(document: vscode.TextDocument, quests: Quests): Promise<Diagnostic[]> {
+    const diagnostics: Diagnostic[] = [];
 
-    let schema: RegExp | null = null;
-
-    for (let index = 0; index < document.lineCount; index++) {
-        const line = document.lineAt(index);
-
-        // Skip comments
-        if (parser.isEmptyOrComment(line.text)) {
-            continue;
-        }
-
-        // Get schema
-        if (!schema && /^\s*schema:/.test(line.text)) {
-            const args = line.text.split(',').length;
-            if (args > 0) {
-                schema = new RegExp('^\s*[^,]*(,[^,]*){' + (args - 1) + '}$');
-            }
-
-            continue;
-        }
+    const table = QuestTable.parse(document);
+    if (table !== undefined && table.hasQuests && table.content.length > 0) {
 
         // Check entry against schema
-        if (!schema || !schema.test(line.text)) {
-            yield Errors.schemaMismatch(line.range);
+        for (const entry of table.content) {
+            if (!table.schema.test(entry.text)) {
+                diagnostics.push(Errors.schemaMismatch(entry.range));
+            }
+        }
+
+        // Check if listed quest files exist
+        if (table.hasQuests) {
+            await Promise.all(table.content.map(async entry => {
+                if (!await quests.questExist(table.makeQuestUri(entry))) {
+                    diagnostics.push(Errors.undefinedQuest(subRange(entry.range, entry.text, entry.value), entry.value));
+                }
+            }));
         }
     }
+
+    return diagnostics;
 }

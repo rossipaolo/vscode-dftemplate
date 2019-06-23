@@ -37,7 +37,7 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext, data:
         if (Quests.isTable(document.uri)) {
 
             // Analyse table
-            diagnostics = Array.from(tableCheck(document));
+            diagnostics = await tableCheck(document, quests);
         } else {
 
             // Analyse quest
