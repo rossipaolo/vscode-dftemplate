@@ -38,8 +38,7 @@
             {
                 "id": "dftemplate",
                 "aliases": [
-                    "DfTemplate",
-                    "dftemplate"
+                    "DFTemplate"
                 ],
                 "configuration": "./language-configuration.json"
             }
