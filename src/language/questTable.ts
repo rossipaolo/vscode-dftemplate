@@ -26,7 +26,7 @@ export class QuestTable {
      * Checks if this table provide quest names; otherwise it contains other data used by quests.
      */
     public get hasQuests(): boolean {
-        return /QuestList-[^\.]+\.txt$/.test(this.fileName);
+        return /QuestList-(.)+\.txt$/.test(this.fileName);
     }
 
     /**

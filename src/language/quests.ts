@@ -158,7 +158,7 @@ export class Quests {
      * @param uri A document uri.
      */
     public static isTable(uri: vscode.Uri): boolean {
-        return /Quest(s|List)-[a-zA-Z]+\.txt$/.test(uri.fsPath);
+        return /Quest(s|List)-(.)+\.txt$/.test(uri.fsPath);
     }
 
     /**
