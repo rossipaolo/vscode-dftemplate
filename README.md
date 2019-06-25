@@ -43,6 +43,18 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
     * Suggest symbol variations in QRC block
     * Find duplicated or unused declarations
 
+### Commands and settings
+
+| Command | Description |
+| --- | --- |
+| `DFTemplate: Toggle center token` | Switch between left and centered alignment for the selected message. |
+| `DFTemplate: Generate messages` | Propose a list of static messages which are not defined inside current quest. |
+| `DFTemplate: Order messages` | Reposition messages inside the QRC block according to numeric id. |
+| `DFTemplate: Generate global variables` | Propose a list of global variables which are not defined inside current quest. |
+| `Format Document` | Format code using the formatter provided by this extension. |
+
+To configure the behaviour of this extension, open the [user or workspace settings](https://code.visualstudio.com/docs/getstarted/settings) and type ```DFTemplate```.
+
 ## Language Data
 
 ### Tables
