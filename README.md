@@ -55,6 +55,16 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 
 To configure the behaviour of this extension, open the [user or workspace settings](https://code.visualstudio.com/docs/getstarted/settings) and type ```DFTemplate```.
 
+### Documentation comments
+
+A comment block above any quest or resource declaration is parsed as a documentation for it and shown inside tooltips. Markdown syntax is supported.
+
+```
+-- Example quest to freely spawn multiple foes inside a dungeon environment.
+-- Player will be teleported automatically to target dungeon.
+Quest: __DEMO13
+```
+
 ## Language Data
 
 ### Tables
