@@ -236,6 +236,16 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         }
                     }
                     break;
+                case DiagnosticCode.QuestNameMismatch:
+                    const questNameDirective = quest.preamble.questName;
+                    if (questNameDirective !== undefined) {
+                        const newName = quest.name;
+                        action = new CodeAction(`Change name to ${newName}`, CodeActionKind.QuickFix);
+                        action.edit = new WorkspaceEdit();
+                        action.edit.replace(document.uri, questNameDirective.valueRange, newName);
+                        actions.push(action);
+                    }
+                break;
                 case DiagnosticCode.OrderMessages:
                     action = new CodeAction('Order messages', CodeActionKind.RefactorRewrite);
                     action.command = {

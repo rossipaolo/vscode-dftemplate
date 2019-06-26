@@ -27,6 +27,7 @@ export enum DiagnosticCode {
     UndefinedQuest,
     MissingPositiveSign,
     GenericWarning,
+    QuestNameMismatch,
     UnusedDeclarationMessage,
     UnusedDeclarationSymbol,
     UnusedDeclarationTask,
@@ -85,6 +86,8 @@ export const Errors = {
 };
 
 export const Warnings = {
+    questNameMismatch: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.QuestNameMismatch, 'Quest name should be equal to file name; A readable longer name can be provided with DisplayName.', DiagnosticSeverity.Warning),
     unusedDeclarationMessage: (range: Range, name: string) =>
         makeDiagnostic(range, DiagnosticCode.UnusedDeclarationMessage, name + ' is declared but never used.', DiagnosticSeverity.Warning),
     unusedDeclarationSymbol: (range: Range, name: string) =>

@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import { TextLine, Range, MarkdownString, Position } from 'vscode';
 import { EOL } from 'os';
+import { basename } from 'path';
 import { first } from '../extension';
 import { LanguageData } from './static/languageData';
 import { ParameterTypes } from './static/parameterTypes';
@@ -41,6 +42,15 @@ export class Quest {
     public readonly comments: Range[] = [];
 
     public readonly version: number;
+
+    /**
+     * The name that can be used to reference this quest.
+     * This is the name of the file that contains this quest, without extension.
+     * @see Quest.getName() to retrieve the value of the `Quest:` directive.
+     */
+    public get name(): string {
+        return Quest.uriToName(this.document.uri);
+    }
 
     public constructor(public readonly document: vscode.TextDocument, private readonly data: LanguageData) {
 
@@ -83,7 +93,8 @@ export class Quest {
     }
 
     /**
-     * Gets the name of this quest.
+     * Gets the value of the `Quest:` directive, if present.
+     * @see Quest.name for the identificative name of the quest file.
      */
     public getName(): string | undefined {
         const directive = this.preamble.questName;
@@ -257,5 +268,13 @@ export class Quest {
      */
     public static indexToName(idOrName: string) {
         return !isNaN(Number(idOrName)) ? 'S' + '0'.repeat(7 - idOrName.length) + idOrName : idOrName;
+    }
+
+    /**
+     * Gets the name of a quest from its uri, meaning `NAME` inside `./NAME.txt`
+     * @param uri The uri of a quest file.
+     */
+    public static uriToName(uri: vscode.Uri): string {
+        return basename(uri.path, '.txt');
     }
 }

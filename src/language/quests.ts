@@ -6,7 +6,6 @@
 
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
-import { basename } from 'path';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { subRange } from '../parser';
 import { LanguageData } from './static/languageData';
@@ -122,7 +121,7 @@ export class Quests {
         const uris = await this.getUris(token);
         if (uris !== undefined) {
             name = Quest.indexToName(name);
-            const uri = uris.find(x => basename(x.path, '.txt') === name);
+            const uri = uris.find(x => Quest.uriToName(x) === name);
             if (uri !== undefined) {
                 return this.quests.get(uri.fsPath) || this.get(await vscode.workspace.openTextDocument(uri));
             }
