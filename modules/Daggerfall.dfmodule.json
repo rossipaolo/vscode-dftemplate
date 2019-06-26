@@ -136,16 +136,33 @@
             ]
         },
         {
-            "summary": "Adds an NPC portrait to HUD which indicates player is escorting this NPC.",
+            "summary": [
+                "Adds an NPC portrait to HUD which indicates player is escorting this NPC. It can be later removed with **_drop `_person_` face_**.",
+                "Adds an NPC portrait to HUD which indicates player is escorting this NPC and shows a message. It can be later removed with **_drop `_person_` face_**."
+            ],
             "overloads": [
                 "add ${1:_person_} face",
                 "add ${1:_person_} face saying ${2:messageID}"
             ]
         },
         {
-            "summary": "Magically enhances a foe by casting one of the standard spells; this action can be repeated any number of times with different spells.",
+            "summary": [
+                "Adds a humanoid foe portrait to HUD which indicates player is escorting this foe. It can be later removed with **_drop foe `_foe_` face_**.",
+                "Adds a humanoid foe portrait to HUD which indicates player is escorting this foe and shows a message. It can be later removed with **_drop foe `_foe_` face_**."
+            ],
             "overloads": [
-                "cast ${1:spell} spell on ${2:_foe_}"
+                "add foe ${1:_foe_} face",
+                "add foe ${1:_foes_} face saying ${2:messageID}"
+            ]
+        },
+        {
+            "summary": [
+                "Magically enhances a foe by casting one of the standard spells; if the foe has not been spawned, the spell will be added to a queue and casted the moment it spawns. This action can be repeated any number of times with different spells.",
+                "Magically enhances a foe by casting a custom spell; if the foe has not been spawned, the spell will be added to a queue and casted the moment it spawns. This action can be repeated any number of times with different spells."
+            ],
+            "overloads": [
+                "cast ${1:spell} spell on ${2:_foe_}",
+                "cast ${1:customSpell} custom spell on ${2:_foe_}"
             ]
         },
         {
@@ -226,9 +243,15 @@
             ]
         },
         {
-            "summary": "Drops escorting face from HUD.",
+            "summary": "Drops an escorting face from HUD which was previosly added with **_add `_person_` face_**.",
             "overloads": [
                 "drop ${1:_person_} face"
+            ]
+        },
+        {
+            "summary": "Drops an escorting face from HUD which was previosly added with **_add foe `_foe_` face_**.",
+            "overloads": [
+                "drop foe ${1:_foe_} face"
             ]
         },
         {
@@ -473,6 +496,7 @@
         "ElementalResistance-Magicka",
         "Jumping",
         "Paralyze",
+        "Shield",
         "Slowfall",
         "WaterBreathing",
         "ContinuousDamage-Fatigue",
@@ -516,18 +540,49 @@
         "Disease-WizardFever",
         "Disease-WoundRot",
         "Disease-YellowFever",
+        "AbsorbsSpells",
+        "BadReactionsFrom",
+        "BadRepWith",
+        "CastWhenHeld",
+        "CastWhenStrikes",
+        "CastWhenUsed",
+        "EnhancesSkill",
+        "ExtraSpellPts",
+        "ExtraWeight",
+        "FeatherWeight",
+        "GoodRepWith",
+        "HealthLeech",
+        "ImprovesTalents",
+        "IncreasedWeightAllowance",
+        "ItemDeteriorates",
+        "LowDamageVs",
+        "PotentVs",
+        "RegensHealth",
+        "RepairsObjects",
+        "StrengthensArmor",
+        "UserTakesDamage",
+        "VampiricEffect",
+        "WeakensArmor",
         "Vampirism-Infection",
+        "Wereboar-Infection",
+        "Werewolf-Infection",
         "Chameleon-Normal",
         "Chameleon-True",
         "Invisibility-Normal",
         "Invisibility-True",
         "Light",
+        "MorphSelf",
         "Shadow-Normal",
         "Shadow-True",
+        "ComprehendLanguages",
+        "CreateItem",
+        "Dispel-Daedra",
         "Dispel-Magic",
+        "Dispel-Undead",
         "Lock",
         "Open",
         "Silence",
+        "SoulTrap",
         "Teleport-Effect",
         "Poison-Nux_Vomica",
         "Poison-Arsenic",
@@ -576,9 +631,19 @@
         "Heal-Willpower",
         "Regenerate",
         "SpellAbsorption",
-        "Passive-Item-Specials",
+        "Azuras_Star",
+        "Lycanthropy-Curse",
+        "Mace_of_Molag_Bal",
+        "Masque_of_Clavicus",
+        "Mehrunes_Razor",
+        "Oghma_Infinium",
         "Passive-Specials",
+        "Ring_of_Namira",
+        "Sanguine_Rose",
+        "Skull_of_Corruption",
         "Vampirism-Curse",
+        "Wabbajack",
+        "Charm",
         "Detect-Enemy",
         "Detect-Magic",
         "Detect-Treasure",
@@ -588,6 +653,8 @@
         "Pacify-Undead",
         "Pacify-Humanoid",
         "Pacify-Daedra",
+        "SpellReflection",
+        "SpellResistance",
         "WaterWalking"
     ]
 }

@@ -33,5 +33,12 @@
                 "setvar ${1:task}"
             ]
         }
+    ],
+    "effects": [
+        "MageLight-Inferno",
+        "MageLight-Rime",
+        "MageLight-Venom",
+        "MageLight-Storm",
+        "MageLight-Arcane"
     ]
 }
