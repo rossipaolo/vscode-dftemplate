@@ -20,6 +20,14 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
     public async provideReferences(document: TextDocument, position: Position, options: { includeDeclaration: boolean }, token: CancellationToken): Promise<Location[] | undefined> {
         if (Quests.isTable(document.uri)) {
+            const quest = await this.quests.findFromTable(document, position, token);
+            if (quest !== undefined) {
+                const name = quest.getName();
+                if (name) {
+                    return TemplateReferenceProvider.questReferences(this.quests, name, options.includeDeclaration, token);
+                }
+            }
+
             return undefined;
         }
 
