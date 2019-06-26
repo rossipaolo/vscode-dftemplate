@@ -4,15 +4,18 @@ A Visual Studio Code extension with support for Donald Tipton's _TEMPLATE 1.11_ 
 
 ## Quick start
 
-1. Install the Template extension for Visual Studio Code from **Extensions > drop-down > [Install from VSIX](https://code.visualstudio.com/docs/editor/extension-gallery#_install-from-a-vsix)**.
-2. Open **Preferences > Settings > User Settings** and set **dftemplate.tablesPath** to point to _StreamingAssets/Tables_.
-3. Open the project folder or workspace, then from **Preferences > Settings > Workspace Settings** set files associations. For example, it may looks like this:
+1. Download the latest version from [Releases](https://github.com/TheLacus/vscode-dftemplate/releases). Open the command palette (**View > Command Palette** or `Ctrl+Shift+P`), type **_Extensions: Install from VSIX_** and select the downloaded file.
+2. Open the folder with your quests, then from **File > Preferences > Settings > Workspace Settings** search `files.associations` to associate the language to text files inside the folder.
 
     ```json
     "files.associations": {
-        "**/Quests/**/*.txt": "dftemplate"
+        "*.txt": "dftemplate"
     }
     ```
+
+    Daggerfall Unity quest files use .txt extension, but is possible to use glob patterns to target only a subsection of files.
+
+3. When you open a quest file for the first time you will be asked to select the folder _StreamingAssets/Tables_. Alternatively, manually set `dftemplate.tablesPath`.
 
 ## Features
 
