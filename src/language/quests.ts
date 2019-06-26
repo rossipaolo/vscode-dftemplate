@@ -6,9 +6,12 @@
 
 import * as vscode from 'vscode';
 import { Uri } from 'vscode';
+import { basename } from 'path';
 import { TEMPLATE_LANGUAGE } from '../extension';
+import { subRange } from '../parser';
 import { LanguageData } from './static/languageData';
 import { Quest } from './quest';
+import { QuestTable } from './questTable';
 
 /**
  * Manages quest files inside a workspace.
@@ -92,6 +95,39 @@ export class Quests {
         const quests = await (this.loadingQuests = this.loadQuests(token));
         this.loadingQuests = undefined;
         return quests !== undefined ? quests : [];
+    }
+
+    /**
+     * Finds the quest referenced by an entry of a quest table.
+     * @param document A document with a quest table.
+     * @param position A position in the quest table where the name of a quest can be foun.
+     * @param token An optional cancellation toke.
+     */
+    public async findFromTable(document: vscode.TextDocument, position: vscode.Position, token?: vscode.CancellationToken): Promise<Quest | undefined> {
+        const table = QuestTable.parse(document);
+        if (table && table.hasQuests) {
+            const entry = table.content.find(x => subRange(x.range, x.text, x.value).contains(position));
+            if (entry) {
+                return this.find(entry.value, token);
+            }
+        }
+    }
+
+    /**
+     * Finds a quest with the given file name.
+     * @param name `NAME` inside `./NAME.txt`.
+     * @param token An optional cancellation token.
+     */
+    private async find(name: string, token?: vscode.CancellationToken): Promise<Quest | undefined> {
+        const uris = await this.getUris(token);
+        if (uris !== undefined) {
+            const uri = uris.find(x => basename(x.path, '.txt') === name);
+            if (uri !== undefined) {
+                return this.quests.get(uri.fsPath) || this.get(await vscode.workspace.openTextDocument(uri));
+            }
+        }
+
+        return undefined;
     }
 
     /**

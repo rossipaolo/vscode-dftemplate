@@ -36,6 +36,15 @@ export class TemplateHoverProvider implements HoverProvider {
     public async provideHover(document: TextDocument, position: Position, token: CancellationToken): Promise<Hover | undefined> {
 
         if (Quests.isTable(document.uri)) {
+            const quest = await this.quests.findFromTable(document, position, token);
+            if (quest !== undefined) {
+                return TemplateHoverProvider.makeHover({
+                    category: 'quest',
+                    signature: 'Quest: ' + quest.getName(),
+                    summary: TemplateHoverProvider.getQuestDescription(quest)
+                });
+            }
+
             return undefined;
         }
 

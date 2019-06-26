@@ -17,6 +17,11 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
     public async provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Promise<Definition | undefined> {
         if (Quests.isTable(document.uri)) {
+            const quest = await this.quests.findFromTable(document, position, token);
+            if (quest !== undefined) {
+                return quest.getNameLocation();
+            }
+
             return undefined;
         }
 
