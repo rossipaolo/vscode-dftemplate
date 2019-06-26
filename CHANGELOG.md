@@ -14,6 +14,7 @@
 ### Improved
 
 - Improved resource seeking at position. Now words inside messages or comments are not considered references to symbols with the same name but valid only in other parts of the file.
+- Updated list of actions and effects.
 
 ## 0.10.0
 
