@@ -9,6 +9,7 @@
 - Added word highlight for symbol types.
 - Added diagnostic for quest names inside quest tables. Quests are seeked in the directory where the table is located.
 - Added hovers, find definition and references for quest names inside quest tables.
+- Issue a warning and a quick fix if the value of the `Quest:` directive is different than the name of file without extension.
 
 ### Improved
 
