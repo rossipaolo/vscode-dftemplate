@@ -200,28 +200,24 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     public static async questReferences(quests: Quests, questNameOrId: string, includeDeclaration: boolean = true, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
+        if (includeDeclaration) {
+            const quest = await quests.find(questNameOrId, token);
+            if (quest !== undefined) {
+                locations.push(quest.getNameLocation());
+            }
+        }
+
         questNameOrId = Quest.indexToName(questNameOrId);
-
         for (const quest of await quests.getAll(token)) {
-            if (quest.getName() === questNameOrId) {
-
-                // Definition
-                if (includeDeclaration) {
-                    locations.push(quest.getNameLocation());
-                }
-            } else {
-
-                // Actions
-                for (const action of quest.qbn.iterateActions()) {
-                    for (const parameter of action.signature) {
-                        if (parameter.type === ParameterTypes.questName) {
-                            if (parameter.value === questNameOrId) {
-                                locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
-                            }
-                        } else if (parameter.type === ParameterTypes.questID) {
-                            if (Quest.indexToName(parameter.value) === questNameOrId) {
-                                locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
-                            }
+            for (const action of quest.qbn.iterateActions()) {
+                for (const parameter of action.signature) {
+                    if (parameter.type === ParameterTypes.questName) {
+                        if (parameter.value === questNameOrId) {
+                            locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
+                        }
+                    } else if (parameter.type === ParameterTypes.questID) {
+                        if (Quest.indexToName(parameter.value) === questNameOrId) {
+                            locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
                         }
                     }
                 }

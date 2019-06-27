@@ -8,7 +8,6 @@ import * as vscode from 'vscode';
 import { TextDocument, Position, Definition } from 'vscode';
 import { SymbolType } from '../language/static/common';
 import { Quests } from '../language/quests';
-import { Quest } from '../language/quest';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
@@ -45,11 +44,9 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
                     return quest.getLocation(symbol.range);
                 case 'quest':
-                    const quests = await this.quests.getAll(token);
-                    const questName = Quest.indexToName(resource.value);
-                    const found = quests.find(x => x.getName() === questName);
-                    if (found) {
-                        return found.getNameLocation();
+                    const targetQuest = await this.quests.find(resource.value);
+                    if (targetQuest) {
+                        return targetQuest.getNameLocation();
                     }
             }
         }

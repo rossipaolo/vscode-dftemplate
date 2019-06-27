@@ -115,12 +115,13 @@ export class Quests {
 
     /**
      * Finds a quest with the given file name.
-     * @param name `NAME` inside `./NAME.txt`.
+     * @param name `NAME` inside `./NAME.txt` or the index inside `./S000NNNN.txt`.
      * @param token An optional cancellation token.
      */
-    private async find(name: string, token?: vscode.CancellationToken): Promise<Quest | undefined> {
+    public async find(name: string, token?: vscode.CancellationToken): Promise<Quest | undefined> {
         const uris = await this.getUris(token);
         if (uris !== undefined) {
+            name = Quest.indexToName(name);
             const uri = uris.find(x => basename(x.path, '.txt') === name);
             if (uri !== undefined) {
                 return this.quests.get(uri.fsPath) || this.get(await vscode.workspace.openTextDocument(uri));

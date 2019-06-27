@@ -107,16 +107,11 @@ export function makeDiagnosticCollection(context: vscode.ExtensionContext, data:
  * @param diagnostics The array where diagnostics are pushed.
  */
 async function analyseQuestReferences(context: Quest, diagnostics: vscode.Diagnostic[], quests: Quests): Promise<void> {
-    let cachedQuests: Quest[] | undefined;
     for (const action of context.qbn.iterateActions()) {
         const index = action.signature.findIndex(x => x.type === ParameterTypes.questName || x.type === ParameterTypes.questID);
         if (index !== -1) {
-            if (cachedQuests === undefined) {
-                cachedQuests = await quests.getAll();
-            }
-
-            const name = Quest.indexToName(action.signature[index].value);
-            if (!cachedQuests.find(x => x.getName() === name)) {
+            const name = action.signature[index].value;
+            if (!await quests.find(name)) {
                 diagnostics.push(Errors.undefinedQuest(action.getRange(index), name));
             }
         }
