@@ -106,14 +106,12 @@ export class TemplateHoverProvider implements HoverProvider {
                     }
                     break;
                 case 'quest':
-                    const quests = await this.quests.getAll(token);
-                    const questName = Quest.indexToName(resource.value);
-                    const questMatch = quests.find(x => x.getName() === questName);
-                    if (questMatch) {
+                    const targetQuest = await this.quests.find(resource.value);
+                    if (targetQuest) {
                         item = {
                             category: 'quest',
-                            signature: 'Quest: ' + questMatch.getName(),
-                            summary: TemplateHoverProvider.getQuestDescription(questMatch)
+                            signature: 'Quest: ' + targetQuest.getName(),
+                            summary: TemplateHoverProvider.getQuestDescription(targetQuest)
                         };
                     }
                 case 'directive':
