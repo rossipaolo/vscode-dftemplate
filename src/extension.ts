@@ -7,7 +7,6 @@
 import * as vscode from 'vscode';
 import { DocumentFilter, ExtensionContext } from 'vscode';
 import { EOL } from 'os';
-import { makeDiagnosticCollection } from './diagnostics/diagnostics';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
 import { TemplateSignatureHelpProvider } from './providers/signatureHelpProvider';
@@ -25,6 +24,8 @@ import { TemplateFoldingRangeProvider } from './providers/foldingRangeProvider';
 import { LanguageData } from './language/static/languageData';
 import { tasks } from './parser';
 import { Quests } from './language/quests';
+import { QuestLinter } from './diagnostics/questLinter';
+import { TableLinter } from './diagnostics/tableLinter';
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
@@ -243,4 +244,74 @@ function registerCommands(context: ExtensionContext, data: LanguageData, quests:
             }
         })
     );
+}
+
+/**
+ * Makes a diagnostic collection and subscribes to events for diagnostic.
+ * @param context Extension context.
+ * @param data Language data used for linting.
+ * @param quests Quests inside current workspace.
+ */
+function makeDiagnosticCollection(context: vscode.ExtensionContext, data: LanguageData, quests: Quests): vscode.DiagnosticCollection {
+
+    const diagnosticCollection = vscode.languages.createDiagnosticCollection(TEMPLATE_LANGUAGE);
+    
+    const questLinter = new QuestLinter(data, quests);
+    const tableLinter = new TableLinter(quests);
+
+    /**
+    * Makes diagnostics for the given document.
+    */
+    const updateDiagnostics = async (document: vscode.TextDocument) => {
+        const linter = Quests.isTable(document.uri) ? tableLinter : questLinter;
+        diagnosticCollection.set(document.uri, await linter.analyse(document));
+    };
+
+    // Do diagnostics for current file
+    if (vscode.window.activeTextEditor) {
+        const document = vscode.window.activeTextEditor.document;
+        if (document.languageId === TEMPLATE_LANGUAGE) {
+            updateDiagnostics(document);
+        }
+    }
+
+    // Do diagnostics for opened files
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument((document) => {
+        if (document.languageId === TEMPLATE_LANGUAGE) {
+            updateDiagnostics(document);
+        }
+    }));
+
+    const diagnosticsOption = getOptions()['diagnostics'];
+    if (diagnosticsOption['live']) {
+
+        const delay = diagnosticsOption['delay'];
+        let timer: NodeJS.Timer | null = null;
+
+        // Do live diagnostics
+        context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+            if (e.document.languageId === TEMPLATE_LANGUAGE) {
+
+                if (timer !== null) {
+                    clearTimeout(timer);
+                }
+
+                timer = setTimeout(() => {
+                    updateDiagnostics(e.document);
+                    timer = null;
+                }, delay);
+            }
+        }));
+    }
+    else {
+
+        // Do diagnostics only on save
+        context.subscriptions.push(vscode.workspace.onDidSaveTextDocument((document) => {
+            if (document.languageId === TEMPLATE_LANGUAGE) {
+                updateDiagnostics(document);
+            }
+        }));
+    }
+
+    return diagnosticCollection;
 }
