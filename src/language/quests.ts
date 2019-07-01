@@ -28,6 +28,11 @@ export class Quests {
     private uris: Uri[] | undefined = undefined;
 
     /**
+     * Cached quest tables with their uris.
+     */
+    private readonly tables = new Map<string, QuestTable>();
+
+    /**
      * A loading operation in progress.
      */
     private loadingQuests: Promise<Quest[] | undefined> | undefined;
@@ -47,8 +52,8 @@ export class Quests {
         });
         fsWatcher.onDidDelete(uri => {
             this.uris = undefined;
-            if (this.quests.has(uri.fsPath)) {
-                this.quests.delete(uri.fsPath);
+            if (!this.quests.delete(uri.fsPath)) {
+                this.tables.delete(uri.fsPath);
             }
         });
         return fsWatcher;
@@ -97,14 +102,27 @@ export class Quests {
     }
 
     /**
+     * Gets a `QuestTable` instance for the given document.
+     * @param document A text document with a quest table to be parsed.
+     */
+    public getTable(document: vscode.TextDocument): QuestTable {
+        let table = this.tables.get(document.uri.fsPath);
+        if (!table || document.version > table.version) {
+            this.tables.set(document.uri.fsPath, table = new QuestTable(document));
+        }
+
+        return table;
+    }
+
+    /**
      * Finds the quest referenced by an entry of a quest table.
      * @param document A document with a quest table.
      * @param position A position in the quest table where the name of a quest can be foun.
      * @param token An optional cancellation toke.
      */
     public async findFromTable(document: vscode.TextDocument, position: vscode.Position, token?: vscode.CancellationToken): Promise<Quest | undefined> {
-        const table = QuestTable.parse(document);
-        if (table && table.hasQuests) {
+        const table = this.getTable(document);
+        if (table.hasQuests) {
             const entry = table.content.find(x => subRange(x.range, x.text, x.value).contains(position));
             if (entry) {
                 return this.find(entry.value, token);
