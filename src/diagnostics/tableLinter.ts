@@ -7,7 +7,6 @@
 import * as vscode from 'vscode';
 import { Diagnostic } from 'vscode';
 import { subRange } from '../parser';
-import { QuestTable } from '../language/questTable';
 import { Quests } from '../language/quests';
 import { Errors } from './common';
 
@@ -18,13 +17,15 @@ export class TableLinter {
     public async analyse(document: vscode.TextDocument): Promise<Diagnostic[]> {
         const diagnostics: Diagnostic[] = [];
 
-        const table = QuestTable.parse(document);
-        if (table !== undefined && table.hasQuests && table.content.length > 0) {
+        const table = this.quests.getTable(document);
+        if (table.hasQuests && table.content.length > 0) {
 
             // Check entry against schema
-            for (const entry of table.content) {
-                if (!table.schema.test(entry.text)) {
-                    diagnostics.push(Errors.schemaMismatch(entry.range));
+            if (table.schema) {
+                for (const entry of table.content) {
+                    if (!table.schema.test(entry.text)) {
+                        diagnostics.push(Errors.schemaMismatch(entry.range));
+                    }
                 }
             }
 
