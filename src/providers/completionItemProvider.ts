@@ -112,14 +112,30 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                             items.push(item);
                         }
                     });
+                    break;
                 case ParameterTypes.message:
                 case ParameterTypes.messageName:
-                    for (const message of quest.qrc.messages) {
-                        if (message.alias && message.alias.startsWith(prefix)) {
-                            const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
-                            item.detail = quest.document.lineAt(message.range.start.line).text.trim();
-                            item.documentation = quest.makeDocumentation(message, true);
-                            items.push(item);
+                case ParameterTypes.messageID:
+                    if (param !== ParameterTypes.messageID) {
+                        for (const message of quest.qrc.messages) {
+                            if (message.alias && message.alias.startsWith(prefix)) {
+                                const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
+                                item.detail = quest.document.lineAt(message.range.start.line).text.trim();
+                                item.documentation = quest.makeDocumentation(message, true);
+                                items.push(item);
+                            }
+                        }
+                    }
+
+                    if (param !== ParameterTypes.messageName) {
+                        for (const message of quest.qrc.messages) {
+                            const messageID = String(message.id);
+                            if (messageID.startsWith(prefix)) {
+                                const item = new CompletionItem(messageID, vscode.CompletionItemKind.Struct);
+                                item.detail = quest.document.lineAt(message.range.start.line).text.trim();
+                                item.documentation = quest.makeDocumentation(message, true);
+                                items.push(item);
+                            }
                         }
                     }
                     break;
