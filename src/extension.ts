@@ -31,6 +31,8 @@ import { Quest } from './language/quest';
 import { QuestLinter } from './diagnostics/questLinter';
 import { TableLinter } from './diagnostics/tableLinter';
 
+const MESSAGE_ID_TRIGGER = '1';
+
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
     { language: TEMPLATE_LANGUAGE, scheme: 'file' }, 
@@ -52,7 +54,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(quests.initialize());
 
         context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(data, quests)));
-        context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(data, quests)));
+        context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(data, quests), MESSAGE_ID_TRIGGER));
         context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider(data)));
         context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider(quests)));
         context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider(quests)));
