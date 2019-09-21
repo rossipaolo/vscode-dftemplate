@@ -56,12 +56,18 @@
                         "type": "string",
                         "minItems": 1
                     }
+                },
+                "isObsolete": {
+                    "type":"boolean",
+                    "description": "If true this action is marked as obsolete.",
+                    "default": true
                 }
             },
             "required": [
                 "summary",
                 "overloads"
-            ]
+            ],
+            "additionalProperties": false
         }
     },
     "required": [

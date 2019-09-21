@@ -17,7 +17,7 @@ import { Tables } from '../language/static/tables';
 import { QuestBlock, QuestBlockKind, Task } from '../language/common';
 import { Quest } from '../language/quest';
 import { Quests } from '../language/quests';
-import { Errors, findParameter, Hints, Warnings } from './common';
+import { Errors, findParameter, Hints, Warnings, Informations } from './common';
 import { SignatureLinter } from './signatureLinter';
 
 export class QuestLinter {
@@ -229,6 +229,10 @@ export class QuestLinter {
 
         const hintTaskActivationForm: boolean = getOptions()['diagnostics']['hintTaskActivationForm'];
         for (const action of quest.qbn.iterateActions()) {
+            if (action.info.details.isObsolete) {
+                diagnostics.push(Informations.obsoleteAction(action.range, action.getFullName()));
+            }
+            
             if (hintTaskActivationForm) {
                 if (action.isInvocationOf('start', 'task')) {
                     const task = quest.qbn.getTask(action.signature[2].value);
