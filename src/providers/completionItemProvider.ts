@@ -117,8 +117,9 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 case ParameterTypes.messageName:
                 case ParameterTypes.messageID:
                     if (param !== ParameterTypes.messageID) {
+                        const regex = new RegExp(`^${prefix}`, 'i');
                         for (const message of quest.qrc.messages) {
-                            if (message.alias && message.alias.startsWith(prefix)) {
+                            if (message.alias && regex.test(message.alias)) {
                                 const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
                                 item.detail = message.makePreview(true);
                                 item.documentation = quest.makeDocumentation(message, true);
