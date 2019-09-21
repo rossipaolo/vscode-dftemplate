@@ -57,7 +57,7 @@ export class TemplateHoverProvider implements HoverProvider {
                 case 'message':
                     item = {
                         category: 'message',
-                        signature: document.lineAt(resource.value.range.start).text.trim(),
+                        signature: resource.value.makePreview(false),
                         summary: quest.makeDocumentation(resource.value)
                     };
                     break;
