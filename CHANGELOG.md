@@ -9,6 +9,10 @@
 - Added decoration styling to conditions and actions that affect quest workflow, action and symbol parameters and sybols that don't follow standard syntax and can't benefit of syntax highlighting. Colors can be themed (`dftemplate.stringParameter`, `dftemplate.controlAction` and `dftemplate.otherSymbol`).
 - Show completion proposals inside actions for message ids that follow standard pattern (1xxx).
 
+### Improved
+
+- Tooltips for message references and completion proposals now include a preview of the text content.
+
 ### Fixed
 
 - Fixed issue which could cause code action `Convert to task` not to appear.

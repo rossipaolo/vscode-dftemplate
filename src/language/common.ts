@@ -488,6 +488,39 @@ export class Message implements QuestResource {
     }
 
     /**
+     * Makes a compact but readable preview of the message, to be shown inside tooltips.
+     * @param textBlockSeparationLine Adds an empty line between definition and text block for better readability.
+     * @param maxLenght Maximum number of characters taken from the text block.
+     */
+    public makePreview(textBlockSeparationLine: boolean, maxLenght: number = 150): string {
+        const previewLines: string[] = [];
+
+        previewLines.push(this.alias !== undefined ? `${this.alias}: [${this.id}]` : `Message: ${this.id}`);
+
+        let lenght = 0;
+        for (const line of this.textBlock) {
+            let text = line.text.replace('<ce>', '').trim();
+            
+            if (text === '<--->') {
+                break;
+            }
+
+            if (lenght === 0) {
+                text = (textBlockSeparationLine ? '\n\n' : '\n') + text;
+            }
+
+            if ((lenght += text.length) >= maxLenght) {
+                previewLines.push(text.substr(0, maxLenght - lenght - text.length) + ' [...]');
+                break;
+            }
+
+            previewLines.push(text);
+        }
+
+        return previewLines.join(' ');
+    }
+
+    /**
      * Attempts to parse a message definition.
      * @param line A text line with a message definition.
      * @returns A `Message` instance if parse operation was successful, `undefined` otherwise.

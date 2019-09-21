@@ -120,7 +120,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                         for (const message of quest.qrc.messages) {
                             if (message.alias && message.alias.startsWith(prefix)) {
                                 const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
-                                item.detail = quest.document.lineAt(message.range.start.line).text.trim();
+                                item.detail = message.makePreview(true);
                                 item.documentation = quest.makeDocumentation(message, true);
                                 items.push(item);
                             }
@@ -132,7 +132,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                             const messageID = String(message.id);
                             if (messageID.startsWith(prefix)) {
                                 const item = new CompletionItem(messageID, vscode.CompletionItemKind.Struct);
-                                item.detail = quest.document.lineAt(message.range.start.line).text.trim();
+                                item.detail = message.makePreview(true);
                                 item.documentation = quest.makeDocumentation(message, true);
                                 items.push(item);
                             }
