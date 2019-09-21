@@ -207,7 +207,8 @@
             "summary": "Reserves a quest site for a resource, which is tipically, but not necessarily, an npc. The actual spawn can be done with **_place npc_**, **_place item_** or **_place foe_**. These actions can also reserve a quest site automatically so is not mandatory to perform this action.",
             "overloads": [
                 "create npc at ${1:_place_}"
-            ]
+            ],
+            "isObsolete": true
         },
         {
             "summary": "Cure specific disease on player received by **_make pc ill_** or through exposure to various elements.",

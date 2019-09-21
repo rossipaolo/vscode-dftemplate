@@ -7,11 +7,12 @@
 import * as parser from '../parser';
 import { TextDocument, TextLine, Range } from "vscode";
 import { tasks, wordRange } from "../parser";
-import { QuestResourceCategory, SymbolType } from "./static/common";
+import { QuestResourceCategory, SymbolType, ActionInfo } from "./static/common";
 import { Modules } from "./static/modules";
 import { Language } from "./static/language";
 import { LanguageData } from './static/languageData';
 import { EOL } from 'os';
+import { StaticData } from './static/staticData';
 
 /**
  * A quest resource with a tag that defines its category.
@@ -298,9 +299,9 @@ export class Task implements QuestResource {
  * An action that belongs to a task and perform a specific function when task is active and conditions are met.
  */
 export class Action implements QuestResource {
-
     public line: TextLine;
     public signature: Parameter[];
+    public readonly info: ActionInfo;
 
     /**
      * The range of the first word that is not a parameter.
@@ -316,7 +317,7 @@ export class Action implements QuestResource {
         return this.getRange();
     }
 
-    private constructor(line: TextLine, signature: string) {
+    private constructor(line: TextLine, info: ActionInfo) {
 
         function doParams(signatureItems: string[], lineItems: string[]): string[] {
             if (signatureItems[signatureItems.length - 1].indexOf('${...') !== -1) {
@@ -331,11 +332,13 @@ export class Action implements QuestResource {
         }
 
         const values = (this.line = line).text.trim().split(' ');
-        const types = doParams(signature.replace(/\${\d:/g, '${').split(' '), values);
+        const types = doParams(info.getSignature().replace(/\${\d:/g, '${').split(' '), values);
 
         this.signature = values.map((value, index) => {
             return { type: types[index], value: value };
         });
+
+        this.info = info;
     }
 
     /**
@@ -356,6 +359,13 @@ export class Action implements QuestResource {
     public getName(): string {
         const word = this.signature.find(x => !x.type.startsWith('$'));
         return word ? word.value : '';
+    }
+
+    /**
+     * The entire signature as a readable string.
+     */
+    public getFullName(): string {
+        return StaticData.prettySignature(this.info.getSignature());
     }
 
     /**
@@ -387,9 +397,9 @@ export class Action implements QuestResource {
      * @returns An `Action` instance if parse operation was successful, `undefined` otherwise.
      */
     public static parse(line: TextLine, modules: Modules): Action | undefined {
-        const result = modules.findAction(line.text);
-        if (result) {
-            return new Action(line, result.getSignature());
+        const info = modules.findAction(line.text);
+        if (info) {
+            return new Action(line, info);
         }
     }
 }

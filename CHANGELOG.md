@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Added
+
+- Added diagnostic information for obsolete action `create npc at _place_` with severity level of 'Information'.
+
 ## 0.11.0
 
 ### Added

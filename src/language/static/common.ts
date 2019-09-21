@@ -177,6 +177,11 @@ export interface ActionDetails {
      * All variations of this action.
      */
     readonly overloads: string[];
+
+    /**
+     * If true this action should be removed or replaced.
+     */
+    readonly isObsolete?: boolean;
 }
 
 /**

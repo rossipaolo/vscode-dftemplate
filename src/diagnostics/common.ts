@@ -33,6 +33,7 @@ export enum DiagnosticCode {
     UnusedDeclarationTask,
     IncorrectSymbolVariation,
     ClockWithoutTask,
+    ObsoleteAction,
     GenericHint,
     SymbolNamingConvention,
     UseAliasForStaticMessage,
@@ -100,6 +101,11 @@ export const Warnings = {
         makeDiagnostic(range, DiagnosticCode.ClockWithoutTask, name + " doesn't activate a task.", DiagnosticSeverity.Warning),
     incorrectSymbolVariation: (range: Range, symbol: string, type: string) =>
         makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, symbol + " is not a valid variation for type '" + type + "'.", DiagnosticSeverity.Warning)
+};
+
+export const Informations = {
+    obsoleteAction: (range: Range, fullName: string) =>
+        makeDiagnostic(range, DiagnosticCode.ObsoleteAction, `'${fullName}' is obsolete.`, DiagnosticSeverity.Information)
 };
 
 export const Hints = {
