@@ -12,6 +12,7 @@
 ### Improved
 
 - Tooltips for message references and completion proposals now include a preview of the text content.
+- Use case insensitive comparison for completion proposals of static message names.
 
 ### Fixed
 
