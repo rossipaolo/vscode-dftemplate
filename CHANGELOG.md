@@ -4,7 +4,7 @@
 
 ### Added
 
-- Added diagnostic information for obsolete action `create npc at _place_` with severity level of 'Information'.
+- Added diagnostic information for obsolete action `create npc at _place_` and obsolete overload `get item _item_ from _person_` with severity level of 'Information'.
 
 ## 0.11.0
 

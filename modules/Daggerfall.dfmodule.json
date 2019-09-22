@@ -272,6 +272,11 @@
                 "get item ${1:_item_}",
                 "get item ${1:_item_} saying ${2:messageID}",
                 "get item ${1:_item_} from ${2:_person_}"
+            ],
+            "isObsolete": [
+                false,
+                false,
+                true
             ]
         },
         {

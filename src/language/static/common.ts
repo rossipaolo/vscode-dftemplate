@@ -181,7 +181,7 @@ export interface ActionDetails {
     /**
      * If true this action should be removed or replaced.
      */
-    readonly isObsolete?: boolean;
+    readonly isObsolete?: boolean | boolean[];
 }
 
 /**
@@ -227,6 +227,17 @@ export class ActionInfo {
         return Array.isArray(this.details.summary) ?
             this.details.summary[overload !== undefined ? overload : this.overload] :
             this.details.summary;
+    }
+
+    /**
+     * Checks if the used overload is obsolete.
+     */
+    public isObsolete(): boolean {
+        const isObsolete = Array.isArray(this.details.isObsolete) ?
+            this.details.isObsolete[this.overload] :
+            this.details.isObsolete;
+
+        return isObsolete === true;
     }
 }
 

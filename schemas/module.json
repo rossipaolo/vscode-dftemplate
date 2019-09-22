@@ -58,9 +58,24 @@
                     }
                 },
                 "isObsolete": {
-                    "type":"boolean",
-                    "description": "If true this action is marked as obsolete.",
-                    "default": true
+                    "anyOf": [
+                        {
+                            "type": "boolean",
+                            "description": "If true this action is marked as obsolete.",
+                            "default": true
+                        },
+                        {
+                            "type": "array",
+                            "description": "An array with the same lenght as the overloads array.",
+                            "items": {
+                                "type": "boolean",
+                                "description": "If true the overload at this position is marked as obsolete.",
+                                "default": false
+                            },
+                            "minLength": 1,
+                            "default": []
+                        }
+                    ]
                 }
             },
             "required": [
