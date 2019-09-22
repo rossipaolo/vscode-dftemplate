@@ -5,6 +5,7 @@
 ### Added
 
 - Added diagnostic information for obsolete action `create npc at _place_` and obsolete overload `get item _item_ from _person_` with severity level of 'Information'.
+- Added syntax highlighting for global variables.
 
 ## 0.11.0
 
