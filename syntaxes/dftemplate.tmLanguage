@@ -422,6 +422,28 @@
                 </dict>
                 <dict>
                     <key>match</key>
+                    <string>^\s*(?:\((task)\))?\s*([A-Z][A-Za-z]*)\s*([^\s]*)\s*$</string>
+                    <key>captures</key>
+                    <dict>
+                        <key>1</key>
+                        <dict>
+                            <key>name</key>
+                            <string>storage.type.dftemplate</string>
+                        </dict>
+                        <key>2</key>
+                        <dict>
+                            <key>name</key>
+                            <string>support.type.global-variable.dftemplate</string>
+                        </dict>
+                        <key>3</key>
+                        <dict>
+                            <key>name</key>
+                            <string>variable.other.symbol.dftemplate</string>
+                        </dict>
+                    </dict>
+                </dict>
+                <dict>
+                    <key>match</key>
                     <string>(^|\s|&lt;)src:\s+[^\s&gt;]+(\s|&gt;)</string>
                     <key>name</key>
                     <string>meta.preprocessor.define.src-directive.dftemplate</string>
