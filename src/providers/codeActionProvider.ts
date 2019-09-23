@@ -307,19 +307,22 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
             actions.push(action);
         }
 
-        if (!range.isEmpty) {
-            const task = quest.qbn.getTask(range);
-            if (task && task.definition.type === parser.tasks.TaskType.Variable) {
-                const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
-                action.edit = new WorkspaceEdit();
-                action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
-                if (getOptions()['diagnostics']['hintTaskActivationForm']) {
-                    TemplateCodeActionProvider.changeTextEdits(document,
-                        TemplateReferenceProvider.taskReferences(quest, task, false), 'setvar', 'start task', action.edit);
+        if (range.isSingleLine) {
+            for (const task of quest.qbn.iterateTasks()) {
+                if (task.range.intersection(range) !== undefined && task.definition.type === parser.tasks.TaskType.Variable) {
+                    const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
+                    action.edit = new WorkspaceEdit();
+                    action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
+                    if (getOptions()['diagnostics']['hintTaskActivationForm']) {
+                        TemplateCodeActionProvider.changeTextEdits(document,
+                            TemplateReferenceProvider.taskReferences(quest, task, false), 'setvar', 'start task', action.edit);
+                    }
+                    actions.push(action);
                 }
-                actions.push(action);
             }
+        }
 
+        if (!range.isEmpty) {
             for (const task of quest.qbn.iterateTasks()) {
                 if (task.isValidSubRange(range)) {
                     const action = new CodeAction('Extract to new task', CodeActionKind.RefactorExtract);
