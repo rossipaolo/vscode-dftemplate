@@ -7,6 +7,10 @@
 - Added diagnostic information for obsolete action `create npc at _place_` and obsolete overload `get item _item_ from _person_` with severity level of 'Information'.
 - Added syntax highlighting for global variables.
 
+### Fixed
+
+- Fixed issue which could cause code action `Convert to task` not to appear.
+
 ## 0.11.0
 
 ### Added

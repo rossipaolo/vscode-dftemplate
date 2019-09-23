@@ -41,7 +41,7 @@ export function subRange(range: vscode.Range, text: string, subString: string): 
 
     const index = text.indexOf(subString);
     if (index === -1) {
-        throw new Error('Substring not found');
+        return new vscode.Range(range.start, range.start);
     }
 
     return new vscode.Range(
