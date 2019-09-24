@@ -105,4 +105,36 @@ export abstract class ParameterTypes {
                 return 'The name of a skill.';
         }
     }
+
+    /**
+     * Returns true if the given parameter type doesn't have a special syntax,
+     * meaning that it can be considered a raw text string.
+     * */
+    public static isRawInput(type: string, value: string) {
+        if (!type.startsWith('${') || type.endsWith('|}') || type.endsWith('%')) {
+            return false;
+        }
+
+        switch (type) {
+            case ParameterTypes.clockSymbol:
+            case ParameterTypes.foeSymbol:
+            case ParameterTypes.integerNumber:
+            case ParameterTypes.itemSymbol:
+            case ParameterTypes.itemSymbol:
+            case ParameterTypes.messageID:
+            case ParameterTypes.naturalNumber:
+            case ParameterTypes.personSymbol:
+            case ParameterTypes.placeSymbol:
+            case ParameterTypes.questID:
+            case ParameterTypes.questName:
+            case ParameterTypes.symbol:
+            case ParameterTypes.task:
+            case ParameterTypes.time:
+                return false;
+            case ParameterTypes.message:
+                return isNaN(Number(value));
+        }
+
+        return true;
+    }
 }

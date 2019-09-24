@@ -51,6 +51,31 @@ export function subRange(range: vscode.Range, text: string, subString: string): 
 }
 
 /**
+ * Finds the char index of a word in a string.
+ * For example wordIndex 2 in `give item _note_ to _vampleader_` is 5.
+ */
+export function findWordPosition(text: string, wordIndex: number): number {
+    let insideWord = false;
+    for (let i = 0; i < text.length; i++) {
+        if (!/\s/.test(text[i])) {
+            if (!insideWord) {
+                if (wordIndex-- === 0) {
+                    return i;
+                }
+                insideWord = true;
+            }
+        }
+        else {
+            if (insideWord) {
+                insideWord = false;
+            }
+        }
+    }
+
+    return 0;
+}
+
+/**
  * Checks if a line is empty or a comment.
  * @param text A line of a quest.
  */

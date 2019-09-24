@@ -165,6 +165,13 @@ export class Symbol implements QuestResource {
         public readonly signature: Parameter[] | undefined) {
     }
 
+    public getParameterRange(parameter: Parameter): Range | undefined {
+        const index = this.line.text.search(new RegExp(`\\b${parameter.value}\\b`));
+        if (index !== -1) {
+            return new Range(this.line.range.start.line, index, this.line.range.start.line, index + parameter.value.length);
+        }
+    }
+
     /**
      * Attempts to parse a symbol definition.
      * @param line A text line with a symbol definition.
@@ -347,7 +354,8 @@ export class Action implements QuestResource {
      */
     public getRange(index?: number): Range {
         if (index !== undefined && this.signature.length > index) {
-            return wordRange(this.line, this.signature[index].value);
+            const wordPosition = parser.findWordPosition(this.line.text, index);
+            return new Range(this.line.lineNumber, wordPosition, this.line.lineNumber, wordPosition + this.signature[index].value.length);
         }
 
         return this.line.range;

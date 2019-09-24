@@ -237,12 +237,12 @@ export class QuestLinter {
                 if (action.isInvocationOf('start', 'task')) {
                     const task = quest.qbn.getTask(action.signature[2].value);
                     if (task && task.isVariable) {
-                        diagnostics.push(Hints.changeStartTaskToSetVar(action.getRange(0)));
+                        diagnostics.push(Hints.changeStartTaskToSetVar(action.range));
                     }
                 } else if (action.isInvocationOf('setvar')) {
                     const task = quest.qbn.getTask(action.signature[1].value);
                     if (task && !task.isVariable) {
-                        diagnostics.push(Hints.changeSetVarToStartTask(action.getRange(0)));
+                        diagnostics.push(Hints.changeSetVarToStartTask(action.range));
                     }
                 }
             }
