@@ -37,6 +37,11 @@ export class Quests {
      */
     private loadingQuests: Promise<Quest[] | undefined> | undefined;
 
+    private readonly _onDidParseQuest = new vscode.EventEmitter<Quest>();
+    public get onDidParseQuest(): vscode.Event<Quest> {
+        return this._onDidParseQuest.event;
+    }
+
     public constructor(private readonly data: LanguageData) {
     }
 
@@ -75,9 +80,20 @@ export class Quests {
         let quest = this.quests.get(document.uri.fsPath);
         if (!quest || document.version > quest.version) {
             this.quests.set(document.uri.fsPath, quest = new Quest(document, this.data));
+            this._onDidParseQuest.fire(quest);
         }
 
         return quest;
+    }
+
+    /**
+     * Gets a `Quest` instance for the given document if is actually a quest file.
+     * @param document A text document with a quest to be parsed.
+     */
+    public getIfQuest(document: vscode.TextDocument): Quest | undefined {
+        if (!Quests.isTable(document.uri)) {
+            return this.get(document);
+        }
     }
 
     /**

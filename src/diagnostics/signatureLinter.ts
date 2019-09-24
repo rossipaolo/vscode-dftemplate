@@ -5,6 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as parser from '../parser';
 import { Diagnostic, TextLine } from 'vscode';
 import { SymbolType } from '../language/static/common';
 import { Errors } from './common';
@@ -36,7 +37,7 @@ export class SignatureLinter {
             const parameter = signature[index];
 
             const diagnostic = this.analyseParameter(quest, parameter, () => {
-                const wordPosition = areOrdered ? this.findWordPosition(line.text, index) : line.text.indexOf(parameter.value);
+                const wordPosition = areOrdered ? parser.findWordPosition(line.text, index) : line.text.indexOf(parameter.value);
                 return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + parameter.value.length);
             });
 
@@ -141,30 +142,5 @@ export class SignatureLinter {
         else if ((Array.isArray(symbolContext) ? symbolContext[0] : symbolContext).type !== type) {
             return Errors.incorrectSymbolType(range(), symbol, type);
         }
-    }
-
-    /**
-    * Finds the char index of a word in a string.
-    * For example wordIndex 2 in `give item _note_ to _vampleader_` is 5.
-    */
-    private findWordPosition(text: string, wordIndex: number): number {
-        let insideWord = false;
-        for (let i = 0; i < text.length; i++) {
-            if (text[i] !== ' ') {
-                if (!insideWord) {
-                    if (wordIndex-- === 0) {
-                        return i;
-                    }
-                    insideWord = true;
-                }
-            }
-            else {
-                if (insideWord) {
-                    insideWord = false;
-                }
-            }
-        }
-
-        return 0;
     }
 }

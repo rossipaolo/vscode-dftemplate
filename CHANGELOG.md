@@ -6,6 +6,7 @@
 
 - Added diagnostic information for obsolete action `create npc at _place_` and obsolete overload `get item _item_ from _person_` with severity level of 'Information'.
 - Added syntax highlighting for global variables.
+- Added decoration styling to conditions and actions that affect quest workflow, action and symbol parameters and sybols that don't follow standard syntax and can't benefit of syntax highlighting. Colors can be themed (`dftemplate.stringParameter`, `dftemplate.controlAction` and `dftemplate.otherSymbol`).
 
 ### Fixed
 
