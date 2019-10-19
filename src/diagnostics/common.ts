@@ -5,7 +5,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { Range, DiagnosticSeverity } from 'vscode';
+import { Range, DiagnosticSeverity, DiagnosticTag } from 'vscode';
 import { TEMPLATE_LANGUAGE } from '../extension';
 import { Parameter } from '../language/common';
 import { Quest } from '../language/quest';
@@ -90,13 +90,13 @@ export const Warnings = {
     questNameMismatch: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.QuestNameMismatch, 'Quest name should be equal to file name; A readable longer name can be provided with DisplayName.', DiagnosticSeverity.Warning),
     unusedDeclarationMessage: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationMessage, name + ' is declared but never used.', DiagnosticSeverity.Warning),
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationMessage, name + ' is declared but never used.', DiagnosticSeverity.Warning, undefined, [DiagnosticTag.Unnecessary]),
     unusedDeclarationSymbol: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never used.', DiagnosticSeverity.Warning),
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never used.', DiagnosticSeverity.Warning, undefined, [DiagnosticTag.Unnecessary]),
     unusedDeclarationTask: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationTask, name + ' is declared but never used.', DiagnosticSeverity.Warning),
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationTask, name + ' is declared but never used.', DiagnosticSeverity.Warning, undefined, [DiagnosticTag.Unnecessary]),
     unstartedClock: (range: Range, name: string) =>
-        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never starts.', DiagnosticSeverity.Warning),
+        makeDiagnostic(range, DiagnosticCode.UnusedDeclarationSymbol, name + ' is declared but never starts.', DiagnosticSeverity.Warning, undefined, [DiagnosticTag.Unnecessary]),
     unlinkedClock: (range: Range, name: string) =>
         makeDiagnostic(range, DiagnosticCode.ClockWithoutTask, name + " doesn't activate a task.", DiagnosticSeverity.Warning),
     incorrectSymbolVariation: (range: Range, symbol: string, type: string) =>
@@ -105,7 +105,7 @@ export const Warnings = {
 
 export const Informations = {
     obsoleteAction: (range: Range, fullName: string) =>
-        makeDiagnostic(range, DiagnosticCode.ObsoleteAction, `'${fullName}' is obsolete.`, DiagnosticSeverity.Information)
+        makeDiagnostic(range, DiagnosticCode.ObsoleteAction, `'${fullName}' is obsolete.`, DiagnosticSeverity.Information, undefined, [DiagnosticTag.Deprecated])
 };
 
 export const Hints = {
@@ -156,16 +156,15 @@ export function findParameter(context: Quest, filter: (parameter: Parameter) => 
     return false;
 }
 
-function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity, relatedInformation?: { locations: vscode.Location[], label: string }): vscode.Diagnostic {
+function makeDiagnostic(range: vscode.Range, code: DiagnosticCode, label: string, severity: vscode.DiagnosticSeverity, relatedInformation?: { locations: vscode.Location[], label: string }, tags?: DiagnosticTag[]): vscode.Diagnostic {
     const diagnostic = new vscode.Diagnostic(range, label, severity);
     diagnostic.code = code;
-    if (code === DiagnosticCode.UnusedDeclarationMessage || code === DiagnosticCode.UnusedDeclarationSymbol || code === DiagnosticCode.UnusedDeclarationTask) {
-        diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
-    
-    }
+    diagnostic.tags = tags;
+
     if (relatedInformation) {
         diagnostic.relatedInformation = relatedInformation.locations.map(x => new vscode.DiagnosticRelatedInformation(x, relatedInformation.label));
     }
+
     diagnostic.source = TEMPLATE_LANGUAGE;
     return diagnostic;
 }
