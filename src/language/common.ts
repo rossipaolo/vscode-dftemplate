@@ -358,7 +358,7 @@ export class Action implements QuestResource {
             return new Range(this.line.lineNumber, wordPosition, this.line.lineNumber, wordPosition + this.signature[index].value.length);
         }
 
-        return this.line.range;
+        return parser.trimRange(this.line);
     }
 
     /**

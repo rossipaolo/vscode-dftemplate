@@ -230,7 +230,7 @@ export class QuestLinter {
         const hintTaskActivationForm: boolean = getOptions()['diagnostics']['hintTaskActivationForm'];
         for (const action of quest.qbn.iterateActions()) {
             if (action.info.isObsolete()) {
-                diagnostics.push(Informations.obsoleteAction(action.range, action.getFullName()));
+                diagnostics.push(Informations.obsoleteAction(action.getRange(), action.getFullName()));
             }
             
             if (hintTaskActivationForm) {
