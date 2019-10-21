@@ -5,25 +5,29 @@
             "summary": "Triggers when player readies a spell containing a single specific effect.",
             "overloads": [
                 "cast ${1:effectKey} effect do ${2:task}"
-            ]
+            ],
+            "sourceName": "CastEffectDo"
         },
         {
             "summary": "Triggers when character reaches minimum value for specified attribute.",
             "overloads": [
                 "when attribute ${1:attributeName} is at least ${2:nn}"
-            ]
+            ],
+            "sourceName": "WhenAttributeLevel"
         },
         {
             "summary": "Triggers when player enters/exits a certain location area.",
             "overloads": [
                 "when pc ${1|enters,exits|} ${2:locationType}"
-            ]
+            ],
+            "sourceName": "WhenPcEntersExits"
         },
         {
             "summary": "Triggers when player has reached specified skill level or higher.",
             "overloads": [
                 "when skill ${1:skillName} is at least ${2:nn}"
-            ]
+            ],
+            "sourceName": "WhenSkillLevel"
         }
     ],
     "actions": [
@@ -31,7 +35,8 @@
             "summary": "Sets a variable. Can be unset with **_clear_**.",
             "overloads": [
                 "setvar ${1:task}"
-            ]
+            ],
+            "sourceName": "StartTask"
         }
     ],
     "effects": [

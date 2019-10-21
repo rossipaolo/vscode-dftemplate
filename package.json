@@ -30,7 +30,8 @@
         "Snippets"
     ],
     "activationEvents": [
-        "onLanguage:dftemplate"
+        "onLanguage:dftemplate",
+        "onCommand:dftemplate.findActionReferences"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -77,6 +78,11 @@
                 "command": "dftemplate.generateGlobalVariables",
                 "title": "Generate global variables",
                 "category": "DFTemplate"
+            },
+            {
+                "command": "dftemplate.findActionReferences",
+                "title": "Find action references",
+                "category": "DFTemplate"
             }
         ],
         "menus": {
@@ -96,6 +102,10 @@
                 {
                     "command": "dftemplate.generateGlobalVariables",
                     "when": "!editorReadOnly && resourceLangId == dftemplate"
+                },
+                {
+                    "command": "dftemplate.findActionReferences",
+                    "when": "resourceLangId == csharp"
                 }
             ],
             "editor/context": [

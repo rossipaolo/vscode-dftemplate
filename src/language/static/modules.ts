@@ -92,6 +92,20 @@ export class Modules extends StaticData {
         }
     }
 
+    public getActionInfo(predicate: (actionDetails: ActionDetails) => boolean): ActionInfo | undefined {
+        for (const module of this.modules) {
+            for (const query of Modules.queries) {
+                const actions = query.fromModule(module);
+                if (actions) {
+                    const action = actions.find(predicate);
+                    if (action !== undefined) {
+                        return new ActionInfo(module.displayName, query.kind, action);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Checks if an effect key is defined inside a module.
      */

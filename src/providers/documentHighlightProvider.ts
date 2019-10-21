@@ -45,7 +45,7 @@ export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlig
             case 'task':
                 return TemplateReferenceProvider.taskReferences(quest, resource.value, false);
             case 'action':
-                return TemplateReferenceProvider.actionReferences(quest, resource.value);
+                return TemplateReferenceProvider.actionReferences(quest, resource.value.info);
         }
     }
 

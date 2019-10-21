@@ -182,6 +182,11 @@ export interface ActionDetails {
      * If true this action should be removed or replaced.
      */
     readonly isObsolete?: boolean | boolean[];
+
+    /**
+     * The name of the C# class that defines this action and its filename.
+     */
+    readonly sourceName?: string | null;
 }
 
 /**
@@ -209,7 +214,7 @@ export class ActionInfo {
         /**
          * Index of the used signature variation.
          */
-        public overload: number = 0, ) {
+        public overload: number = 0) {
     }
 
     /**
@@ -238,6 +243,29 @@ export class ActionInfo {
             this.details.isObsolete;
 
         return isObsolete === true;
+    }
+
+    /**
+     * Compare this action info to another one and returns true if they are the same overload
+     * or two different overload of the same action. Returns false if they are different actions.
+     * @param other Another action info.
+     */
+    public isSameAction(other: ActionInfo) {
+        if (this.details.sourceName === 'WhenTask' && other.details.sourceName === 'WhenTask') {
+            return true;
+        }
+        
+        if (this.details.overloads.length !== other.details.overloads.length) {
+            return false;
+        }
+
+        for (let index = 0; index < this.details.overloads.length; index++) {
+            if (this.details.overloads[index] !== other.details.overloads[index]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
 

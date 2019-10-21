@@ -6,6 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as parser from './parser';
+import * as path from 'path'; 
 import { DocumentFilter, ExtensionContext, ThemeColor } from 'vscode';
 import { EOL } from 'os';
 import { TemplateHoverProvider } from './providers/hoverProvider';
@@ -43,11 +44,11 @@ export function getOptions() {
     return vscode.workspace.getConfiguration('dftemplate');
 }
 
-export function activate(context: ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 
     setLanguageConfiguration();
 
-    LanguageData.load(context).then(data => {
+    await LanguageData.load(context).then(data => {
         tasks.setGlobalVariables(data.tables.globalVarsTable.globalVars);
 
         const quests = new Quests(data);
@@ -56,7 +57,7 @@ export function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(data, quests)));
         context.subscriptions.push(vscode.languages.registerCompletionItemProvider(TEMPLATE_MODE, new TemplateCompletionItemProvider(data, quests), MESSAGE_ID_TRIGGER));
         context.subscriptions.push(vscode.languages.registerSignatureHelpProvider(TEMPLATE_MODE, new TemplateSignatureHelpProvider(data)));
-        context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerDefinitionProvider(TEMPLATE_MODE, new TemplateDefinitionProvider(quests, data)));
         context.subscriptions.push(vscode.languages.registerReferenceProvider(TEMPLATE_MODE, new TemplateReferenceProvider(quests)));
         context.subscriptions.push(vscode.languages.registerDocumentHighlightProvider(TEMPLATE_MODE, new TemplateDocumentHighlightProvider(quests)));
         context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider(quests)));
@@ -251,6 +252,23 @@ function registerCommands(context: ExtensionContext, data: LanguageData, quests:
             if (selection !== undefined) {
                 textEditor.edit(editBuilder => editBuilder.insert(qbn.range!.end, EOL + selection.map(selected =>
                     `${selected.label} _${selected.label.charAt(0).toLowerCase() + selected.label.slice(1)}_`).join(EOL)));
+            }
+        }),
+
+        vscode.commands.registerTextEditorCommand('dftemplate.findActionReferences', async (textEditor) => {
+            const name = path.basename(textEditor.document.fileName, '.cs');
+            if (name.length > 0) {
+                const location = await data.questEngine.findCsharpClassLocation(textEditor.document.uri, name);
+                if (location !== undefined) {
+                    const position = new vscode.Position(location.range.start.line, location.range.start.character + name.length / 2);
+                    const actionInfo = data.modules.getActionInfo(x => x.sourceName === name);
+                    const references = actionInfo !== undefined ? await TemplateReferenceProvider.workspaceActionReferences(quests, actionInfo) : [];
+                    await vscode.commands.executeCommand('editor.action.showReferences', textEditor.document.uri, position, references);
+                } else {
+                    await vscode.window.showErrorMessage('Failed to parse C# class definition from active document.');
+                }
+            } else {
+                await vscode.window.showErrorMessage('Failed to parse C# class definition from active document.');
             }
         })
     );
