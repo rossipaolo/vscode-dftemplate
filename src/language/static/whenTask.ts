@@ -4,7 +4,7 @@
 
 'use strict';
 
-import { QuestResourceCategory, ActionInfo } from "./common";
+import { QuestResourceCategory, ActionInfo, ActionDetails } from "./common";
 
 /**
  * Tries to parse an action with signature of `when task` condition.
@@ -13,11 +13,12 @@ import { QuestResourceCategory, ActionInfo } from "./common";
  */
 export function tryParseWhenTaskCondition(text: string): ActionInfo | undefined {
     if (/^\s*when( not)? [a-zA-Z0-9_.]+( (and|or)( not)? [a-zA-Z0-9_.]+)*/.test(text)) {
-        const signature = {
+        const details: ActionDetails = {
             summary: 'A special condition that provides a boolean expression; checks set/unset state of tasks.',
-            overloads: [makeSignature(text)]
+            overloads: [makeSignature(text)],
+            sourceName: 'WhenTask'
         };
-        return new ActionInfo('Daggerfall', QuestResourceCategory.Condition, signature);
+        return new ActionInfo('Daggerfall', QuestResourceCategory.Condition, details);
     }
 }
 

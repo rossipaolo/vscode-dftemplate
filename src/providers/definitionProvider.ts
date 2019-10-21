@@ -8,10 +8,11 @@ import * as vscode from 'vscode';
 import { TextDocument, Position, Definition } from 'vscode';
 import { SymbolType } from '../language/static/common';
 import { Quests } from '../language/quests';
+import { LanguageData } from '../language/static/languageData';
 
 export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
 
-    public constructor(private readonly quests: Quests) {
+    public constructor(private readonly quests: Quests, private readonly data: LanguageData) {
     }
 
     public async provideDefinition(document: TextDocument, position: Position, token: vscode.CancellationToken): Promise<Definition | undefined> {
@@ -48,6 +49,14 @@ export class TemplateDefinitionProvider implements vscode.DefinitionProvider {
                     if (targetQuest) {
                         return targetQuest.getNameLocation();
                     }
+                case 'type':
+                    return this.data.questEngine.findSymbolType(resource.value);
+                case 'action':
+                    const name = resource.value.info.details.sourceName;
+                    if (name !== undefined && name !== null) {
+                        return this.data.questEngine.findAction(name);
+                    }
+                    break;
             }
         }
     }

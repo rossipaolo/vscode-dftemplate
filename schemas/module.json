@@ -76,6 +76,14 @@
                             "default": []
                         }
                     ]
+                },
+                "sourceName": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "description": "The name of the C# class that defines this action, which is assumed to be equal to its filename without extension.",
+                    "default": null
                 }
             },
             "required": [

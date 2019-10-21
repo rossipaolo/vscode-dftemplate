@@ -7,8 +7,8 @@
 import * as parser from '../parser';
 import { ReferenceProvider, TextDocument, Position, Location, CancellationToken, Range } from 'vscode';
 import { Quest } from '../language/quest';
-import { Symbol, Message, Task, Action } from '../language/common';
-import { SymbolType } from '../language/static/common';
+import { Symbol, Message, Task } from '../language/common';
+import { SymbolType, ActionInfo } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { wordRange } from '../parser';
 import { Quests } from '../language/quests';
@@ -44,7 +44,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
                 case 'task':
                     return TemplateReferenceProvider.taskReferences(quest, resource.value, options.includeDeclaration);
                 case 'action':
-                    return TemplateReferenceProvider.workspaceActionReferences(this.quests, resource.value, token);
+                    return TemplateReferenceProvider.workspaceActionReferences(this.quests, resource.value.info, token);
                 case 'quest':
                     return TemplateReferenceProvider.questReferences(this.quests, resource.value, options.includeDeclaration, token);
                 case 'globalVar':
@@ -152,12 +152,16 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
-    public static actionReferences(quest: Quest, action: Action): Location[] {
+    public static actionReferences(quest: Quest, actionInfo: ActionInfo): Location[] {
         const locations: Location[] = [];
 
-        const name = action.getName();
+        let name: string | undefined = undefined;
         for (const other of quest.qbn.iterateActions()) {
-            if (action.compareSignature(other)) {
+            if (actionInfo.isSameAction(other.info)) {
+                if (name === undefined) {
+                    name = other.getName();
+                }
+
                 locations.push(quest.getLocation(wordRange(other.line, name)));
             }
         }
@@ -165,11 +169,11 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         return locations;
     }
 
-    public static async workspaceActionReferences(quests: Quests, action: Action, token?: CancellationToken): Promise<Location[]> {
+    public static async workspaceActionReferences(quests: Quests, actionInfo: ActionInfo, token?: CancellationToken): Promise<Location[]> {
         const locations: Location[] = [];
 
         for (const quest of await quests.getAll(token)) {
-            locations.push(...TemplateReferenceProvider.actionReferences(quest, action));
+            locations.push(...TemplateReferenceProvider.actionReferences(quest, actionInfo));
         }
 
         return locations;

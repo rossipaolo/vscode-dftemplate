@@ -5,7 +5,8 @@
             "summary": "Triggers when player readies a spell containing specific effects; this is any standard or custom spell matched by effects.",
             "overloads": [
                 "cast ${1:spell} spell do ${2:task}"
-            ]
+            ],
+            "sourceName": "CastSpellDo"
         },
         {
             "summary": [
@@ -15,7 +16,8 @@
             "overloads": [
                 "clicked item ${1:_item_}",
                 "clicked item ${1:_item_} say ${2:message}"
-            ]
+            ],
+            "sourceName": "ClickedItem"
         },
         {
             "summary": [
@@ -27,33 +29,38 @@
                 "clicked npc ${1:_person_}",
                 "clicked npc ${1:_person_} say ${2:message}",
                 "clicked ${1:_person_} and at least ${2:nn} gold otherwise do ${3:task}"
-            ]
+            ],
+            "sourceName": "ClickedNpc"
         },
         {
             "summary": "Raise or lower task state based on time of day.",
             "overloads": [
                 "daily from ${1:hh}:${2:mm} to ${3:hh}:${4:mm}"
-            ]
+            ],
+            "sourceName": "DailyFrom"
         },
         {
             "summary": "Triggers when the PC drops a quest item at a quest location.",
             "overloads": [
                 "dropped ${1:_item_} at ${2:_place_}",
                 "dropped ${1:_item_} at ${2:_place_} saying ${3:messageID}"
-            ]
+            ],
+            "sourceName": "DroppedItemAtPlace"
         },
         {
             "summary": "Triggers when player has a particular item resource in their inventory.",
             "overloads": [
                 "have ${1:_item_} set ${2:task}"
-            ]
+            ],
+            "sourceName": "HaveItem"
         },
         {
             "summary": "Triggers when a Foe has been injured. Will not fire if Foe dies immediately.",
             "overloads": [
                 "injured ${1:_foe_}",
                 "injured ${1:_foe_} saying ${2:messageID}"
-            ]
+            ],
+            "sourceName": "InjuredFoe"
         },
         {
             "summary": [
@@ -65,13 +72,15 @@
                 "killed ${1:_foe_}",
                 "killed ${1:nn} ${2:_foe_}",
                 "killed ${1:nn} ${2:_foe_} saying ${3:messageID}"
-            ]
+            ],
+            "sourceName": "KilledFoe"
         },
         {
             "summary": "Triggers when player has reached specified level or higher.",
             "overloads": [
                 "level ${1:nn} completed"
-            ]
+            ],
+            "sourceName": "LevelCompleted"
         },
         {
             "summary": [
@@ -81,20 +90,23 @@
             "overloads": [
                 "pc at ${1:_place_} ${2|set,do|} ${3:task}",
                 "pc at ${1:_place_} ${2|set,do|} ${3:task} saying ${4:messageID}"
-            ]
+            ],
+            "sourceName": "PcAt"
         },
         {
             "summary": "Triggers target task when reputation with NPC exceeds a specific value.",
             "overloads": [
                 "repute with ${1:_person_} exceeds ${2:nn} do ${3:task}"
-            ]
+            ],
+            "sourceName": "ReputeExceedsDo"
         },
         {
             "summary": "Triggers when player clicks on NPC while holding a quest Item in their inventory.",
             "overloads": [
                 "toting ${1:_item_} and ${2:_person_} clicked",
                 "toting ${1:_item_} and ${2:_person_} clicked saying ${3:message}"
-            ]
+            ],
+            "sourceName": "TotingItemAndClickedNpc"
         },
         {
             "summary": [
@@ -104,19 +116,22 @@
             "overloads": [
                 "${1:_item_} used do ${2:task}",
                 "${1:_item_} used saying ${2:messageID} do ${2:task}"
-            ]
+            ],
+            "sourceName": "ItemUsedDo"
         },
         {
             "summary": "Triggers when player clicks on an individual NPC that is not currently assigned to another quest.",
             "overloads": [
                 "when ${1:faction} is available"
-            ]
+            ],
+            "sourceName": "WhenNpcIsAvailable"
         },
         {
             "summary": "Triggers when player reputation with a special named NPC equals or exceeds a minimum value.",
             "overloads": [
                 "when repute with ${1:faction} is at least ${2:nn}"
-            ]
+            ],
+            "sourceName": "WhenReputeWith"
         }
     ],
     "actions": [
@@ -124,7 +139,8 @@
             "summary": "Gives an NPC the questor role; different NPCs can be given responsibility for separate stages or subquests using **_drop person as questor_**.",
             "overloads": [
                 "add ${1:_person_} as questor"
-            ]
+            ],
+            "sourceName": "AddAsQuestor"
         },
         {
             "summary": "Adds target resource(s) to the _Tell me about_ dialog picklist with _anyInfo_ message. If one resource has been linked to another resource with **_dialog link_**, the linked resource can be discovered from the message if its name appears in it.",
@@ -133,7 +149,8 @@
                 "add dialog for location ${1:_place_} ${2|person,item|} ${3:_symbol_}",
                 "add dialog for person ${1:_person_} item ${2:_item_}",
                 "add dialog for location ${1:_place_} person ${2:_person_} item ${3:_item_}"
-            ]
+            ],
+            "sourceName": "AddDialog"
         },
         {
             "summary": [
@@ -143,7 +160,8 @@
             "overloads": [
                 "add ${1:_person_} face",
                 "add ${1:_person_} face saying ${2:messageID}"
-            ]
+            ],
+            "sourceName": "AddFace"
         },
         {
             "summary": [
@@ -153,7 +171,8 @@
             "overloads": [
                 "add foe ${1:_foe_} face",
                 "add foe ${1:_foes_} face saying ${2:messageID}"
-            ]
+            ],
+            "sourceName": "AddFace"
         },
         {
             "summary": [
@@ -163,19 +182,22 @@
             "overloads": [
                 "cast ${1:spell} spell on ${2:_foe_}",
                 "cast ${1:customSpell} custom spell on ${2:_foe_}"
-            ]
+            ],
+            "sourceName": "CastSpellOnFoe"
         },
         {
             "summary": "Changes reputation with an NPC by specified amount.",
             "overloads": [
                 "change repute with ${1:_person_} by ${2:dd}"
-            ]
+            ],
+            "sourceName": "ChangeReputeWith"
         },
         {
             "summary": "Unsets one or more tasks so they can be triggered again.",
             "overloads": [
                 "clear ${1:...task}"
-            ]
+            ],
+            "sourceName": "ClearTask"
         },
         {
             "summary": [
@@ -185,7 +207,8 @@
             "overloads": [
                 "create foe ${1:_foe_} every ${2:nn} minutes indefinitely with ${3:nn}% success",
                 "create foe ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success"
-            ]
+            ],
+            "sourceName": "CreateFoe"
         },
         {
             "summary": [
@@ -195,33 +218,38 @@
             "overloads": [
                 "send ${1:_foe_} every ${2:nn} minutes with ${4:nn}% success",
                 "send ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success"
-            ]
+            ],
+            "sourceName": "CreateFoe"
         },
         {
             "summary": "Places a person to a random building in their home town within current region. Should not be used with individual npcs or questors.",
             "overloads": [
                 "create npc ${1:_person_}"
-            ]
+            ],
+            "sourceName": "CreateNpc"
         },
         {
             "summary": "Reserves a quest site for a resource, which is tipically, but not necessarily, an npc. The actual spawn can be done with **_place npc_**, **_place item_** or **_place foe_**. These actions can also reserve a quest site automatically so is not mandatory to perform this action.",
             "overloads": [
                 "create npc at ${1:_place_}"
             ],
-            "isObsolete": true
+            "isObsolete": true,
+            "sourceName": "CreateNpcAt"
         },
         {
             "summary": "Cure specific disease on player received by **_make pc ill_** or through exposure to various elements.",
             "overloads": [
                 "cure ${1|vampirism,lycanthropy|}",
                 "cure ${1:disease}"
-            ]
+            ],
+            "sourceName": "CurePcDiseases"
         },
         {
             "summary": "Destroys a Person resource; unlike **_hide npc_**, any reference to this symbol in a message block become invalid.",
             "overloads": [
                 "destroy ${1:_person_}"
-            ]
+            ],
+            "sourceName": "DestroyNpc"
         },
         {
             "summary": [
@@ -235,32 +263,37 @@
                 "dialog link for ${1|person,location|} ${2:_symbol_} item ${3:_item_}",
                 "dialog link for location ${2:_symbol_} person ${3:_person_}",
                 "dialog link for location ${2:_symbol_} person ${3:_person_} item ${4:_item_}"
-            ]
+            ],
+            "sourceName": "DialogLink"
         },
         {
             "summary": "Strips an NPC of its questor role; different NPCs can be given responsibility for separate stages or subquests.",
             "overloads": [
                 "drop ${1:_person_} as questor"
-            ]
+            ],
+            "sourceName":"DropAsQuestor"
         },
         {
             "summary": "Drops an escorting face from HUD which was previosly added with **_add `_person_` face_**.",
             "overloads": [
                 "drop ${1:_person_} face"
-            ]
+            ],
+            "sourceName":"DropFace"
         },
         {
             "summary": "Drops an escorting face from HUD which was previosly added with **_add foe `_foe_` face_**.",
             "overloads": [
                 "drop foe ${1:_foe_} face"
-            ]
+            ],
+            "sourceName":"DropFace"
         },
         {
             "summary": "Completes the quest's activity; all quest-related objects in the player's inventory are removed, other quest resources are discarded and the player's log book emptied.",
             "overloads": [
                 "end quest",
                 "end quest saying ${1:messageID}"
-            ]
+            ],
+            "sourceName":"EndQuest"
         },
         {
             "summary": [
@@ -277,13 +310,15 @@
                 false,
                 false,
                 true
-            ]
+            ],
+            "sourceName":"GetItem"
         },
         {
             "summary": "Gives an item to an entity; the PC can get it with pickpocketing or corpse loot.",
             "overloads": [
                 "give item ${1:_item_} to ${2:_foe_}"
-            ]
+            ],
+            "sourceName":"GiveItem"
         },
         {
             "summary": [
@@ -297,50 +332,58 @@
                 "give pc ${1:_item_}",
                 "give pc ${1:_item_} silently",
                 "give pc ${1:_item_} notify ${2:messageID}"
-            ]
+            ],
+            "sourceName":"GivePc"
         },
         {
             "summary": "Hide NPC from world temporarily; Qrc messages associated with the NPC still works properly. Can be restored with **_restore npc_**.",
             "overloads": [
                 "hide npc ${1:_person_}"
-            ]
+            ],
+            "sourceName":"HideNpc"
         },
         {
             "summary": "Modifies the legal standing of the PC in the current province, or the province where the quest was obtained, by a positive or negative amount of repute.",
             "overloads": [
                 "legal repute ${1:dd}"
-            ]
+            ],
+            "sourceName":"LegalRepute"
         },
         {
             "summary": "Adds Qrc text message to player journal. A quest can have up to 10 journal entries; if message has already been added at stepID index, old message gets replaced. A message can be remove with **_remove log step_**.",
             "overloads": [
                 "log ${1:messageID} ${2:nn}",
                 "log ${1:messageID} step ${2:nn}"
-            ]
+            ],
+            "sourceName":"LogMessage"
         },
         {
             "summary": "Inflicts a disease on player.",
             "overloads": [
                 "make pc ill with ${1:disease}"
-            ]
+            ],
+            "sourceName":"MakePcDiseased"
         },
         {
             "summary": "Converts a quest item into a permanent item that persists after the quest terminates.",
             "overloads": [
                 "make ${1:_item_} permanent"
-            ]
+            ],
+            "sourceName":"MakePermanent"
         },
         {
             "summary": "Causes the indicated NPC to ignore mouse clicks from the player.",
             "overloads": [
                 "mute npc ${1:_person_}"
-            ]
+            ],
+            "sourceName":"MuteNpc"
         },
         {
             "summary": "Randomly triggers one of the tasks for activation. The choice is evenly selected over the tasks, but the selection can be skewed by repeating the same task.",
             "overloads": [
                 "pick one of ${1:...task}"
-            ]
+            ],
+            "sourceName":"PickOneOf"
         },
         {
             "summary": [
@@ -350,7 +393,8 @@
             "overloads": [
                 "place foe ${1:_foe_} at ${2:_place_}",
                 "place foe ${1:_foe_} at ${2:_place_} marker ${3:nn}"
-            ]
+            ],
+            "sourceName":"PlaceFoe"
         },
         {
             "summary": [
@@ -360,57 +404,66 @@
             "overloads": [
                 "place item ${1:_item_} at ${2:_place_}",
                 "place item ${1:_item_} at ${2:_place_} marker ${3:nn}"
-            ]
+            ],
+            "sourceName":"PlaceItem"
         },
         {
             "summary": "Moves npc into world at a reserved site, which is requested automatically if is not already done by **_create npc at_**. This action can be used to instantiate a random npc or move a fixed npc from their home, provided they're not marked `atHome`.",
             "overloads": [
                 "place npc ${1:_person_} at ${2:_place_}"
-            ]
+            ],
+            "sourceName":"PlaceNpc"
         },
         {
             "summary": "Plays the sound with the given name. Sound performs indefinitely with the given interval, defined by the first number, and is stopped only when the parent task is cleared, tipically by a clock. The second number is ignored.",
             "overloads": [
                 "play sound ${1:sound} ${2:nn} ${3:nn}",
                 "play sound ${1:sound} every ${2:nn} minutes ${3:nn} times"
-            ]
+            ],
+            "sourceName":"PlaySound"
         },
         {
             "summary": "Plays one of the **ANIMXXXX.VID** videos defined by its index, meaning the last part of the name. For example `play video 1` plays _ANIM0001.VID_.",
             "overloads": [
                 "play video ${1:nn}"
-            ]
+            ],
+            "sourceName":"PlayVideo"
         },
         {
             "summary": "Prompt which displays a yes/no dialog that executes a different task based on user input.",
             "overloads": [
                 "prompt ${1:message} yes ${2:task} no ${3:task}"
-            ]
+            ],
+            "sourceName":"Prompt"
         },
         {
             "summary": "Removes active instances of a Foe in game world.",
             "overloads": [
                 "remove foe ${1:_foe_}"
-            ]
+            ],
+            "sourceName":"RemoveFoe"
         },
         {
             "summary": "Removes Qrc text message from player journal.",
             "overloads": [
                 "remove log step ${1:nn}"
-            ]
+            ],
+            "sourceName":"RemoveLogMessage"
         },
         {
             "summary": "Restore NPC previously hidden from world with **_hide npc_**.",
             "overloads": [
                 "restore npc ${1:_person_}",
                 "restore ${1:_person_}"
-            ]
+            ],
+            "sourceName":"RestoreNpc"
         },
         {
             "summary": "Makes a foe non-hostile until player strikes them again.",
             "overloads": [
                 "restrain foe ${1:_foe_}"
-            ]
+            ],
+            "sourceName":"RestrainFoe"
         },
         {
             "summary": [
@@ -422,19 +475,22 @@
                 "reveal ${1:_place_}",
                 "reveal ${1:_place_} readmap",
                 "reveal ${1:_place_} in province ${2:nn} at ${3:nn}"
-            ]
+            ],
+            "sourceName":"RevealLocation"
         },
         {
             "summary": "Adds a Qrc message block to the set of rumors that an NPC may respond with when asked about _Any News?_ in the dialog screen.",
             "overloads": [
                 "rumor mill ${1:messageID}"
-            ]
+            ],
+            "sourceName":"RumorMill"
         },
         {
             "summary": "Displays a prompt which user can click to dismiss.",
             "overloads": [
                 "say ${1:message}"
-            ]
+            ],
+            "sourceName":"Say"
         },
         {
             "summary": [
@@ -444,25 +500,29 @@
             "overloads": [
                 "start quest ${1:questName}",
                 "start quest ${1:questID} ${2:questID}"
-            ]
+            ],
+            "sourceName":"StartQuest"
         },
         {
             "summary": "Starts a clock resource timer.",
             "overloads": [
                 "start timer ${1:_clock_}"
-            ]
+            ],
+            "sourceName":"StartStopTimer"
         },
         {
             "summary": "Stops a clock resource timer without triggering the actions scheduled by its alarm task.",
             "overloads": [
                 "stop timer ${1:_clock_}"
-            ]
+            ],
+            "sourceName":"StartStopTimer"
         },
         {
             "summary": "Starts a task by setting it active.",
             "overloads": [
                 "start task ${1:task}"
-            ]
+            ],
+            "sourceName":"StartTask"
         },
         {
             "summary": [
@@ -472,25 +532,29 @@
             "overloads": [
                 "take ${1:_item_} from pc",
                 "take ${1:_item_} from pc saying ${2:messageID}"
-            ]
+            ],
+            "sourceName":"TakeItem"
         },
         {
             "summary": "Teleports player to a dungeon. Use **_transfer pc_** to specify a marker inside the dungeon.",
             "overloads": [
                 "teleport pc to ${1:_place_}"
-            ]
+            ],
+            "sourceName":"TeleportPc"
         },
         {
             "summary": "Teleports player to a specific marker inside a dungeon. **_teleport pc_** is similar but doesn't require a marker.",
             "overloads": [
                 "transfer pc inside ${1:_place_} marker ${2:nn}"
-            ]
+            ],
+            "sourceName":"TeleportPc"
         },
         {
             "summary": "Permanently disable one or more tasks. ",
             "overloads": [
                 "unset ${1:...task}"
-            ]
+            ],
+            "sourceName": "UnsetTask"
         }
     ],
     "effects": [
