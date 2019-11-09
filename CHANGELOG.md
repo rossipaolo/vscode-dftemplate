@@ -6,6 +6,7 @@
 
 - Go to definition and Peek definition can resolve TEMPLATE actions to their C# source if Daggerfall Unity project is part of current workspace.
 - Added action `Find action references` that finds TEMPLATE references from a C# action definition if Daggerfall Unity project is part of current workspace.
+- Tables path is found automatically if Daggerfall Unity project is part of current workspace.
 
 ## 0.12.0
 

@@ -4,7 +4,9 @@
 
 'use strict';
 
+import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Kinds of resources usable in a quest.
@@ -277,4 +279,21 @@ export async function readTextFile(path: string): Promise<string> {
 export async function readTextFileLines(path: string): Promise<string[]> {
     const text = await readTextFile(path);
     return text.split(/\r?\n/);
+}
+
+/**
+ * Finds the path to a folder inside current workspace from its relative path.
+ * @param relPath A relative path from any of the workspace folders.
+ * @returns Full path to folder or undefined if it doesn't exist.
+ */
+export async function findWorkspaceSubFolder(relPath: string): Promise<string | undefined> {
+    if (vscode.workspace.workspaceFolders !== undefined) {
+        const pathExists = require('util').promisify(fs.exists);
+        for (const workspaceFolder of vscode.workspace.workspaceFolders) {
+            const folder = path.join(workspaceFolder.uri.fsPath, relPath);
+            if (await pathExists(folder) === true) {
+                return folder;
+            }
+        }
+    }
 }
