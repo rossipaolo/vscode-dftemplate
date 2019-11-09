@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getOptions, select, where } from '../../extension';
-import { readTextFileLines } from './common';
+import { readTextFileLines, findWorkspaceSubFolder } from './common';
 import { ParameterTypes } from './parameterTypes';
 
 abstract class Table {
@@ -259,7 +259,7 @@ export class Tables {
     /**
      * Gets the path to _StreamingAssets/Tables_. It can be obtained in three ways:
      * 1. From settings.
-     * 2. From relative path if workspace is inside _StreamingAssets_.
+     * 2. From relative path if workspace is inside _StreamingAssets_ or includes it.
      * 3. With an open dialog request; the selected folder is written to user settings.
      */
     private static async getTablesPath(): Promise<string | undefined> {
@@ -294,6 +294,12 @@ export class Tables {
                 if (i !== -1) {
                     return path.resolve(rootPath.substring(0, i), path.join('StreamingAssets', 'Tables'));
                 }
+            }
+
+            // Check if Daggerfall Unity is part of current workspace
+            const workspaceSubFolder = await findWorkspaceSubFolder('Assets/StreamingAssets/Tables/');
+            if (workspaceSubFolder !== undefined) {
+                return workspaceSubFolder;
             }
 
             // Ask with open folder dialog

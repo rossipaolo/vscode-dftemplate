@@ -7,10 +7,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ExtensionContext } from "vscode";
-import { exists } from 'fs';
 import { Tables } from "./tables";
 import { Language } from "./language";
 import { Modules } from "./modules";
+import { findWorkspaceSubFolder } from './common';
 
 /**
  * Result of a query to the Quest Engine parser.
@@ -122,18 +122,8 @@ class QuestEngine {
      * @param name Name of resource class type.
      */
     private async getCsharpResourceLocation(relPath: string, name: string): EngineQueryResult {
-        if (this.questingFolder === undefined) {
+        if (this.questingFolder === undefined && (this.questingFolder = await findWorkspaceSubFolder('Assets/Scripts/Game/Questing/')) === undefined) {
             this.questingFolder = null;
-            if (vscode.workspace.workspaceFolders !== undefined) {
-                const pathExists = require('util').promisify(exists);
-                for (const workspaceFolder of vscode.workspace.workspaceFolders) {
-                    const questingFolder = path.join(workspaceFolder.uri.fsPath, 'Assets/Scripts/Game/Questing/');
-                    if (await pathExists(questingFolder) === true) {
-                        this.questingFolder = questingFolder;
-                        break;
-                    }
-                }
-            }
         }
 
         if (this.questingFolder !== null) {
