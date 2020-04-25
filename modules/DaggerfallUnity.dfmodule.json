@@ -32,11 +32,81 @@
     ],
     "actions": [
         {
+            "summary": "Changes whether or not a quest foe is attackable by other NPCs.",
+            "overloads": [
+                "change foe ${1:_person_} infighting ${2:bool}"
+            ],
+            "sourceName": "ChangeFoeInfighting"
+        },
+        {
+            "summary": "Changes a foe's team.",
+            "overloads": [
+                "change foe ${1:_person_} team ${2:nn}",
+                "change foe ${1:_person_} team ${2:teamName}"
+            ],
+            "sourceName": "ChangeFoeTeam"
+        },
+        {
+            "summary": "Makes all foes hostile, or clears (removes) them all.",
+            "overloads": [
+                "enemies ${1|makehostile,clear|}"
+            ],
+            "sourceName": "Enemies"
+        },
+        {
+            "summary": "Adds a text entry to the player journal as a note.",
+            "overloads": [
+                "journal note ${1:nn}"
+            ],
+            "sourceName": "JournalNote"
+        },
+        {
+            "summary": "Plays a song from MIDI.BSA using SongFiles enum.",
+            "overloads": [
+                "play song ${1:song}"
+            ],
+            "sourceName": "PlaySong"
+        },
+        {
+            "summary": "Sets a player's crime.",
+            "overloads": [
+                "setplayercrime ${1:crime}"
+            ],
+            "sourceName": "SetPlayerCrime"
+        },
+        {
             "summary": "Sets a variable. Can be unset with **_clear_**.",
             "overloads": [
                 "setvar ${1:task}"
             ],
             "sourceName": "StartTask"
+        },
+        {
+            "summary": "Spawns city guards using `PlayerEntity.SpawnCityGuards()`.",
+            "overloads": [
+                "spawncityguards",
+                "spawncityguards immediate"
+            ],
+            "sourceName": "SpawnCityGuards"
+        },
+        {
+            "summary": "Unrestrains a foe restrained by RestrainFoe.",
+            "overloads": [
+                "unrestrain foe ${1:_foe_}"
+            ],
+            "sourceName": "UnrestrainFoe"
+        },
+        {
+            "summary": "Updates the world data system to use a specific variant for a given place (location, block, building) either for all instances or for a particular location. Specify a single dash for variant to remove any existing variant.",
+            "overloads": [
+                "worldupdate location at ${1:nn} in region ${2:nn} variant ${3:variant}",
+                "worldupdate locationnew named ${1:locationName} in region ${2:nn} variant ${3:variant}",
+                "worldupdate block ${1:blockName} at ${2:nn} in region ${3:nn} variant ${4:variant}",
+                "worldupdate blockAll ${1:blockName} variant ${2:variant}",
+                "worldupdate building ${1:blockName} ${2:nn} at ${3:nn} in region ${4:nn} variant ${5:variant}",
+                "worldupdate buildingAll ${1:blockName} ${2:nn} variant ${3:variant}"
+            ],
+            "sourceName": "WorldUpdate"
         }
     ],
     "effects": [
