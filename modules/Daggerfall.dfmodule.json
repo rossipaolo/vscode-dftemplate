@@ -202,22 +202,30 @@
         {
             "summary": [
                 "Spawns an endless amount of a Foe resource into the world; unlike **_send foe_**, foe can appears both in town and inside dungeons. See also **_place foe_** for a more guarded spawn.",
+                "Spawns an endless amount of a Foe resource into the world; unlike **_send foe_**, foe can appears both in town and inside dungeons. See also **_place foe_** for a more guarded spawn.",
+                "Spawns a Foe resource into the world for a specific amount of times; unlike **_send foe_**, foe can appears both in town and inside dungeons. See also **_place foe_** for a more guarded spawn.",
                 "Spawns a Foe resource into the world for a specific amount of times; unlike **_send foe_**, foe can appears both in town and inside dungeons. See also **_place foe_** for a more guarded spawn."
             ],
             "overloads": [
                 "create foe ${1:_foe_} every ${2:nn} minutes indefinitely with ${3:nn}% success",
-                "create foe ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success"
+                "create foe ${1:_foe_} every ${2:nn} minutes indefinitely with ${3:nn}% success msg ${4:messageID}",
+                "create foe ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success",
+                "create foe ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success msg ${5:messageID}"
             ],
             "sourceName": "CreateFoe"
         },
         {
             "summary": [
                 "Spawns an endless amount of a Foe resource into the world; unlike **_create foe_**, it limits the spawning of foe to the times when the player is above ground. See also **_place foe_** for a more guarded spawn.",
+                "Spawns an endless amount of a Foe resource into the world; unlike **_create foe_**, it limits the spawning of foe to the times when the player is above ground. See also **_place foe_** for a more guarded spawn.",
+                "Spawns a Foe resource into the world for a specific amount of times; unlike **_create foe_**, it limits the spawning of foe to the times when the player is above ground. See also **_place foe_** for a more guarded spawn.",
                 "Spawns a Foe resource into the world for a specific amount of times; unlike **_create foe_**, it limits the spawning of foe to the times when the player is above ground. See also **_place foe_** for a more guarded spawn."
             ],
             "overloads": [
                 "send ${1:_foe_} every ${2:nn} minutes with ${4:nn}% success",
-                "send ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success"
+                "send ${1:_foe_} every ${2:nn} minutes with ${4:nn}% success msg ${5:messageID}",
+                "send ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success",
+                "send ${1:_foe_} every ${2:nn} minutes ${3:nn} times with ${4:nn}% success msg ${5:messageID}"
             ],
             "sourceName": "CreateFoe"
         },
@@ -399,11 +407,13 @@
         {
             "summary": [
                 "Moves item into world at a random reserved site at `_place_`.",
+                "Moves item into world at a specific reserved site at `_place_` using marker index.",
                 "Moves item into world at a specific reserved site at `_place_` using marker index."
             ],
             "overloads": [
                 "place item ${1:_item_} at ${2:_place_}",
-                "place item ${1:_item_} at ${2:_place_} marker ${3:nn}"
+                "place item ${1:_item_} at ${2:_place_} marker ${3:nn}",
+                "place item ${1:_item_} at ${2:_place_} questmarker ${3:nn}"
             ],
             "sourceName":"PlaceItem"
         },

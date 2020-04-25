@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Improved
+
+- Updated list of actions.
+
 ## 0.13.0
 
 ### Added
