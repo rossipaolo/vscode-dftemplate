@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import { TextLine, Range, MarkdownString, Position } from 'vscode';
 import { EOL } from 'os';
 import { basename } from 'path';
-import { first } from '../extension';
+import { first, WORD_PATTERN } from '../extension';
 import { LanguageData } from './static/languageData';
 import { ParameterTypes } from './static/parameterTypes';
 import { QuestParseContext, QuestBlockKind, QuestResource, CategorizedQuestResource } from './common';
@@ -128,7 +128,7 @@ export class Quest {
      */
     public getResource(position: Position): CategorizedQuestResource | undefined {
 
-        const range = this.document.getWordRangeAtPosition(position);
+        const range = this.document.getWordRangeAtPosition(position, WORD_PATTERN);
         if (range === undefined) {
             return undefined;
         }

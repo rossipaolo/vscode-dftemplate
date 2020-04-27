@@ -6,7 +6,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ExtensionContext } from "vscode";
+import { IContext } from '../../extension';
 import { Tables } from "./tables";
 import { Language } from "./language";
 import { Modules } from "./modules";
@@ -43,7 +43,7 @@ export class LanguageData {
      */
     public readonly questEngine: QuestEngine;
 
-    private constructor(context: ExtensionContext) {
+    private constructor(context: IContext) {
         this.questEngine = new QuestEngine(context);
     }
 
@@ -51,7 +51,7 @@ export class LanguageData {
      * Loads all the language data.
      * @param context Context of the running extension.
      */
-    public static async load(context: ExtensionContext): Promise<LanguageData> {
+    public static async load(context: IContext): Promise<LanguageData> {
         const data = new LanguageData(context);
         await Promise.all([
             data.tables.load(),
@@ -73,7 +73,7 @@ class QuestEngine {
      */
     private questingFolder: string | null | undefined = undefined;
 
-    public constructor(context: ExtensionContext) {
+    public constructor(context: IContext) {
         context.subscriptions.push(vscode.workspace.onDidChangeWorkspaceFolders(() => {
             this.questingFolder = undefined;
         }));

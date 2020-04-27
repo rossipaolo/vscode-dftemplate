@@ -29,6 +29,7 @@ import { QuestLinter } from './diagnostics/questLinter';
 import { TableLinter } from './diagnostics/tableLinter';
 
 const MESSAGE_ID_TRIGGER = '1';
+export const WORD_PATTERN = /(={1,2}|%)?([a-zA-Z0-9_-]+\.)?[a-zA-Z0-9_-]+/;
 
 export const TEMPLATE_LANGUAGE = 'dftemplate';
 export const TEMPLATE_MODE: DocumentFilter[] = [
@@ -40,9 +41,14 @@ export function getOptions() {
     return vscode.workspace.getConfiguration('dftemplate');
 }
 
+export interface IContext {
+    subscriptions: vscode.Disposable[];
+    extensionPath: string;
+}
+
 export async function activate(context: ExtensionContext) {
 
-    setLanguageConfiguration();
+    context.subscriptions.push(setLanguageConfiguration());
 
     await LanguageData.load(context).then(data => {
         const quests = new Quests(data);
@@ -123,9 +129,9 @@ export function* selectMany<T1, T2, T3>(iterable: Iterable<T1>, selector: (item:
     }
 }
 
-function setLanguageConfiguration() {
-    vscode.languages.setLanguageConfiguration(TEMPLATE_LANGUAGE, {
-        wordPattern: /(={1,2}|%)?([a-zA-Z0-9_-]+\.)?[a-zA-Z0-9_-]+/g,
+function setLanguageConfiguration(): vscode.Disposable {
+    return vscode.languages.setLanguageConfiguration(TEMPLATE_LANGUAGE, {
+        wordPattern: WORD_PATTERN,
         onEnterRules: [
             {
                 beforeText: /\s*([^\s]+ task|until [^\s]+ performed):\s*$/,

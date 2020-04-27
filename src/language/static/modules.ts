@@ -8,11 +8,9 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as parser from '../../parser';
-
-import { ExtensionContext } from 'vscode';
 import { StaticData } from './staticData';
 import { tryParseWhenTaskCondition } from './whenTask';
-import { getOptions, select, where } from '../../extension';
+import { getOptions, select, where, IContext } from '../../extension';
 import { QuestResourceCategory, ActionDetails, ActionInfo } from './common';
 
 interface Module {
@@ -38,7 +36,7 @@ export class Modules extends StaticData {
      * Load all enabled modules.
      * @param context Current context of extension.
      */
-    public async load(context: ExtensionContext): Promise<void> {
+    public async load(context: IContext): Promise<void> {
         this.modules = await Modules.loadModules(getOptions()['modules'], context);
     }
 
@@ -144,7 +142,7 @@ export class Modules extends StaticData {
      * @param modules A list of module names without `.dfmodule.json` extension.
      * @param context The extension context.
      */
-    private static async loadModules(modules: string[], context: ExtensionContext): Promise<Module[]> {
+    private static async loadModules(modules: string[], context: IContext): Promise<Module[]> {
         return (await Promise.all(modules.map(async name => {
             name = name + '.dfmodule.json';
 

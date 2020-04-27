@@ -1,0 +1,19 @@
+Quest: TEST
+
+QRC:
+
+Message:  1020
+<ce>                         message content
+<ce>                              =gold_
+
+QBN:
+
+-- Item description
+Item _gold_ gold range 1 to 1
+
+variable _foo_
+
+_bar_ task:
+    when _foo_
+    give pc _gold_
+    say 1020

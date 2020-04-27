@@ -5,8 +5,7 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext } from 'vscode';
-import { iterateAll, where, select, selectMany } from '../../extension';
+import { iterateAll, where, select, selectMany, IContext } from '../../extension';
 import { symbols } from '../../parser';
 import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo, SymbolVariation, Overload } from './common';
 import { StaticData } from "./staticData";
@@ -42,7 +41,7 @@ export class Language extends StaticData {
     /**
      * Load language tables.
      */
-    public async load(context: ExtensionContext): Promise<void> {
+    public async load(context: IContext): Promise<void> {
         const instance = this;
 
         const loadTable = async (name: string) =>
