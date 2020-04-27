@@ -23,7 +23,7 @@
         "url": "https://github.com/TheLacus/vscode-dftemplate/issues"
     },
     "engines": {
-        "vscode": "^1.39.0"
+        "vscode": "^1.44.0"
     },
     "categories": [
         "Programming Languages",
@@ -116,35 +116,6 @@
                 }
             ]
         },
-        "colors": [
-            {
-                "id": "dftemplate.stringParameter",
-                "description": "The color of the decorator used to style action parameters that don't have a specific syntax.",
-                "defaults": {
-                    "light": "#D7BA7D",
-                    "dark": "#D7BA7D",
-                    "highContrast": "#D7BA7D"
-                }
-            },
-            {
-                "id": "dftemplate.controlAction",
-                "description": "The color of the decorator used to style conditions and actions that toggle tasks.",
-                "defaults": {
-                    "light": "#AF00DB",
-                    "dark": "#C586C0",
-                    "highContrast": "#C586C0"
-                }
-            },
-            {
-                "id": "dftemplate.otherSymbol",
-                "description": "The color of the decorator used to style symbols that don't follow standard _symbol_ syntax.",
-                "defaults": {
-                    "light": "#001080",
-                    "dark": "#9CDCFE",
-                    "highContrast": "#9CDCFE"
-                }
-            }
-        ],
         "jsonValidation": [
             {
                 "fileMatch": "*.dfmodule.json",
@@ -153,6 +124,7 @@
         ],
         "configurationDefaults": {
             "[dftemplate]": {
+                "editor.semanticHighlighting.enabled": true,
                 "editor.suggest.snippetsPreventQuickSuggestions": false,
                 "editor.quickSuggestions": {
                     "other": true,
@@ -186,11 +158,6 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Specifies whether CodeLenses with references and other details should be shown."
-                },
-                "dftemplate.decorations.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Use text decorators to style parts of code that don't benefit of specific syntax highlighting."
                 },
                 "dftemplate.diagnostics.enabled": {
                     "type": "boolean",
@@ -242,7 +209,7 @@
         "@types/glob": "^7.1.1",
         "@types/mocha": "^7.0.2",
         "@types/node": "^13.13.4",
-        "@types/vscode": "^1.39.0",
+        "@types/vscode": "1.44.0",
         "glob": "^7.1.6",
         "mocha": "^7.1.1",
         "tslint": "^6.1.1",
