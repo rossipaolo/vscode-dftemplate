@@ -5,9 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from './parser';
 import * as path from 'path'; 
-import { DocumentFilter, ExtensionContext, ThemeColor } from 'vscode';
+import { DocumentFilter, ExtensionContext } from 'vscode';
 import { EOL } from 'os';
 import { TemplateHoverProvider } from './providers/hoverProvider';
 import { TemplateCompletionItemProvider } from './providers/completionItemProvider';
@@ -23,12 +22,10 @@ import { TemplateDocumentRangeFormattingEditProvider } from './providers/documen
 import { TemplateOnTypingFormatter } from './providers/onTypeFormattingEditProvider';
 import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { TemplateFoldingRangeProvider } from './providers/foldingRangeProvider';
-import { QuestResourceCategory } from './language/static/common';
+import { TemplateDocumentSemanticTokensProvider, tokenTypesLegend } from './providers/documentSemanticTokensProvider';
 import { LanguageData } from './language/static/languageData';
-import { ParameterTypes } from './language/static/parameterTypes';
 import { tasks } from './parser';
 import { Quests } from './language/quests';
-import { Quest } from './language/quest';
 import { QuestLinter } from './diagnostics/questLinter';
 import { TableLinter } from './diagnostics/tableLinter';
 
@@ -67,6 +64,7 @@ export async function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
         context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(data, quests, context)));
         context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(TEMPLATE_MODE, new TemplateFoldingRangeProvider(quests)));
+        context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider(TEMPLATE_MODE, new TemplateDocumentSemanticTokensProvider(quests), tokenTypesLegend));
 
         if (getOptions()['codeLens']['enabled']) {
             context.subscriptions.push(vscode.languages.registerCodeLensProvider(TEMPLATE_MODE, new TemplateCodeLensProvider(data.modules, quests)));
@@ -74,10 +72,6 @@ export async function activate(context: ExtensionContext) {
 
         if (getOptions()['diagnostics']['enabled']) {
             context.subscriptions.push(makeDiagnosticCollection(context, data, quests));
-        }
-
-        if (getOptions()['decorations']['enabled']) {
-            context.subscriptions.push(runDecorator(quests));
         }
 
         registerCommands(context, data, quests);     
@@ -342,108 +336,4 @@ function makeDiagnosticCollection(context: vscode.ExtensionContext, data: Langua
     }
 
     return diagnosticCollection;
-}
-
-/**
- * Makes decorations to style parts of code that don't have a specific syntax.
- * @param quests Quests inside current workspace.
- */
-export function runDecorator(quests: Quests): vscode.Disposable {
-    const parameterDecorationType = vscode.window.createTextEditorDecorationType({
-        color: new ThemeColor('dftemplate.stringParameter')
-    });
-
-    const controlDecorationType = vscode.window.createTextEditorDecorationType({
-        color: new ThemeColor('dftemplate.controlAction')
-    });
-
-    const otherSymbolDecorationType = vscode.window.createTextEditorDecorationType({
-        color: new ThemeColor('dftemplate.otherSymbol')
-    });
-
-    const setDecorations = (textEditor: vscode.TextEditor, quest?: Quest) => {
-
-        if (quest === undefined && (quest = quests.getIfQuest(textEditor.document)) === undefined) {
-            return;
-        }
-
-        const stringParameterRanges: vscode.Range[] = [];
-        const controlRanges: vscode.Range[] = [];
-        const otherSymbolRanges: vscode.Range[] = [];
-
-        if (quest.qbn.found) {
-            for (const symbol of quest.qbn.iterateSymbols()) {
-                if (symbol.signature !== undefined) {
-                    for (const parameter of symbol.signature) {
-                        if (ParameterTypes.isRawInput(parameter.type, parameter.value)) {
-                            const range = symbol.getParameterRange(parameter);
-                            if (range !== undefined) {
-                                stringParameterRanges.push(range);
-                            }
-                        }
-                    }
-                }
-
-                if (!parser.symbols.symbolFollowsNamingConventions(symbol.name)) {
-                    for (const location of TemplateReferenceProvider.symbolReferences(quest, symbol, true)) {
-                        otherSymbolRanges.push(location.range);
-                    }
-                }
-            }
-
-            for (const task of quest.qbn.iterateTasks()) {
-                if (!parser.symbols.symbolFollowsNamingConventions(task.name)) {
-                    for (const location of TemplateReferenceProvider.taskReferences(quest, task, true)) {
-                        otherSymbolRanges.push(location.range);
-                    }
-                }
-            }
-
-            for (const action of quest.qbn.iterateActions()) {
-                let hasTaskReference: boolean = false;
-
-                for (let index = 0; index < action.signature.length; index++) {
-                    const parameter = action.signature[index];
-                    if (ParameterTypes.isRawInput(parameter.type, parameter.value)) {
-                        stringParameterRanges.push(action.getRange(index));
-                    }
-
-                    if (!hasTaskReference) {
-                        hasTaskReference = parameter.type === ParameterTypes.task;
-                    }
-                }
-
-                if (action.info.category === QuestResourceCategory.Condition || hasTaskReference) {
-                    for (let index = 0; index < action.signature.length; index++) {
-                        const parameter = action.signature[index];
-                        if (/^([^\$]|\$\{\d\|)/.test(parameter.type)) {
-                            controlRanges.push(action.getRange(index));
-                        }
-                    }
-                }
-            }
-        }
-
-        textEditor.setDecorations(parameterDecorationType, stringParameterRanges);
-        textEditor.setDecorations(controlDecorationType, controlRanges);
-        textEditor.setDecorations(otherSymbolDecorationType, otherSymbolRanges);
-    };
-
-    if (vscode.window.activeTextEditor) {
-        setDecorations(vscode.window.activeTextEditor);
-    }
-
-    return vscode.Disposable.from(
-        quests.onDidParseQuest(quest => {
-            if (vscode.window.activeTextEditor !== undefined && vscode.window.activeTextEditor.document === quest.document){
-                setDecorations(vscode.window.activeTextEditor, quest);
-            }
-        }),
-
-        vscode.window.onDidChangeVisibleTextEditors(textEditors => {
-            for (const textEditor of textEditors) {
-                setDecorations(textEditor);
-            }
-        })
-    );
 }
