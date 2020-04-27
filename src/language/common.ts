@@ -13,6 +13,7 @@ import { Language } from "./static/language";
 import { LanguageData } from './static/languageData';
 import { EOL } from 'os';
 import { StaticData } from './static/staticData';
+import { Tables } from './static/tables';
 
 /**
  * A quest resource with a tag that defines its category.
@@ -292,10 +293,11 @@ export class Task implements QuestResource {
     /**
      * Attempts to parse a task definition.
      * @param line A text line with a task definition.
+     * @param tables Language tables used for parsing.
      * @returns A `Task` instance if parse operation was successful, `undefined` otherwise.
      */
-    public static parse(line: TextLine): Task | undefined {
-        const task = parser.tasks.parseTask(line.text);
+    public static parse(line: TextLine, tables: Tables): Task | undefined {
+        const task = parser.tasks.parseTask(line.text, tables.globalVarsTable.globalVars);
         if (task) {
             return new Task(task.symbol, line, wordRange(line, task.symbol), task);
         }

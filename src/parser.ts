@@ -342,43 +342,30 @@ export namespace tasks {
         readonly globalVarName?: string;
     }
 
-    let globalVarsAlternation: string;
-    let globalMatch: RegExp;
-
-    /**
-     * Set known names and numbers of global variables used in the main quest.
-     * @param globalVars A map of global variables.
-     */
-    export function setGlobalVariables(globalVars: Map<string, number>) {
-        const globalVariables = Array.from(globalVars.keys());
-        globalVarsAlternation = globalVariables.join('|');
-        globalMatch = new RegExp('^\\s*(' + globalVarsAlternation + ')\\s+([a-zA-Z0-9._]+)');
-    }
-
     /**
      * Attempts to parse a task definition from the given text line.
      * @param text A text line.
+     * @param globalVars Known global variables.
      * @returns The name and type of the task if parse operation was successful, `undefined` otherwise.
      */
-    export function parseTask(text: string): TaskDefinition | undefined {
+    export function parseTask(text: string, globalVars: Map<string, number>): TaskDefinition | undefined {
         let results = text.match(/^\s*([a-zA-Z0-9\._-]+)\s*task:/);
-        if (results) {
+        if (results !== null) {
             return { symbol: results[1], type: TaskType.Standard };
         }
 
         results = text.match(/^\s*until\s*([a-zA-Z0-9\._-]+)\s*performed/);
-        if (results) {
+        if (results !== null) {
             return { symbol: results[1], type: TaskType.PersistUntil };
         }
 
-        results = text.match(/^\s*variable\s*([a-zA-Z0-9\._-]+)/);
-        if (results) {
-            return { symbol: results[1], type: TaskType.Variable };
-        }
-
-        results = text.match(globalMatch);
-        if (results) {
-            return { globalVarName: results[1], symbol: results[2], type: TaskType.GlobalVarLink };
+        results = text.match(/^\s*([a-zA-Z0-9\._-]+)\s*([a-zA-Z0-9\._-]+)/);
+        if (results !== null) {
+            if (results[1] === "variable") {
+                return { symbol: results[2], type: TaskType.Variable };
+            } else if (globalVars.has(results[1])) {
+                return { globalVarName: results[1], symbol: results[2], type: TaskType.GlobalVarLink };
+            }
         }
     }
 }
