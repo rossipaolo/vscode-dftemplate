@@ -8,6 +8,7 @@ import * as parser from './parser';
 
 import { Range, TextEdit, TextLine, TextDocument, FormattingOptions, Position } from 'vscode';
 import { getOptions } from './extension';
+import { Tables } from './language/static/tables';
 
 interface FormatterResults {
     textEdit?: TextEdit;
@@ -60,8 +61,9 @@ export class Formatter {
     * @param document The document to format.
     * @param options Formatting options.
     * @param formatEmptyLines Trim empty lines and keep a single one between blocks.
+    * @param tables Language tables used for parsing.
     */
-    public constructor(document: TextDocument, options: FormattingOptions, formatEmptyLines: boolean) {
+    public constructor(document: TextDocument, options: FormattingOptions, formatEmptyLines: boolean, private readonly tables: Tables) {
         this.document = document;
         this.indent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
         this.formatEmptyLines = formatEmptyLines;
@@ -359,7 +361,7 @@ export class Formatter {
     private formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
         if (!parser.isEmptyOrComment(line.text) &&
             !parser.symbols.parseSymbol(line.text) &&
-            !parser.tasks.parseTask(line.text)) {
+            !parser.tasks.parseTask(line.text, this.tables.globalVarsTable.globalVars)) {
             return this.formatTaskScope(line);
         }
     }
@@ -368,7 +370,7 @@ export class Formatter {
      * Formats the definition of a task and request the following lines until the end of the task block.
      */
     private formatTask(line: TextLine): FormatterResults | undefined {
-        const task = parser.tasks.parseTask(line.text);
+        const task = parser.tasks.parseTask(line.text, this.tables.globalVarsTable.globalVars);
         if (task) {
             return {
                 textEdits: Formatter.filterTextEdits(
@@ -412,7 +414,7 @@ export class Formatter {
     private getTaskBlockFormatRequest(): FormatLineRequest {
         return {
             requestLine: (line) => {
-                return !/^\s*$/g.test(line.text) && !parser.tasks.parseTask(line.text);
+                return !/^\s*$/g.test(line.text) && !parser.tasks.parseTask(line.text, this.tables.globalVarsTable.globalVars);
             },
             formatLine: (line) => {
                 return this.formatEmptyOrComment(line) || this.formatTaskScope(line);

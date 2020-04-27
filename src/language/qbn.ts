@@ -50,7 +50,7 @@ export class Qbn extends QuestBlock {
         }
 
         // Task definition
-        const task = Task.parse(line);
+        const task = Task.parse(line, context.data.tables);
         if (task) {
             if (task.definition.type === parser.tasks.TaskType.PersistUntil) {
                 this.persistUntilTasks.push(task);

@@ -24,7 +24,6 @@ import { TemplateCodeActionProvider } from './providers/codeActionProvider';
 import { TemplateFoldingRangeProvider } from './providers/foldingRangeProvider';
 import { TemplateDocumentSemanticTokensProvider, tokenTypesLegend } from './providers/documentSemanticTokensProvider';
 import { LanguageData } from './language/static/languageData';
-import { tasks } from './parser';
 import { Quests } from './language/quests';
 import { QuestLinter } from './diagnostics/questLinter';
 import { TableLinter } from './diagnostics/tableLinter';
@@ -46,8 +45,6 @@ export async function activate(context: ExtensionContext) {
     setLanguageConfiguration();
 
     await LanguageData.load(context).then(data => {
-        tasks.setGlobalVariables(data.tables.globalVarsTable.globalVars);
-
         const quests = new Quests(data);
         context.subscriptions.push(quests.initialize());
 
@@ -60,8 +57,8 @@ export async function activate(context: ExtensionContext) {
         context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(TEMPLATE_MODE, new TemplateDocumentSymbolProvider(quests)));
         context.subscriptions.push(vscode.languages.registerWorkspaceSymbolProvider(new TemplateWorkspaceSymbolProvider(quests)));
         context.subscriptions.push(vscode.languages.registerRenameProvider(TEMPLATE_MODE, new TemplateRenameProvider(quests)));
-        context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider()));
-        context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(), '\n'));
+        context.subscriptions.push(vscode.languages.registerDocumentRangeFormattingEditProvider(TEMPLATE_MODE, new TemplateDocumentRangeFormattingEditProvider(data.tables)));
+        context.subscriptions.push(vscode.languages.registerOnTypeFormattingEditProvider(TEMPLATE_MODE, new TemplateOnTypingFormatter(data.tables), '\n'));
         context.subscriptions.push(vscode.languages.registerCodeActionsProvider(TEMPLATE_MODE, new TemplateCodeActionProvider(data, quests, context)));
         context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(TEMPLATE_MODE, new TemplateFoldingRangeProvider(quests)));
         context.subscriptions.push(vscode.languages.registerDocumentSemanticTokensProvider(TEMPLATE_MODE, new TemplateDocumentSemanticTokensProvider(quests), tokenTypesLegend));
