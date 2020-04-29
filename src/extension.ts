@@ -45,7 +45,7 @@ export async function activate(context: ExtensionContext) {
     setLanguageConfiguration();
 
     await LanguageData.load(context).then(data => {
-        const quests = new Quests(data);
+        const quests = new Quests(context, data);
         context.subscriptions.push(quests.initialize());
 
         context.subscriptions.push(vscode.languages.registerHoverProvider(TEMPLATE_MODE, new TemplateHoverProvider(data, quests)));
@@ -260,6 +260,36 @@ function registerCommands(context: ExtensionContext, data: LanguageData, quests:
                 }
             } else {
                 await vscode.window.showErrorMessage('Failed to parse C# class definition from active document.');
+            }
+        }),
+
+        vscode.commands.registerCommand('dftemplate.inspectSerializedData.load', async () => {
+            if (!quests.saveInspector.isSetup) {
+                const textEditor = vscode.window.activeTextEditor;
+                if (textEditor !== undefined && textEditor.document.languageId === TEMPLATE_LANGUAGE) {
+                    quests.saveInspector.setup(textEditor, quests.getIfQuest(textEditor.document));
+                } else {
+                    quests.saveInspector.setup();
+                }
+            }
+        }),
+
+        vscode.commands.registerCommand('dftemplate.inspectSerializedData.reload', async () => {
+            if (quests.saveInspector.isSetup) {
+                quests.saveInspector.reload();
+            }
+        }),
+
+        vscode.commands.registerCommand('dftemplate.inspectSerializedData.unload', async () => {
+            if (quests.saveInspector.isSetup) {
+                quests.saveInspector.tearDown();
+            }
+        }),
+
+        vscode.commands.registerCommand('dftemplate.showQuestWithName', async (name: string) => {
+            const quest = await quests.find(name);
+            if (quest !== undefined) {
+                vscode.window.showTextDocument(quest.document);
             }
         })
     );

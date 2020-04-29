@@ -83,6 +83,26 @@
                 "command": "dftemplate.findActionReferences",
                 "title": "Find action references",
                 "category": "DFTemplate"
+            },
+            {
+                "command": "dftemplate.inspectSerializedData.load",
+                "title": "Inspect quest save data from file",
+                "category": "DFTemplate",
+                "enablement": "!dftemplate:saveInspectorIsSetup"
+            },
+            {
+                "command": "dftemplate.inspectSerializedData.reload",
+                "title": "Reload quest save data from file",
+                "category": "DFTemplate",
+                "icon": "$(refresh)",
+                "enablement": "dftemplate:saveInspectorIsSetup"
+            },
+            {
+                "command": "dftemplate.inspectSerializedData.unload",
+                "title": "Unload quest save data",
+                "category": "DFTemplate",
+                "icon": "$(close-all)",
+                "enablement": "dftemplate:saveInspectorIsSetup"
             }
         ],
         "menus": {
@@ -106,6 +126,18 @@
                 {
                     "command": "dftemplate.findActionReferences",
                     "when": "resourceLangId == csharp"
+                },
+                {
+                    "command": "dftemplate.inspectSerializedData.load",
+                    "when": "resourceLangId == dftemplate && !dftemplate:saveInspectorIsSetup"
+                },
+                {
+                    "command": "dftemplate.inspectSerializedData.reload",
+                    "when": "resourceLangId == dftemplate && dftemplate:saveInspectorIsSetup"
+                },
+                {
+                    "command": "dftemplate.inspectSerializedData.unload",
+                    "when": "resourceLangId == dftemplate && dftemplate:saveInspectorIsSetup"
                 }
             ],
             "editor/context": [
@@ -114,8 +146,73 @@
                     "group": "1_modification",
                     "command": "dftemplate.toggleCeToken"
                 }
+            ],
+            "view/title": [
+                {
+                    "command": "dftemplate.inspectSerializedData.reload",
+                    "when": "view == dftemplate.saveInspector",
+                    "group": "navigation"
+                },
+                {
+                    "command": "dftemplate.inspectSerializedData.unload",
+                    "when": "view == dftemplate.saveInspector",
+                    "group": "navigation"
+                }
             ]
         },
+        "views": {
+            "debug": [
+                {
+                    "id": "dftemplate.saveInspector",
+                    "name": "Quest Save Inspector",
+                    "when": "dftemplate:saveInspectorIsEnabled"
+                }
+            ]
+        },
+        "viewsWelcome": [
+            {
+                "view": "dftemplate.saveInspector",
+                "contents": "Inspect serialized quest data from QuestData.txt.\n[Load Save](command:dftemplate.inspectSerializedData.load)"
+            }
+        ],
+        "colors": [
+            {
+                "id": "dftemplate.saveInspector.background.enabled",
+                "description": "Background color for enabled tasks and clocks.",
+                "defaults": {
+                    "dark": "#00FF0050",
+                    "light": "#00FF0050",
+                    "highContrast": "#00FF0050"
+                }
+            },
+            {
+                "id": "dftemplate.saveInspector.background.disabled",
+                "description": "Background color for disabled tasks and clocks.",
+                "defaults": {
+                    "dark": "#80808050",
+                    "light": "#80808050",
+                    "highContrast": "#80808050"
+                }
+            },
+            {
+                "id": "dftemplate.saveInspector.background.finished",
+                "description": "Background color for finished clocks.",
+                "defaults": {
+                    "dark": "#FF000050",
+                    "light": "#FF000050",
+                    "highContrast": "#FF000050"
+                }
+            },
+            {
+                "id": "dftemplate.saveInspector.border",
+                "description": "Border color for tasks and clocks.",
+                "defaults": {
+                    "dark": "#FFFFFFFF",
+                    "light": "#000000FF",
+                    "highContrast": "#FFFFFFFF"
+                }
+            }
+        ],
         "jsonValidation": [
             {
                 "fileMatch": "*.dfmodule.json",

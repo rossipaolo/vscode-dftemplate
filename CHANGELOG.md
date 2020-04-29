@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Added a tree view that allows to parse `QuestData.txt` from Daggerfall Unity saves and lists all serialized quest data in it. Clicking an entry opens corresponding quest file, with decorations for set/unset tasks and unstarted/running/stopped clocks. Hover provider is also used to show json data (with a markdown codeblock) for each quest resource, filtering its children. For example only task data is shown for a task, while each action data is shown for corresponding action.
+
 ### Improved
 
 - Use Semantic Highlighting instead of decoration styling for conditions and actions that affect quest workflow, action and symbol parameters and symbols that don't follow standard syntax and can't benefit of syntax highlighting.

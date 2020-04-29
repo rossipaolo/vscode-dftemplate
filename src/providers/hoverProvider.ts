@@ -49,8 +49,15 @@ export class TemplateHoverProvider implements HoverProvider {
         }
 
         const quest = this.quests.get(document);
-        let item: TemplateDocumentationItem | undefined = undefined;
 
+        if (this.quests.saveInspector.isSetup === true) {
+            const saveDataMarkdown = this.quests.saveInspector.inspect(quest, position);
+            if (saveDataMarkdown !== undefined) {
+                return new Hover(saveDataMarkdown);
+            }
+        }
+
+        let item: TemplateDocumentationItem | undefined = undefined;
         const resource = quest.getResource(position);
         if (resource) {
             switch (resource.kind) {

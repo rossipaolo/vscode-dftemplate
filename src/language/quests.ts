@@ -11,6 +11,7 @@ import { subRange } from '../parser';
 import { LanguageData } from './static/languageData';
 import { Quest } from './quest';
 import { QuestTable } from './questTable';
+import { SaveInspector } from './saveInspector';
 
 /**
  * Manages quest files inside a workspace.
@@ -37,12 +38,15 @@ export class Quests {
      */
     private loadingQuests: Promise<Quest[] | undefined> | undefined;
 
+    public readonly saveInspector: SaveInspector;
+
     private readonly _onDidParseQuest = new vscode.EventEmitter<Quest>();
     public get onDidParseQuest(): vscode.Event<Quest> {
         return this._onDidParseQuest.event;
     }
 
-    public constructor(private readonly data: LanguageData) {
+    public constructor(context: vscode.ExtensionContext, private readonly data: LanguageData) {
+        this.saveInspector = new SaveInspector(context.subscriptions);
     }
 
     /**
@@ -61,7 +65,14 @@ export class Quests {
                 this.tables.delete(uri.fsPath);
             }
         });
-        return fsWatcher;
+
+        const event = vscode.window.onDidChangeActiveTextEditor(textEditor => {
+            if (this.saveInspector.isSetup && textEditor !== undefined && textEditor.document.languageId === TEMPLATE_LANGUAGE) {
+                this.saveInspector.refresh(textEditor, this.getIfQuest(textEditor.document));
+            }
+        });
+
+        return vscode.Disposable.from(fsWatcher, event);
     }
 
     /**
