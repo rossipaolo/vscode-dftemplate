@@ -159,7 +159,10 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     break;
                 case DiagnosticCode.UndefinedTask:
                     const taskNames = Array.from(quest.qbn.iterateTasks()).map(x => x.definition.symbol);
-                    actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames));
+                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames);
+                    if (action) {
+                        actions.push(action);
+                    }
                     break;
                 case DiagnosticCode.UndefinedQuest:
                     const questNames = (await this.quests.getAll()).reduce((names, quest) => {
@@ -170,14 +173,20 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
                         return names;
                     }, [] as string[]);
-                    actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, questNames));
+                    action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, questNames);
+                    if (action) {
+                        actions.push(action);
+                    }
                     break;
                 case DiagnosticCode.UndefinedAttribute:
                     const parameter = quest.qbn.getParameter(diagnostic.range);
                     if (parameter) {
                         const values = this.data.tables.getValues(parameter.type);
                         if (values) {
-                            actions.push(TemplateCodeActionProvider.bestMatch(document, diagnostic.range, values));
+                            action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, values);
+                            if (action) {
+                                actions.push(action);
+                            }
                         }
                     }
                     break;
@@ -351,7 +360,11 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
         }
     }
 
-    private static bestMatch(document: vscode.TextDocument, range: vscode.Range, values: string[]): CodeAction {
+    private static bestMatch(document: vscode.TextDocument, range: vscode.Range, values: string[]): CodeAction | undefined {
+        if (values.length === 0) {
+            return undefined;
+        }
+
         const stringSimilarity = require('string-similarity');
         const value = stringSimilarity.findBestMatch(document.getText(range), values).bestMatch.target;
         const action = new CodeAction(`Change to ${value}`, CodeActionKind.QuickFix);
