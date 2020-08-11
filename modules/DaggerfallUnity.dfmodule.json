@@ -9,6 +9,26 @@
             "sourceName": "CastEffectDo"
         },
         {
+            "summary": [
+                "Triggers when the player character clicks on a foe.",
+                "Triggers when the player character clicks on a foe and shows a message.",
+                "Triggers when the player character clicks on a foe and the required amount of gold can be deducted, otherwise a different task is triggered."
+            ],
+            "overloads": [
+                "clicked foe ${1:_foe_}",
+                "clicked foe ${1:_foe_} say ${2:message}",
+                "clicked ${1:_foe_} and at least ${2:nn} gold otherwise do ${3:task}"
+            ],
+            "sourceName": "ClickedFoe"
+        },
+        {
+            "summary": "Starts target task if the required amount of gold can be deducted, otherwise a different task is triggered.",
+            "overloads": [
+                "pay ${1:nn} money do ${2:task} otherwise do ${3:task}"
+            ],
+            "sourceName": "PayMoney"
+        },
+        {
             "summary": "Triggers when character reaches minimum value for specified attribute.",
             "overloads": [
                 "when attribute ${1:attributeName} is at least ${2:nn}"
