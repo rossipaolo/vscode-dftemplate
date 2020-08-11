@@ -34,15 +34,15 @@
         {
             "summary": "Changes whether or not a quest foe is attackable by other NPCs.",
             "overloads": [
-                "change foe ${1:_person_} infighting ${2:bool}"
+                "change foe ${1:_foe_} infighting ${2:bool}"
             ],
             "sourceName": "ChangeFoeInfighting"
         },
         {
             "summary": "Changes a foe's team.",
             "overloads": [
-                "change foe ${1:_person_} team ${2:nn}",
-                "change foe ${1:_person_} team ${2:teamName}"
+                "change foe ${1:_foe_} team ${2:nn}",
+                "change foe ${1:_foe_} team ${2:teamName}"
             ],
             "sourceName": "ChangeFoeTeam"
         },
