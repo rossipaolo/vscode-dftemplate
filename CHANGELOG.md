@@ -4,6 +4,7 @@
 
 ### Improved
 
+- Updated Item definition to support creation of items with specific key.
 - Updated list of actions.
 
 ### Fixed

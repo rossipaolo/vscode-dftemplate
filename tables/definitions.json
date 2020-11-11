@@ -159,6 +159,48 @@
             ]
         },
         {
+            "snippet": "Item ${1:_item_} ${2:someItemName} key ${3:itemKey}",
+            "match": "(Item|item) [a-zA-Z0-9_.-]+ [a-zA-Z0-9_'.-]+ key \\d+( anyInfo (\\d+|\\w+))?( used (\\d+|\\w+))?",
+            "matches": [
+                {
+                    "regex": "(?:Item|item) [a-zA-Z0-9_.-]+ ([a-zA-Z0-9_'.-]+)",
+                    "signature": "${commonItem}"
+                },
+                {
+                    "regex": "key (\\d+)",
+                    "signature": "${nn}"
+                },
+                {
+                    "regex": "anyInfo (\\d+|\\w+)",
+                    "signature": "${message}"
+                },
+                {
+                    "regex": "used (\\d+|\\w+)",
+                    "signature": "${message}"
+                }
+            ],
+            "signature": "Item _item_ name key itemKey anyInfo message used message",
+            "summary": "A prefabricated common item, like a book or potion, with specific ID.",
+            "parameters": [
+                {
+                    "name": "name",
+                    "description": "The name of the item."
+                },
+                {
+                    "name": "itemKey",
+                    "description": "The numeric identifier of an item, like a book or a potion."
+                },
+                {
+                    "name": "anyInfo",
+                    "description": "(optional) Add the message to the _Tell me about..._ dialog responses under the NPC's name."
+                },
+                {
+                    "name": "used",
+                    "description": "(optional) A message shown when the item is used in the player's inventory screen."
+                }
+            ]
+        },
+        {
             "snippet": "Item ${1:_item_} item class ${2:dd} subclass ${3:dd}",
             "signature": "Item _item_ item class classIndex subclass subclassIndex",
             "summary": "A common item created from its item codes.",
