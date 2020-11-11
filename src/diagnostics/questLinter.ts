@@ -111,7 +111,7 @@ export class QuestLinter {
 
                         diagnostics.push(!this.data.language.isSymbolVariationDefined(symbol, symbolDefinition.type) ?
                             Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolDefinition.type) :
-                            Hints.SymbolVariation(wordRange(line, symbol)));
+                            Hints.changeSymbolVariation(wordRange(line, symbol)));
                     }
                 }
             }

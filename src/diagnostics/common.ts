@@ -116,8 +116,8 @@ export const Hints = {
     incorrectMessagePosition: (range: Range, current: number, previous: number, previousLocation: vscode.Location) =>
         makeDiagnostic(range, DiagnosticCode.OrderMessages, 'Message ' + current + ' should not be positioned after ' + previous + '.', DiagnosticSeverity.Hint,
             { locations: [previousLocation], label: 'message ' + previous }),
-    SymbolVariation: (range: Range) =>
-        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, '', DiagnosticSeverity.Hint),
+    changeSymbolVariation: (range: Range) =>
+        makeDiagnostic(range, DiagnosticCode.IncorrectSymbolVariation, 'Symbol variation can be changed.', DiagnosticSeverity.Hint),
     convertTaskToVariable: (range: Range) =>
         makeDiagnostic(range, DiagnosticCode.ConvertTaskToVariable, 'Empty task can be converted to variable.', DiagnosticSeverity.Hint),
     changeStartTaskToSetVar: (range: Range) =>

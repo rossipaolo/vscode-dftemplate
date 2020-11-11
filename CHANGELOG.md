@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Fixed
+
+- Fixed issue with generation of diagnostics.
+
 ## 0.15.0
 
 ### Added
