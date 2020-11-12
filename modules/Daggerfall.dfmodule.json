@@ -407,13 +407,15 @@
         {
             "summary": [
                 "Moves item into world at a random reserved site at `_place_`.",
-                "Moves item into world at a specific reserved site at `_place_` using marker index.",
-                "Moves item into world at a specific reserved site at `_place_` using marker index."
+                "Moves item into world at a specific reserved site at `_place_` using item marker index.",
+                "Moves item into world at a specific reserved site at `_place_` using quest marker index.",
+                "Moves item into world at a specific reserved site at `_place_` using random quest or item marker."
             ],
             "overloads": [
                 "place item ${1:_item_} at ${2:_place_}",
                 "place item ${1:_item_} at ${2:_place_} marker ${3:nn}",
-                "place item ${1:_item_} at ${2:_place_} questmarker ${3:nn}"
+                "place item ${1:_item_} at ${2:_place_} questmarker ${3:nn}",
+                "place item ${1:_item_} at ${2:_place_} anymarker"
             ],
             "sourceName":"PlaceItem"
         },

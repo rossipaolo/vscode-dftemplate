@@ -88,6 +88,13 @@
             "sourceName": "PlaySong"
         },
         {
+            "summary": "Starts another quest and waits for its termination, then sets task for success or failure. Sets failure task immediately if target quest is not found. Will ensure that target quest is also terminated if still running when parent quest ends.",
+            "overloads": [
+                "run quest ${1:questName} then ${2:task} or ${3:task}"
+            ],
+            "sourceName": "RunQuest"
+        },
+        {
             "summary": "Sets a player's crime.",
             "overloads": [
                 "setplayercrime ${1:crime}"

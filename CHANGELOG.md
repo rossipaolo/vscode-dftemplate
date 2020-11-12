@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Improved
+
+- Updated list of actions.
+
 ### Fixed
 
 - Fixed issue with generation of diagnostics.
