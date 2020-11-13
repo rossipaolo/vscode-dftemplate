@@ -1,6 +1,6 @@
 # Change Log
 
-## Unreleased
+## 0.16.0
 
 ### Improved
 
