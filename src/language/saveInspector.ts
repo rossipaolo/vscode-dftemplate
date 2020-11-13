@@ -31,8 +31,8 @@ class SaveInspectorItem extends vscode.TreeItem {
 
 class SaveInspectorDataProvider implements vscode.TreeDataProvider<SaveInspectorItem> {
 
-    private readonly _onDidChangeTreeData: vscode.EventEmitter<SaveInspectorItem | undefined | void> = new vscode.EventEmitter<SaveInspectorItem | undefined | void>();
-    public readonly onDidChangeTreeData: vscode.Event<SaveInspectorItem | undefined | void> = this._onDidChangeTreeData.event;
+    private readonly _onDidChangeTreeData: vscode.EventEmitter<SaveInspectorItem | undefined | null> = new vscode.EventEmitter<SaveInspectorItem | undefined | null>();
+    public readonly onDidChangeTreeData: vscode.Event<SaveInspectorItem | undefined | null> = this._onDidChangeTreeData.event;
 
     private _saveData: any;
     public set saveData(value: any) {
