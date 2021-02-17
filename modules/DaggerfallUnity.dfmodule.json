@@ -81,6 +81,20 @@
             "sourceName": "JournalNote"
         },
         {
+            "summary": "Kills a specified foe instantly",
+            "overloads": [
+                "kill foe ${1:_foe_}"
+            ],
+            "sourceName": "KillFoe"
+        },
+        {
+            "summary": "Take an amount from player, and start a task depending on if they could pay.",
+            "overloads": [
+                "pay ${1:nn} money do ${2:task} otherwise do ${3:task}"
+            ],
+            "sourceName": "PayMoney"
+        },
+        {
             "summary": "Plays a song from MIDI.BSA using SongFiles enum.",
             "overloads": [
                 "play song ${1:song}"

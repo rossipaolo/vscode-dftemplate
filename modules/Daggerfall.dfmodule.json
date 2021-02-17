@@ -422,7 +422,8 @@
         {
             "summary": "Moves npc into world at a reserved site, which is requested automatically if is not already done by **_create npc at_**. This action can be used to instantiate a random npc or move a fixed npc from their home, provided they're not marked `atHome`.",
             "overloads": [
-                "place npc ${1:_person_} at ${2:_place_}"
+                "place npc ${1:_person_} at ${2:_place_}",
+                "place npc ${1:_person_} at ${2:_place_} marker ${3:nn}"
             ],
             "sourceName":"PlaceNpc"
         },
