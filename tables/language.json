@@ -120,7 +120,8 @@
         "%pg2": "[DU] Him/Her (player)",
         "%pg2self": "[DU] Himself/Herself (player)",
         "%pg3": "[DU] His/Hers (player)",
-        "%hrn": "[DU] Home region (of person)"
+        "%hrn": "[DU] Home region (of person)",
+        "%pcl": "[DU] Character's last name"
     },
     "symbolsVariations": {
         "Item": [
