@@ -7,6 +7,10 @@
 - Updated list of actions.
 - Updated list of macros.
 
+### Fixed
+
+- Parameter of `journal note` is now correctly resolved as a message id.
+
 ## 0.16.0
 
 ### Improved

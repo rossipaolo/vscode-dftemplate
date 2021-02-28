@@ -76,7 +76,7 @@
         {
             "summary": "Adds a text entry to the player journal as a note.",
             "overloads": [
-                "journal note ${1:nn}"
+                "journal note ${1:messageID}"
             ],
             "sourceName": "JournalNote"
         },
