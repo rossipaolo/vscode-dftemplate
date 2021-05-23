@@ -40,6 +40,10 @@ export abstract class ParameterTypes {
     public static readonly sound = '${sound}';
     public static readonly attributeName = '${attributeName}';
     public static readonly skillName = '${skillName}';
+    public static readonly season = '${season}';
+    public static readonly weather = '${weather}';
+    public static readonly climate = '${climate}';
+    public static readonly baseClimate = '${baseClimate}';
 
     /**
     * Gets the description of a parameter for its type.
@@ -103,6 +107,14 @@ export abstract class ParameterTypes {
                 return 'The name of an attribute.';
             case ParameterTypes.skillName:
                 return 'The name of a skill.';
+            case ParameterTypes.season:
+                return 'The name of the season';
+            case ParameterTypes.weather:
+                return 'The name of the weather type';
+            case ParameterTypes.climate:
+                return 'The specific climate of a region';
+            case ParameterTypes.baseClimate:
+                return 'The general climate of a region';
         }
     }
 

@@ -121,7 +121,18 @@
         "%pg2self": "[DU] Himself/Herself (player)",
         "%pg3": "[DU] His/Hers (player)",
         "%hrn": "[DU] Home region (of person)",
-        "%pcl": "[DU] Character's last name"
+        "%pcl": "[DU] Character's last name",
+        "%day": "[DU] Current day of the month (ex: 1, 2, ..., 30)",
+        "%dayn": "[DU] Name of the current day (ex: Morndas)",
+        "%days": "[DU] Current day of the month with suffix (ex: 1st, 2nd, 3rd, ...)",
+        "%mon": "[DU] Current month as number",
+        "%monn": "[DU] Name of the current month (ex: Hearthfire)",
+        "%year": "[DU] Current year as number (ex: 405, not 3E405)",
+        "%min": "[DU] Current minute",
+        "%hour": "[DU] Current hour",
+        "%sign": "[DU] Current sign for the month (ex: The Lady, The Tower, ...)",
+        "%sea": "[DU] Current season",
+        "%cbd": "[DU] Name of the current building, if any"
     },
     "symbolsVariations": {
         "Item": [

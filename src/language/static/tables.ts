@@ -253,6 +253,14 @@ export class Tables {
                 return this.spellsEntityTable.attributes;
             case ParameterTypes.skillName:
                 return this.spellsEntityTable.skills;
+            case ParameterTypes.season:
+                return ['summer', 'fall', 'winter', 'spring'];
+            case ParameterTypes.weather:
+                return ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
+            case ParameterTypes.climate:
+                return ['desert', 'desert2', 'mountain', 'mountainwoods', 'rainforest', 'ocean', 'swamp', 'subtropical', 'woodlands', 'hauntedwoodlands'];
+            case ParameterTypes.baseClimate:
+                return ['desert', 'mountain', 'temperate', 'swamp'];
         }
     }
 
