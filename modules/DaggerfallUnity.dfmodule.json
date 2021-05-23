@@ -48,6 +48,46 @@
                 "when skill ${1:skillName} is at least ${2:nn}"
             ],
             "sourceName": "WhenSkillLevel"
+        },
+        {
+            "summary": "Triggers when the current time is in the specified season.",
+            "overloads": [
+                "season ${1:season}"
+            ],
+            "sourceName": "Season"
+        },
+        {
+            "summary": "Triggers when the current weather is as specified.",
+            "overloads": [
+                "weather ${1:weather}"
+            ],
+            "sourceName": "Weather"
+        },
+        {
+            "summary": "Triggers when the player is in a location with the specified climate.",
+            "overloads": [
+                "climate ${1:climate}",
+                "climate base ${1:baseClimate}"
+            ],
+            "sourceName": "Climate"
+        },
+        {
+            "summary": [ 
+                "Continuously checks if player character is at any building of the specified type and starts or clears target task; set and do are equivalent.",
+                "Continuously checks if player character is at any building of the specified type and starts or clears target task; set and do are equivalent. A message is shown only once after a positive check."
+            ],
+            "overloads": [
+                "pc at any ${1:localRemotePlace} ${2|set,do|} ${3:task}",
+                "pc at any ${1:localRemotePlace} ${2|set,do|} ${3:task} saying ${4:messageID}"
+            ],
+            "sourceName": "PcAt"
+        },
+        {
+            "summary": "Shows _QuestComplete_ success message and trains the player in the specified skill, just like the Training service.",
+            "overloads": [
+                "train pc ${1:skillName}"
+            ],
+            "sourceName": "TrainPc"
         }
     ],
     "actions": [
