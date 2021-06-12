@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.18.0
+
+### Improved
+
+- Updated list of actions.
+- Updated list of macros.
+
 ## 0.17.0
 
 ### Improved
