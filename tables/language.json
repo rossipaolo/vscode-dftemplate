@@ -19,6 +19,7 @@
         "%cld": "Per level (Duration)",
         "%clm": "Per level (Magnitude)",
         "%cn": "Current City",
+        "%cn2": "First city name in alphabetical order of current region.",
         "%cpn": "Current shop name",
         "%cri": "Accused crime",
         "%crn": "Current Region",
@@ -26,6 +27,7 @@
         "%dam": "Damage modifyer",
         "%dat": "Date",
         "%di": "Direction",
+        "%dip": "Days spent in prison during last stay.",
         "%dng": "Dungeon",
         "%dts": "Daedra",
         "%ef": "Local shop name",
@@ -75,6 +77,7 @@
         "%n": "A random female first name",
         "%nam": "A random full name",
         "%nrn": "Noble of the current region",
+        "%nt": "Name of a nearby tavern.",
         "%ol1": "Old lord of %fx1",
         "%olf": "What happened to %ol1",
         "%oth": "An oath (listed in TEXT.RSC)",
@@ -103,6 +106,7 @@
         "%rn": "Regent's Name",
         "%rt": "Regent's Title",
         "%spc": "Current Spell Points",
+        "%spt": "Maximum magicka",
         "%ski": "Skill",
         "%spd": "Speed",
         "%str": "Amount of strength",
@@ -132,7 +136,9 @@
         "%hour": "[DU] Current hour",
         "%sign": "[DU] Current sign for the month (ex: The Lady, The Tower, ...)",
         "%sea": "[DU] Current season",
-        "%cbd": "[DU] Name of the current building, if any"
+        "%cbd": "[DU] Name of the current building, if any",
+        "%ct": "[DU] Current location type (village, city, hamlet, farm, shrine, etc.)",
+        "%lp": "[DU] Current local province of Tamriel"
     },
     "symbolsVariations": {
         "Item": [
