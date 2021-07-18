@@ -11,19 +11,40 @@ import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceI
 import { StaticData, StaticDataLoader } from "./staticData";
 import { Tables } from './tables';
 
-interface LanguageTable {
-    symbols: Map<string, string>;
-    symbolsVariations: Map<string, {
+/**
+ * The content of a language table.
+ */
+export interface LanguageTable {
+    readonly symbols: Map<string, string>;
+    readonly symbolsVariations: Map<string, {
         word: string, description: string
     }[]>;
-    directives: Map<string, QuestResourceDetails>;
-    messages: Map<string, string>;
+    readonly directives: Map<string, QuestResourceDetails>;
+    readonly messages: Map<string, string>;
+}
+
+/**
+ * A loader of language tables.
+ */
+export interface LanguageLoader {
+
+    /**
+     * Loads content of language table.
+     * @returns Language table.
+     */
+    loadTable(): Promise<LanguageTable>;
+    
+    /**
+     * Loads content of symbol definitions table.
+     * @returns Object that maps symbol type to a list of symbol definition patterns.
+     */
+    loadDefinitions(): Promise<Map<string, SymbolInfo[]>>;
 }
 
 /**
  * Loads language data from json modules.
  */
-export class LanguageLoader extends StaticDataLoader {
+export class JsonLanguageLoader extends StaticDataLoader implements LanguageLoader {
     public constructor(private readonly extensionPath: string) {
         super();
     }

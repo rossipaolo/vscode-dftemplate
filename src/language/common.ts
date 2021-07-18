@@ -66,7 +66,7 @@ export interface Parameter {
 export class Directive implements QuestResource {
 
     public get blockRange(): Range {
-        return this.line.range;
+        return parser.trimRange(this.line);
     }
 
     /**
