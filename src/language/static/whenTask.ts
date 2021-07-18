@@ -40,7 +40,7 @@ function makeSignature(text: string) {
                 signature += ' ' + word;
                 break;
             default:
-                signature += ' ${' + arg++ + ':task}';
+                signature += ' ${' + ++arg + ':task}';
                 break;
         }
     }
