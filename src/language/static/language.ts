@@ -5,11 +5,10 @@
 'use strict';
 
 import * as path from 'path';
-import { ExtensionContext } from 'vscode';
 import { iterateAll, where, select, selectMany } from '../../extension';
 import { symbols } from '../../parser';
 import { QuestResourceCategory, SymbolInfo, QuestResourceDetails, QuestResourceInfo, SymbolVariation, Overload } from './common';
-import { StaticData } from "./staticData";
+import { StaticData, StaticDataLoader } from "./staticData";
 import { Tables } from './tables';
 
 interface LanguageTable {
@@ -19,6 +18,50 @@ interface LanguageTable {
     }[]>;
     directives: Map<string, QuestResourceDetails>;
     messages: Map<string, string>;
+}
+
+/**
+ * Loads language data from json modules.
+ */
+export class LanguageLoader extends StaticDataLoader {
+    public constructor(private readonly extensionPath: string) {
+        super();
+    }
+
+    /**
+     * Loads language table from json module.
+     * @returns Language table.
+     */
+    public async loadTable(): Promise<LanguageTable> {
+        const obj: any = await this.loadObj('language.json');
+        return {
+            symbols: this.objectToMap(obj.symbols),
+            symbolsVariations: this.objectToMap(obj.symbolsVariations),
+            directives: this.objectToMap(obj.directives),
+            messages: this.objectToMap(obj.messages),
+        };
+    }
+
+    /**
+     * Loads symbol definitions from json module.
+     * @returns Symbol definitions.
+     */
+    public async loadDefinitions(): Promise<Map<string, SymbolInfo[]>> {
+        const obj: any = await this.loadObj('definitions.json');
+        return this.objectToMap(obj);
+    }
+
+    private async loadObj(name: string): Promise<any> {
+        return this.parseFromJson(path.join(this.extensionPath, 'tables', name));
+    }
+
+    private objectToMap<T>(obj: any): Map<string, T> {
+        const map = new Map<string, T>();
+        for (let k of Object.keys(obj)) {
+            map.set(k, obj[k]);
+        }
+        return map;
+    }
 }
 
 /**
@@ -41,26 +84,11 @@ export class Language extends StaticData {
 
     /**
      * Load language tables.
+     * @param languageLoader Loader of language modules.
      */
-    public async load(context: ExtensionContext): Promise<void> {
-        const instance = this;
-
-        const loadTable = async (name: string) =>
-            await Language.parseFromJson(path.join(context.extensionPath, 'tables', name));
-
-        await Promise.all([
-            loadTable('language.json').then(obj => {
-                instance.table = {
-                    symbols: Language.objectToMap(obj.symbols),
-                    symbolsVariations: Language.objectToMap(obj.symbolsVariations),
-                    directives: Language.objectToMap(obj.directives),
-                    messages: Language.objectToMap(obj.messages),
-                };
-            }),
-            loadTable('definitions.json').then(obj => {
-                instance.definitions = Language.objectToMap(obj);
-            })
-        ]);
+    public async load(languageLoader: LanguageLoader): Promise<void> {
+        this.table = await languageLoader.loadTable();
+        this.definitions = await languageLoader.loadDefinitions();
     }
 
     /**
@@ -313,14 +341,6 @@ export class Language extends StaticData {
                 yield detail;
             }
         }
-    }
-
-    private static objectToMap<T>(obj: any): Map<string, T> {
-        const map = new Map<string, T>();
-        for (let k of Object.keys(obj)) {
-            map.set(k, obj[k]);
-        }
-        return map;
     }
 
     private static makeMessageItem(table: LanguageTable, id: number, name: string): QuestResourceDetails {

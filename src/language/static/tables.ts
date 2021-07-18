@@ -10,26 +10,30 @@ import { getOptions, select, where } from '../../extension';
 import { readTextFileLines, findWorkspaceSubFolder } from './common';
 import { ParameterTypes } from './parameterTypes';
 
+/**
+ * Parses the content of a csv table from text lines.
+ * The table can have a schema (`schema: *`) and comments (`-- *`).
+ * @param textLines Lines of text.
+ * @returns Entries of csv table.
+ */
+export function parseCsvTable(textLines: readonly string[]): string[][] {
+    return textLines.reduce((content, textLine) => {
+        if (!/^\s*((-|schema).*)?$/.test(textLine)) {
+            content.push(textLine.split(',').map(w => w.trim()));
+        }
+        return content;
+    }, [] as string[][]);
+}
+
 abstract class Table {
-
-    public async load(path: string): Promise<void> {
-        const textLines = await readTextFileLines(path);
-        this.set(textLines.reduce((table, textLine) => {
-            if (!/^\s*((-|schema).*)?$/.test(textLine)) {
-                table.push(textLine.split(',').map(w => w.trim()));
-            }
-            return table;
-        }, [] as string[][]));
-    }
-
-    protected abstract set(data: string[][]): void;
+    public abstract set(data: readonly string[][]): void;
 }
 
 class DiseasesTable extends Table {
 
     public readonly diseases: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((disease) => {
             this.diseases.push(disease[1]);
         });
@@ -42,7 +46,7 @@ class FactionsTable extends Table {
     public readonly factionTypes: string[] = [];
     public readonly factions: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((faction) => {
             if (faction[2] !== '?') {
                 this.getFactionGroup(faction[2]).push(faction[0]);
@@ -66,7 +70,7 @@ class FoesTable extends Table {
 
     public readonly foes: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((foe) => {
             this.foes.push(foe[1]);
         });
@@ -77,7 +81,7 @@ class GlobalVarsTable extends Table {
 
     public readonly globalVars = new Map<string, number>();
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((globalVar) => {
             this.globalVars.set(globalVar[1], Number(globalVar[0]));
         });
@@ -89,7 +93,7 @@ class ItemsTable extends Table {
     public readonly artifacts: string[] = [];
     public readonly commonItems: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((item) => {
             this.getItemGroup(item[1]).push(item[0]);
         });
@@ -111,7 +115,7 @@ class PlacesTable extends Table {
     public readonly localRemoteLocations: string[] = [];
     public readonly locationTypes: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((place) => {
             this.getPlaceGroup(place[3]).push(place[0]);
             if (place[1] === '2' && place[3] === '0') {
@@ -134,7 +138,7 @@ class SoundsTable extends Table {
 
     public readonly sounds: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach((sound) => {
             this.sounds.push(sound[1]);
         });
@@ -145,7 +149,7 @@ class SpellsTable extends Table {
 
     public readonly spells: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach(spell =>
             this.spells.push(spell[1]));
     }
@@ -159,7 +163,7 @@ class StaticMessagesTable extends Table {
         yield* select(where(this.messages, item => item["1"] === id), item => item["0"]);
     }
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach(message => {
             if (message[0] !== '0') {
                 this.messages.set(message[1], Number(message[0]));
@@ -173,7 +177,7 @@ class SpellsEntityTable extends Table {
     public readonly attributes: string[] = [];
     public readonly skills: string[] = [];
 
-    protected set(data: string[][]) {
+    public set(data: readonly string[][]) {
         data.forEach(entry => {
             switch (entry[1]) {
                 case '0':
@@ -187,81 +191,28 @@ class SpellsEntityTable extends Table {
     }
 }
 
-export class Tables {
-    public readonly diseasesTable = new DiseasesTable();
-    public readonly factionsTable = new FactionsTable();
-    public readonly foesTable = new FoesTable();
-    public readonly globalVarsTable = new GlobalVarsTable();
-    public readonly itemsTable = new ItemsTable();
-    public readonly placesTable = new PlacesTable();
-    public readonly soundsTable = new SoundsTable();
-    public readonly spellsTable = new SpellsTable();
-    public readonly staticMessagesTable = new StaticMessagesTable();
-    public readonly spellsEntityTable = new SpellsEntityTable();
+/**
+ * Loader of csv tables.
+ */
+export class TableLoader {
+    private tablesPath: Promise<string | undefined> | undefined;
 
-    public async load(): Promise<void> {
+    /**
+     * Loads a csv table from its name.
+     * @param table Table.
+     * @param tableName Name of csv file with table content.
+     */
+    public async loadTable<T extends Table>(table: T, tableName: string): Promise<void> {
+        if (this.tablesPath === undefined) {
+            this.tablesPath = this.getTablesPath();
+        }
 
-        const tablesPath = await Tables.getTablesPath();
-        if (!tablesPath) {
+        const tablesPath = await this.tablesPath;
+        if (tablesPath === undefined) {
             return Promise.reject('Tables path is not set!');
         }
 
-        await Promise.all([
-            this.diseasesTable.load(path.join(tablesPath, 'Quests-Diseases.txt')),
-            this.factionsTable.load(path.join(tablesPath, 'Quests-Factions.txt')),
-            this.foesTable.load(path.join(tablesPath, 'Quests-Foes.txt')),
-            this.globalVarsTable.load(path.join(tablesPath, 'Quests-GlobalVars.txt')),
-            this.itemsTable.load(path.join(tablesPath, 'Quests-Items.txt')),
-            this.placesTable.load(path.join(tablesPath, 'Quests-Places.txt')),
-            this.soundsTable.load(path.join(tablesPath, 'Quests-Sounds.txt')),
-            this.spellsTable.load(path.join(tablesPath, 'Quests-Spells.txt')),
-            this.staticMessagesTable.load(path.join(tablesPath, 'Quests-StaticMessages.txt')),
-            this.spellsEntityTable.load(path.join(tablesPath, 'Spells-Entity.txt'))
-        ]);
-    }
-
-    /**
-     * Finds an array of values from its signature word.
-     */
-    public getValues(signatureWord: string): string[] | undefined {
-        switch (signatureWord) {
-            case ParameterTypes.disease:
-                return this.diseasesTable.diseases;
-            case ParameterTypes.faction:
-                return this.factionsTable.factions;
-            case ParameterTypes.factionType:
-                return this.factionsTable.factionTypes;
-            case ParameterTypes.group:
-                return this.factionsTable.groups;
-            case ParameterTypes.foe:
-                return this.foesTable.foes;
-            case ParameterTypes.commonItem:
-                return this.itemsTable.commonItems;
-            case ParameterTypes.artifactItem:
-                return this.itemsTable.artifacts;
-            case ParameterTypes.localRemotePlace:
-                return this.placesTable.localRemoteLocations;
-            case ParameterTypes.permanentPlace:
-                return this.placesTable.permanentLocations;
-            case ParameterTypes.locationType:
-                return this.placesTable.locationTypes;
-            case ParameterTypes.sound:
-                return this.soundsTable.sounds;
-            case ParameterTypes.spell:
-                return this.spellsTable.spells;
-            case ParameterTypes.attributeName:
-                return this.spellsEntityTable.attributes;
-            case ParameterTypes.skillName:
-                return this.spellsEntityTable.skills;
-            case ParameterTypes.season:
-                return ['summer', 'fall', 'winter', 'spring'];
-            case ParameterTypes.weather:
-                return ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
-            case ParameterTypes.climate:
-                return ['desert', 'desert2', 'mountain', 'mountainwoods', 'rainforest', 'ocean', 'swamp', 'subtropical', 'woodlands', 'hauntedwoodlands'];
-            case ParameterTypes.baseClimate:
-                return ['desert', 'mountain', 'temperate', 'swamp'];
-        }
+        table.set(parseCsvTable(await readTextFileLines(path.join(tablesPath, tableName))));
     }
 
     /**
@@ -270,7 +221,7 @@ export class Tables {
      * 2. From relative path if workspace is inside _StreamingAssets_ or includes it.
      * 3. With an open dialog request; the selected folder is written to user settings.
      */
-    private static async getTablesPath(): Promise<string | undefined> {
+    private async getTablesPath(): Promise<string | undefined> {
 
         // Path from settings
         const tablesPath = getOptions()['tablesPath'];
@@ -320,6 +271,78 @@ export class Tables {
                     return fsPath;
                 }
             }
+        }
+    }
+}
+
+export class Tables {
+    public readonly diseasesTable = new DiseasesTable();
+    public readonly factionsTable = new FactionsTable();
+    public readonly foesTable = new FoesTable();
+    public readonly globalVarsTable = new GlobalVarsTable();
+    public readonly itemsTable = new ItemsTable();
+    public readonly placesTable = new PlacesTable();
+    public readonly soundsTable = new SoundsTable();
+    public readonly spellsTable = new SpellsTable();
+    public readonly staticMessagesTable = new StaticMessagesTable();
+    public readonly spellsEntityTable = new SpellsEntityTable();
+
+    public async load(tableLoader: TableLoader): Promise<void> {
+        await Promise.all([
+            tableLoader.loadTable(this.diseasesTable, 'Quests-Diseases.txt'),
+            tableLoader.loadTable(this.factionsTable, 'Quests-Factions.txt'),
+            tableLoader.loadTable(this.foesTable, 'Quests-Foes.txt'),
+            tableLoader.loadTable(this.globalVarsTable, 'Quests-GlobalVars.txt'),
+            tableLoader.loadTable(this.itemsTable, 'Quests-Items.txt'),
+            tableLoader.loadTable(this.placesTable, 'Quests-Places.txt'),
+            tableLoader.loadTable(this.soundsTable, 'Quests-Sounds.txt'),
+            tableLoader.loadTable(this.spellsTable, 'Quests-Spells.txt'),
+            tableLoader.loadTable(this.staticMessagesTable, 'Quests-StaticMessages.txt'),
+            tableLoader.loadTable(this.spellsEntityTable, 'Spells-Entity.txt')
+        ]);
+    }
+
+    /**
+     * Finds an array of values from its signature word.
+     */
+    public getValues(signatureWord: string): string[] | undefined {
+        switch (signatureWord) {
+            case ParameterTypes.disease:
+                return this.diseasesTable.diseases;
+            case ParameterTypes.faction:
+                return this.factionsTable.factions;
+            case ParameterTypes.factionType:
+                return this.factionsTable.factionTypes;
+            case ParameterTypes.group:
+                return this.factionsTable.groups;
+            case ParameterTypes.foe:
+                return this.foesTable.foes;
+            case ParameterTypes.commonItem:
+                return this.itemsTable.commonItems;
+            case ParameterTypes.artifactItem:
+                return this.itemsTable.artifacts;
+            case ParameterTypes.localRemotePlace:
+                return this.placesTable.localRemoteLocations;
+            case ParameterTypes.permanentPlace:
+                return this.placesTable.permanentLocations;
+            case ParameterTypes.locationType:
+                return this.placesTable.locationTypes;
+            case ParameterTypes.sound:
+                return this.soundsTable.sounds;
+            case ParameterTypes.spell:
+                return this.spellsTable.spells;
+            case ParameterTypes.attributeName:
+                return this.spellsEntityTable.attributes;
+            case ParameterTypes.skillName:
+                return this.spellsEntityTable.skills;
+            case ParameterTypes.season:
+                return ['summer', 'fall', 'winter', 'spring'];
+            case ParameterTypes.weather:
+                return ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow'];
+            case ParameterTypes.climate:
+                return ['desert', 'desert2', 'mountain', 'mountainwoods', 'rainforest', 'ocean', 'swamp', 'subtropical', 'woodlands', 'hauntedwoodlands'];
+            case ParameterTypes.baseClimate:
+                return ['desert', 'mountain', 'temperate', 'swamp'];
         }
     }
 }

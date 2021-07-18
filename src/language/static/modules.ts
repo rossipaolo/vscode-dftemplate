@@ -8,18 +8,57 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as parser from '../../parser';
-
-import { ExtensionContext } from 'vscode';
-import { StaticData } from './staticData';
+import { StaticData, StaticDataLoader } from './staticData';
 import { tryParseWhenTaskCondition } from './whenTask';
 import { getOptions, select, where } from '../../extension';
 import { QuestResourceCategory, ActionDetails, ActionInfo } from './common';
+import { Module } from 'module';
 
 interface Module {
     displayName: string;
     conditions: ActionDetails[];
     actions: ActionDetails[];
     effects: string[];
+}
+
+/**
+ * Loads action/condition modules from json files.
+ */
+export class ModulesLoader extends StaticDataLoader {
+    public constructor(private readonly extensionPath: string) {
+        super();
+    }
+
+    /**
+     * Loads the requested modules, seeked from the extension resources and a folder named _Modules_
+     * inside the root directory of the workspace.
+     * @param moduleNames A list of module names without `.dfmodule.json` extension.
+     * @param extensionPath The extension path.
+     */
+    public async loadModules(moduleNames: string[]): Promise<Module[]> {
+        return (await Promise.all(moduleNames.map(async name => {
+            name = name + '.dfmodule.json';
+
+            try {
+                let modulePath = path.join(this.extensionPath, 'modules', name);
+                if (fs.existsSync(modulePath)) {
+                    return await this.parseFromJson<Module>(modulePath);
+                }
+
+                if (vscode.workspace.workspaceFolders) {
+                    modulePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'Modules', name);
+                    if (fs.existsSync(modulePath)) {
+                        return await this.parseFromJson<Module>(modulePath);
+                    }
+                }
+
+                vscode.window.showErrorMessage('Failed to find module ' + name + '.');
+            } catch (e) {
+                vscode.window.showErrorMessage('Failed to import module ' + name + ': ' + e);
+            }
+
+        }))).filter((x): x is Module => !!x);
+    }
 }
 
 /**
@@ -36,10 +75,10 @@ export class Modules extends StaticData {
 
     /**
      * Load all enabled modules.
-     * @param context Current context of extension.
+     * @param modulesLoader Loader of language modules.
      */
-    public async load(context: ExtensionContext): Promise<void> {
-        this.modules = await Modules.loadModules(getOptions()['modules'], context);
+    public async load(modulesLoader: ModulesLoader): Promise<void> {
+        this.modules = await modulesLoader.loadModules(getOptions()['modules']);
     }
 
     /**
@@ -66,7 +105,7 @@ export class Modules extends StaticData {
      * @param prefix Start of signature.
      * @param allowParameterAsFirstWord Accepts an action if the first word is a paremeter.
      */
-    public *findActions(prefix: string, allowParameterAsFirstWord:boolean = false): Iterable<ActionInfo> {
+    public *findActions(prefix: string, allowParameterAsFirstWord: boolean = false): Iterable<ActionInfo> {
         for (const module of this.modules) {
             for (const query of Modules.queries) {
                 const actions = query.fromModule(module);
@@ -136,39 +175,5 @@ export class Modules extends StaticData {
     public static isActionName(actionResult: ActionInfo, word: string) {
         const overload = actionResult.getSignature();
         return overload.startsWith(word) || overload.split(' ').find(x => !x.startsWith('$')) === word;
-    }
-
-    /**
-     * Loads the requested modules, seeked from the extension resources and a folder named _Modules_
-     * inside the root directory of the workspace.
-     * @param modules A list of module names without `.dfmodule.json` extension.
-     * @param context The extension context.
-     */
-    private static async loadModules(modules: string[], context: ExtensionContext): Promise<Module[]> {
-        return (await Promise.all(modules.map(async name => {
-            name = name + '.dfmodule.json';
-
-            try {
-
-                // Standard modules provided by this extension
-                let modulePath = path.join(context.extensionPath, 'modules', name);
-                if (fs.existsSync(modulePath)) {
-                    return await Modules.parseFromJson<Module>(modulePath);
-                }
-
-                // Modules folder inside the workspace
-                if (vscode.workspace.workspaceFolders) {
-                    modulePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'Modules', name);
-                    if (fs.existsSync(modulePath)) {
-                        return await Modules.parseFromJson<Module>(modulePath);
-                    }
-                }
-
-                vscode.window.showErrorMessage('Failed to find module ' + name + '.');
-            } catch (e) {
-                vscode.window.showErrorMessage('Failed to import module ' + name + ': ' + e);
-            }
-            
-        }))).filter((x): x is Module => !!x);
     }
 }

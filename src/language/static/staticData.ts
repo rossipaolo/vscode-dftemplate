@@ -7,6 +7,21 @@
 import { ActionInfo, readTextFile } from './common';
 
 /**
+ * Loads static data from json modules.
+ */
+export abstract class StaticDataLoader {
+
+    /**
+     * Loads and parses a json file.
+     * @param path Path to a json file.
+     * @returns Content of json file.
+     */
+    protected async parseFromJson<T = any>(path: string): Promise<T> {
+        return JSON.parse(await readTextFile(path));
+    }
+}
+
+/**
  * Manages tables with language data for intellisense features.
  */
 export abstract class StaticData {
@@ -73,9 +88,5 @@ export abstract class StaticData {
         signature = signature.replace(/\$\{\d\|/g, '(').replace(/\|\}/g, ')').replace(/,/g, '|');           // ${d|a,b|} -> (a|b)
         signature = signature.replace(/\$\{\d:[a-zA-Z0-9_-]+?\}/g, "[a-zA-Z0-9_\\-\\+'\\.]+");              // ${d:a}    -> [a-zA-Z0-9_-]+    
         return new RegExp('^\\s*' + signature + '\\s*$');
-    }
-
-    protected static async parseFromJson<T = any>(path: string): Promise<T> {
-        return JSON.parse(await readTextFile(path));
     }
 }
