@@ -140,7 +140,7 @@ export class Symbol implements QuestResource {
      * The range of the line where the symbol is defined.
      */
     public get blockRange() {
-        return this.line.range;
+        return parser.trimRange(this.line);
     }
 
     private constructor(
@@ -163,7 +163,7 @@ export class Symbol implements QuestResource {
         /**
          * Parameters provided with the symbol definition.
          */
-        public readonly signature: Parameter[] | undefined) {
+        public readonly signature: readonly Parameter[] | undefined) {
     }
 
     public getParameterRange(parameter: Parameter): Range | undefined {
@@ -197,11 +197,11 @@ export class Symbol implements QuestResource {
      */
     private static parseSignature(type: string, text: string, language: Language): Parameter[] | undefined {
         const definition = language.findDefinition(type, text);
-        if (definition) {
+        if (definition !== undefined) {
             if (definition.matches && definition.matches.length > 0) {
                 return definition.matches.reduce<Parameter[]>((parameters, word) => {
                     const match = text.match(word.regex);
-                    if (match) {
+                    if (match !== null) {
                         parameters.push({ type: word.signature, value: match[1] });
                     }
 

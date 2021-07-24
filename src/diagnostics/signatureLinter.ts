@@ -30,7 +30,7 @@ export class SignatureLinter {
         return this.analyseSignature(quest, action.line, action.signature, true);
     }
 
-    private analyseSignature(quest: Quest, line: TextLine, signature: Parameter[], areOrdered: boolean): Diagnostic[] {
+    private analyseSignature(quest: Quest, line: TextLine, signature: readonly Parameter[], areOrdered: boolean): Diagnostic[] {
         const diagnostics: Diagnostic[] = [];
 
         for (let index = 0; index < signature.length; index++) {

@@ -90,7 +90,7 @@ export class JsonLanguageLoader extends StaticDataLoader implements LanguageLoad
  */
 export class Language extends StaticData {
     private table: LanguageTable | null = null;
-    private definitions: Map<string, SymbolInfo[]> | null = null;
+    private definitions?: Map<string, SymbolInfo[]>;
 
     /**
      * Symbols used inside QRC message blocks to be expanded depending on context.
@@ -178,17 +178,23 @@ export class Language extends StaticData {
         }
     }
 
+    /**
+     * Finds a symbol definition in a line of text.
+     * @param name One of the symbol types.
+     * @param text The content of a line where a symbol is defined.
+     * @returns Symbol info for used symbol definition or undefined.
+     */
     public findDefinition(name: string, text: string): SymbolInfo | undefined {
-        if (this.definitions) {
-            const group = this.definitions.get(name);
-            if (group) {
+        if (this.definitions !== undefined) {
+            const group: readonly SymbolInfo[] | undefined = this.definitions.get(name);
+            if (group !== undefined) {
                 for (const definition of group) {
                     const regex = definition.match ? new RegExp('^\\s*' + definition.match + '\\s*$') :
                         Language.makeRegexFromSignature(definition.snippet);
                     if (!definition.signature) {
                         definition.signature = Language.prettySignature(definition.snippet);
                     }
-                    if (regex.test(text)) {
+                    if (regex.test(text) === true) {
                         return definition;
                     }
                 }
@@ -339,7 +345,7 @@ export class Language extends StaticData {
      * @param invocation A line of code where a symbol is defined.
      */
     public matchSymbol(type: string, invocation: string): Overload<SymbolInfo> | undefined {
-        if (this.definitions !== null) {
+        if (this.definitions !== undefined) {
             const all = this.definitions.get(type);
             if (all !== undefined) {
                 return {
