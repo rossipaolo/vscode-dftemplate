@@ -9,7 +9,7 @@ import * as path from 'path';
 import { ExtensionContext } from "vscode";
 import { TableLoader, Tables } from "./tables";
 import { Language, JsonLanguageLoader } from "./language";
-import { Modules, ModulesLoader } from "./modules";
+import { Modules, JsonModulesLoader } from "./modules";
 import { findWorkspaceSubFolder } from './common';
 
 /**
@@ -57,7 +57,7 @@ export class LanguageData {
         await Promise.all([
             data.tables.load(new TableLoader()),
             data.language.load(new JsonLanguageLoader(extensionPath)),
-            data.modules.load(new ModulesLoader(extensionPath))
+            data.modules.load(new JsonModulesLoader(extensionPath))
         ]);
         return data;
     }

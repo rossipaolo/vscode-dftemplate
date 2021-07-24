@@ -14,17 +14,48 @@ import { getOptions, select, where } from '../../extension';
 import { QuestResourceCategory, ActionDetails, ActionInfo } from './common';
 import { Module } from 'module';
 
-interface Module {
-    displayName: string;
-    conditions: ActionDetails[];
-    actions: ActionDetails[];
-    effects: string[];
+/**
+ * A module with language actions and other content.
+ */
+export interface Module {
+
+    /**
+     * A readable name for the module.
+     */
+    readonly displayName: string;
+
+    /**
+     * Conditions defined by this module.
+     */
+    readonly conditions?: readonly ActionDetails[];
+
+    /**
+     * Actions defined by this module.
+     */
+    readonly actions?: readonly ActionDetails[];
+    
+    /**
+     * Effect names.
+     */
+    readonly effects?: readonly string[];
+}
+
+/**
+ * A loader of language modules.
+ */
+export interface ModulesLoader {
+    
+    /**
+     * Loads content of language modules.
+     * @param moduleNames Names of modules to be loaded.
+     */
+    loadModules(moduleNames: readonly string[]): Promise<Module[]>;
 }
 
 /**
  * Loads action/condition modules from json files.
  */
-export class ModulesLoader extends StaticDataLoader {
+export class JsonModulesLoader extends StaticDataLoader implements ModulesLoader {
     public constructor(private readonly extensionPath: string) {
         super();
     }
@@ -35,7 +66,7 @@ export class ModulesLoader extends StaticDataLoader {
      * @param moduleNames A list of module names without `.dfmodule.json` extension.
      * @param extensionPath The extension path.
      */
-    public async loadModules(moduleNames: string[]): Promise<Module[]> {
+    public async loadModules(moduleNames: readonly string[]): Promise<Module[]> {
         return (await Promise.all(moduleNames.map(async name => {
             name = name + '.dfmodule.json';
 
@@ -126,8 +157,12 @@ export class Modules extends StaticData {
     public *caseInsensitiveSeek(prefix: string): Iterable<string> {
         prefix = prefix.toUpperCase();
         for (const module of this.modules) {
-            yield* select(where(module.conditions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
-            yield* select(where(module.actions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
+            if (module.conditions !== undefined) {
+                yield* select(where(module.conditions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
+            }
+            if (module.actions !== undefined) {
+                yield* select(where(module.actions, x => x.overloads[0].toUpperCase().startsWith(prefix)), x => x.overloads[0]);
+            }
         }
     }
 
@@ -149,13 +184,7 @@ export class Modules extends StaticData {
      * Checks if an effect key is defined inside a module.
      */
     public effectKeyExists(effectKey: string): boolean {
-        for (const module of where(this.modules, x => x.effects !== undefined)) {
-            if (module.effects.indexOf(effectKey) !== -1) {
-                return true;
-            }
-        }
-
-        return false;
+        return this.modules.find(x => x.effects !== undefined && x.effects.includes(effectKey) === true) !== undefined;
     }
 
     /**
@@ -163,8 +192,10 @@ export class Modules extends StaticData {
      */
     public *getEffectKeys(prefix: string): Iterable<string> {
         prefix = prefix.toUpperCase();
-        for (const module of where(this.modules, x => x.effects !== undefined)) {
-            yield* where(module.effects, x => x.toUpperCase().startsWith(prefix));
+        for (const module of this.modules) {
+            if (module.effects !== undefined) {
+                yield* where(module.effects, x => x.toUpperCase().startsWith(prefix));
+            }
         }
     }
 

@@ -237,8 +237,8 @@ export class Task implements QuestResource {
      * The range of the task with its actions block.
      */
     public get blockRange(): Range {
-        return this.actions.length === 0 ? this.line.range :
-            this.range.union(this.actions[this.actions.length - 1].line.range);
+        return this.actions.length === 0 ? parser.trimRange(this.line) :
+            this.range.union(parser.trimRange(this.actions[this.actions.length - 1].line));
     }
 
     private constructor(
@@ -278,6 +278,8 @@ export class Task implements QuestResource {
     /**
      * Checks if at least one action is fully within the given range
      * and there are no actions which are only partially inside.
+     * @param range A range between the first and the last action of this task.
+     * @returns True if range fully contains one or more actions.
      * @example 
      * 'clicked item _item_'  // true
      * 'cked item _item_'     // false
@@ -308,8 +310,8 @@ export class Task implements QuestResource {
  * An action that belongs to a task and perform a specific function when task is active and conditions are met.
  */
 export class Action implements QuestResource {
-    public line: TextLine;
-    public signature: Parameter[];
+    public readonly line: TextLine;
+    public readonly signature: readonly Parameter[];
     public readonly info: ActionInfo;
 
     /**
@@ -395,7 +397,7 @@ export class Action implements QuestResource {
      * Compares the parameter types of this action with the given words.
      * @param args An array of words.
      */
-    public isInvocationOf(...args: string[]) {
+    public isInvocationOf(...args: readonly string[]) {
         return args.length <= this.signature.length &&
             args.find((arg, index) => arg !== this.signature[index].type) === undefined;
     }
