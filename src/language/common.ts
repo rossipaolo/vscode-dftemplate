@@ -446,10 +446,9 @@ export class Message implements QuestResource {
      * The range of the message including its text block.
      */
     public get blockRange(): Range {
-        const lineRange = this.range.with(this.range.start.with(undefined, 0));
         return this.textBlock.length > 0 ?
-            lineRange.union(this.textBlock[this.textBlock.length - 1].range) :
-            lineRange;
+            this.definitionRange.union(parser.trimRange(this.textBlock[this.textBlock.length - 1])) :
+            this.definitionRange;
     }
 
     private constructor(
@@ -463,6 +462,11 @@ export class Message implements QuestResource {
          * The range of the message id.
          */
         public readonly range: Range,
+
+        /**
+         * The range of the message definition line.
+         */
+        private readonly definitionRange: Range,
 
         /**
          * A meaningful string that can be used to reference the message.
@@ -480,10 +484,9 @@ export class Message implements QuestResource {
      * @param summary The formatted comment block for this message.
      */
     public makeDocumentation(language: Language, summary?: string): string | undefined {
-
-        if (this.alias) {
+        if (this.alias !== undefined) {
             const details = language.findMessage(this.alias);
-            if (details) {
+            if (details !== undefined) {
                 summary = summary ? details.summary + EOL.repeat(2) + summary : details.summary;
             }
         }
@@ -532,12 +535,12 @@ export class Message implements QuestResource {
     public static parse(line: TextLine): Message | undefined {
         const id = parser.messages.parseMessage(line.text);
         if (id) {
-            return new Message(id, wordRange(line, String(id)));
+            return new Message(id, wordRange(line, String(id)), parser.trimRange(line));
         }
 
         const data = parser.messages.parseStaticMessage(line.text);
         if (data) {
-            return new Message(data.id, wordRange(line, String(data.id)), data.name, wordRange(line, data.name));
+            return new Message(data.id, wordRange(line, String(data.id)), parser.trimRange(line), data.name, wordRange(line, data.name));
         }
     }
 }

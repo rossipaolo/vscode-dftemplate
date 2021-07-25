@@ -171,9 +171,14 @@ export class Language extends StaticData {
         }
     }
 
+    /**
+     * Finds a static message from its name.
+     * @param name One the static message aliases (case sensitive).
+     * @returns Static message informations or undefined.
+     */
     public findMessage(name: string): QuestResourceDetails | undefined {
-        const id = this.tables.staticMessagesTable.messages.get(name);
-        if (id && this.table) {
+        const id: number | undefined = this.tables.staticMessagesTable.messages.get(name);
+        if (id !== undefined && this.table !== null) {
             return Language.makeMessageItem(this.table, id, name);
         }
     }

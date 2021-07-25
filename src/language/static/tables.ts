@@ -25,7 +25,7 @@ export function parseCsvTable(textLines: readonly string[]): string[][] {
     }, [] as string[][]);
 }
 
-abstract class Table {
+export abstract class Table {
     public abstract set(data: readonly string[][]): void;
 }
 
@@ -192,9 +192,16 @@ class SpellsEntityTable extends Table {
 }
 
 /**
+ * Loader of language tables.
+ */
+export interface TableLoader {
+    loadTable<T extends Table>(table: T, tableName: string): Promise<void>;
+}
+
+/**
  * Loader of csv tables.
  */
-export class TableLoader {
+export class CsvTableLoader implements TableLoader {
     private tablesPath: Promise<string | undefined> | undefined;
 
     /**

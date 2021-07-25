@@ -7,11 +7,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Range } from 'vscode';
-import { Action, Directive, Parameter, Symbol, Task } from '../../../language/common';
+import { Action, Directive, Message, Parameter, Symbol, Task } from '../../../language/common';
 import { QuestResourceDetails, SymbolInfo, SymbolType } from '../../../language/static/common';
 import { Language, LanguageTable } from '../../../language/static/language';
 import { Module, Modules } from '../../../language/static/modules';
-import { Tables } from '../../../language/static/tables';
+import { Table, Tables } from '../../../language/static/tables';
 import { tasks } from '../../../parser';
 
 suite('Language Test Suite', () => {
@@ -26,22 +26,38 @@ suite('Language Test Suite', () => {
                 '  Quest: QUESTNAME ',
                 '  Foe _spider_ is Spider  ',
                 ' _task_ task:',
-                '    clicked npc _npc_  '
+                '    clicked npc _npc_  ',
+                ' Message:  1021 ',
+                '<ce>  line 0',
+                '<ce>  line 1  ',
+                '   QuestorOffer:  [1000]  '
             ].join('\n')
         });
 
         tables = new Tables();
+        await tables.load({
+            loadTable<T extends Table>(table: T, tableName: string): Promise<void> {
+                if (tableName === 'Quests-StaticMessages.txt') {
+                    table.set([['1000', 'QuestorOffer']]);
+                }
+
+                return Promise.resolve();
+            }
+        });
         language = new Language(tables);
         await language.load({
             loadTable(): Promise<LanguageTable> {
                 const directives: Map<string, QuestResourceDetails> = new Map();
                 directives.set('Quest', { summary: '', signature: 'Quest: ${1:pattern}' })
 
+                const messages: Map<string, string> = new Map();
+                messages.set('1000', 'What the questor says when the PC makes contact for the quest.');
+
                 return Promise.resolve({
                     symbols: new Map(),
                     symbolsVariations: new Map(),
                     directives: directives,
-                    messages: new Map(),
+                    messages: messages,
                 });
             },
 
@@ -172,6 +188,43 @@ suite('Language Test Suite', () => {
                 assert.strictEqual(task.isValidSubRange(action.blockRange), true, 'block range is not a valid subrange.');
                 assert.strictEqual(task.isValidSubRange(action.range), false, 'task range is a valid subrange.');
             }
+        }
+    });
+
+    test('Message test', () => {
+        const message: Message | undefined = Message.parse(textDocument.lineAt(4));
+        if (message === undefined) {
+            assert.fail('message is undefined.');
+        } else {
+            message.textBlock.push(textDocument.lineAt(5));
+            message.textBlock.push(textDocument.lineAt(6));
+            assert.strictEqual(message.id, 1021);
+            assert.strictEqual(message.range.isEqual(new Range(4, 11, 4, 15)), true, 'range is not equal.');
+            assert.strictEqual(message.blockRange.isEqual(new Range(4, 1, 6, 12)), true, 'block range is not equal.');
+            assert.strictEqual(message.alias, undefined, 'alias is not undefined.');
+            assert.strictEqual(message.aliasRange, undefined, 'alias range is not undefined.');
+            assert.strictEqual(message.makeDocumentation(language, ''), '', 'static message documentation is not an empty string.');
+            assert.strictEqual(message.makePreview(true), 'Message: 1021 \n\nline 0 line 1');
+            assert.strictEqual(message.makePreview(false), 'Message: 1021 \nline 0 line 1');
+        }
+    });
+
+    test('Static Message test', () => {
+        const message: Message | undefined = Message.parse(textDocument.lineAt(7));
+        if (message === undefined) {
+            assert.fail('message is undefined.');
+        } else {
+            assert.strictEqual(message.id, 1000);
+            assert.strictEqual(message.range.isEqual(new Range(7, 19, 7, 23)), true, 'range is not equal.');
+            assert.strictEqual(message.blockRange.isEqual(new Range(7, 3, 7, 24)), true, 'block range is not equal.');
+            assert.strictEqual(message.alias, 'QuestorOffer');
+            if (message.aliasRange === undefined) {
+                assert.fail('alias range is undefined.');
+            } else {
+                assert.strictEqual(message.aliasRange.isEqual(new Range(7, 3, 7, 15)), true, 'alias range is not equal.');
+            }
+            assert.strictEqual(message.makeDocumentation(language, ''), 'What the questor says when the PC makes contact for the quest.');
+            assert.strictEqual(message.makePreview(false), 'QuestorOffer: [1000]');
         }
     });
 });

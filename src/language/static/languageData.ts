@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ExtensionContext } from "vscode";
-import { TableLoader, Tables } from "./tables";
+import { CsvTableLoader, Tables } from "./tables";
 import { Language, JsonLanguageLoader } from "./language";
 import { Modules, JsonModulesLoader } from "./modules";
 import { findWorkspaceSubFolder } from './common';
@@ -55,7 +55,7 @@ export class LanguageData {
         const data = new LanguageData(context);
         const extensionPath: string = context.extensionPath;
         await Promise.all([
-            data.tables.load(new TableLoader()),
+            data.tables.load(new CsvTableLoader()),
             data.language.load(new JsonLanguageLoader(extensionPath)),
             data.modules.load(new JsonModulesLoader(extensionPath))
         ]);
