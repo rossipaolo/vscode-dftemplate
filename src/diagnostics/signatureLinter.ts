@@ -5,12 +5,11 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as parser from '../parser';
-import { Diagnostic, TextLine } from 'vscode';
+import { Diagnostic } from 'vscode';
 import { SymbolType } from '../language/static/common';
 import { Errors } from './common';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { Parameter, Directive, Symbol, Action } from '../language/common';
+import { Parameter, QuestResourceWithParameters } from '../language/common';
 import { Quest } from '../language/quest';
 import { LanguageData } from '../language/static/languageData';
 
@@ -18,31 +17,16 @@ export class SignatureLinter {
     public constructor(private readonly data: LanguageData) {
     }
 
-    public analyseDirective(quest: Quest, directive: Directive) {
-        return this.analyseSignature(quest, directive.line, [directive.parameter], false);
-    }
-
-    public analyseSymbol(quest: Quest, symbol: Symbol) {
-        return symbol.signature ? this.analyseSignature(quest, symbol.line, symbol.signature, false) : [];
-    }
-
-    public analyseAction(quest: Quest, action: Action) {
-        return this.analyseSignature(quest, action.line, action.signature, true);
-    }
-
-    private analyseSignature(quest: Quest, line: TextLine, signature: readonly Parameter[], areOrdered: boolean): Diagnostic[] {
+    public analyseSignature(quest: Quest, resource: QuestResourceWithParameters): Diagnostic[] {
         const diagnostics: Diagnostic[] = [];
 
-        for (let index = 0; index < signature.length; index++) {
-            const parameter = signature[index];
-
-            const diagnostic = this.analyseParameter(quest, parameter, () => {
-                const wordPosition = areOrdered ? parser.findWordPosition(line.text, index) : line.text.indexOf(parameter.value);
-                return new vscode.Range(line.lineNumber, wordPosition, line.lineNumber, wordPosition + parameter.value.length);
-            });
-
-            if (diagnostic) {
-                diagnostics.push(diagnostic);
+        const signature: readonly Parameter[] | undefined = resource.signature;
+        if (signature !== undefined) {
+            for (let index = 0; index < signature.length; index++) {
+                const diagnostic = this.analyseParameter(quest, signature[index], () => resource.getRange(index));
+                if (diagnostic) {
+                    diagnostics.push(diagnostic);
+                }
             }
         }
 

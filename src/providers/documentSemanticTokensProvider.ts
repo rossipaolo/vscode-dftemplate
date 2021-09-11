@@ -27,7 +27,7 @@ export class TemplateDocumentSemanticTokensProvider implements vscode.DocumentSe
                 if (symbol.signature !== undefined) {
                     for (const parameter of symbol.signature) {
                         if (ParameterTypes.isRawInput(parameter.type, parameter.value)) {
-                            const range = symbol.getParameterRange(parameter);
+                            const range = symbol.getRange(parameter);
                             if (range !== undefined) {
                                 builder.push(range, 'string');
                             }

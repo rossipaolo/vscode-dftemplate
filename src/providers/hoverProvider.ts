@@ -7,14 +7,14 @@
 import { HoverProvider, Hover, TextDocument, Position, MarkdownString, CancellationToken } from 'vscode';
 import { EOL } from 'os';
 import { first } from '../extension';
-import { tasks } from '../parser';
 import { QuestResourceCategory, SymbolType } from '../language/static/common';
 import { Modules } from '../language/static/modules';
 import { Language } from '../language/static/language';
 import { LanguageData } from '../language/static/languageData';
-import { Symbol, Task } from '../language/common';
 import { Quests } from '../language/quests';
 import { Quest } from '../language/quest';
+import { TaskType } from '../parser';
+import { Symbol, Task } from '../language/resources';
 
 interface TemplateDocumentationParameter {
     name: string;
@@ -64,7 +64,7 @@ export class TemplateHoverProvider implements HoverProvider {
                 case 'message':
                     item = {
                         category: 'message',
-                        signature: resource.value.makePreview(false),
+                        signature: resource.value.makePreview(document.getText(resource.value.node.bodyRange), false),
                         summary: quest.makeDocumentation(resource.value)
                     };
                     break;
@@ -98,7 +98,7 @@ export class TemplateHoverProvider implements HoverProvider {
                     };
                     break;
                 case 'action':
-                    const actionInfo = this.data.modules.findAction(resource.value.line.text);
+                    const actionInfo = this.data.modules.findAction(resource.value.node.value);
                     if (actionInfo) {
                         let signature = actionInfo.moduleName + ' -> ' + actionInfo.getSignature();
                         const otherOverloads = actionInfo.details.overloads.length - 1;
@@ -207,7 +207,7 @@ export class TemplateHoverProvider implements HoverProvider {
     private static getTaskDescription(quest: Quest, task: Task): string {
         let summary = quest.makeDocumentation(task) || '';
 
-        const untilPerformed = first(quest.qbn.iterateTasks(), x => x.name === task.name && x.definition.type === tasks.TaskType.PersistUntil);
+        const untilPerformed = first(quest.qbn.iterateTasks(), x => x.name === task.name && x.node.type === TaskType.PersistUntil);
         if (untilPerformed !== undefined) {
             let untilPerformedSummary = quest.makeDocumentation(untilPerformed);
             if (untilPerformedSummary) {

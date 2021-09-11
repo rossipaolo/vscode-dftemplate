@@ -73,7 +73,7 @@ export class TemplateDocumentSymbolProvider implements vscode.DocumentSymbolProv
             // Tasks
             for (const task of quest.qbn.iterateTasks()) {
                 symbols.push(new SymbolInformation(
-                    task.definition.symbol,
+                    task.node.symbol.value,
                     task.isVariable ? SymbolKind.Variable : SymbolKind.Method,
                     'QBN',
                     quest.getLocation(task.blockRange)

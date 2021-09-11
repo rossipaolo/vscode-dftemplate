@@ -8,8 +8,8 @@ import * as vscode from 'vscode';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { SymbolType } from '../language/static/common';
-import { CategorizedQuestResource } from '../language/common';
 import { Quests } from '../language/quests';
+import { CategorizedQuestResource } from '../language/resources';
 
 export class TemplateDocumentHighlightProvider implements vscode.DocumentHighlightProvider {
 

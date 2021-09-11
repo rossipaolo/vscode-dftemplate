@@ -68,7 +68,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
             for (const symbol of quest.qbn.iterateSymbols()) {
                 this.data.language.getSymbolVariations(symbol.name, symbol.type).forEach(variation => {
                     const item = new vscode.CompletionItem(variation.word, vscode.CompletionItemKind.Field);
-                    item.detail = `${symbol.line.text.trim()} (${variation.description})`;
+                    item.detail = `${symbol.type} ${symbol.name}${symbol.node.pattern !== undefined ? ' ' + symbol.node.pattern.value : ''} (${variation.description})`;
                     items.push(item);
                 });
             }
@@ -121,7 +121,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                         for (const message of quest.qrc.messages) {
                             if (message.alias && regex.test(message.alias)) {
                                 const item = new CompletionItem(message.alias, vscode.CompletionItemKind.Struct);
-                                item.detail = message.makePreview(true);
+                                item.detail = message.makePreview(quest.document.getText(message.node.bodyRange), true);
                                 item.documentation = quest.makeDocumentation(message, true);
                                 items.push(item);
                             }
@@ -133,7 +133,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                             const messageID = String(message.id);
                             if (messageID.startsWith(prefix)) {
                                 const item = new CompletionItem(messageID, vscode.CompletionItemKind.Struct);
-                                item.detail = message.makePreview(true);
+                                item.detail = message.makePreview(quest.document.getText(message.node.bodyRange), true);
                                 item.documentation = quest.makeDocumentation(message, true);
                                 items.push(item);
                             }
@@ -161,7 +161,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
                 case ParameterTypes.task:
                     for (const task of quest.qbn.iterateTasks()) {
                         const kind = task.isVariable ? vscode.CompletionItemKind.Variable : vscode.CompletionItemKind.Method;
-                        const item = new vscode.CompletionItem(task.definition.symbol, kind);
+                        const item = new vscode.CompletionItem(task.node.symbol.value, kind);
                         item.detail = quest.document.lineAt(task.range.start.line).text.trim();
                         item.documentation = quest.makeDocumentation(task, true);
                         items.push(item);
@@ -242,7 +242,7 @@ export class TemplateCompletionItemProvider implements vscode.CompletionItemProv
         for (const symbol of quest.qbn.iterateSymbols()) {
             if ((!type || symbol.type === type) && symbol.name.startsWith(prefix)) {
                 const item = new CompletionItem(symbol.name, vscode.CompletionItemKind.Field);
-                item.detail = symbol.line.text.trim();
+                item.detail = `${symbol.type} ${symbol.name}${symbol.node.pattern !== undefined ? ' ' + symbol.node.pattern.value : ''}`;
                 items.push(item);
             }
         }

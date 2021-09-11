@@ -5,7 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { TextDocument, TextLine } from 'vscode';
+import { Position, Range, TextDocument, TextLine } from 'vscode';
+import { SymbolType } from './language/static/common';
 
 /**
  * Gets the first word in a line.
@@ -16,16 +17,6 @@ export function getFirstWord(text: string): string | undefined {
     if (match) {
         return match[1];
     }
-}
-
-/**
- * Gets the range of the first occurrence of `word` in the given text line.
- * @param line A document line.
- * @param word A word to seek in the line.
- * @returns The range of the first occurrence of the word if found, an empty range otherwise.
- */
-export function wordRange(line: vscode.TextLine, word: string): vscode.Range {
-    return subRange(line.range, line.text, word);
 }
 
 /**
@@ -48,31 +39,6 @@ export function subRange(range: vscode.Range, text: string, subString: string): 
         range.start.line, range.start.character + index,
         range.end.line, range.start.character + index + subString.length
     );
-}
-
-/**
- * Finds the char index of a word in a string.
- * For example wordIndex 2 in `give item _note_ to _vampleader_` is 5.
- */
-export function findWordPosition(text: string, wordIndex: number): number {
-    let insideWord = false;
-    for (let i = 0; i < text.length; i++) {
-        if (!/\s/.test(text[i])) {
-            if (!insideWord) {
-                if (wordIndex-- === 0) {
-                    return i;
-                }
-                insideWord = true;
-            }
-        }
-        else {
-            if (insideWord) {
-                insideWord = false;
-            }
-        }
-    }
-
-    return 0;
 }
 
 /**
@@ -112,131 +78,7 @@ export function getQuestBlocksRanges(document: TextDocument): { qrc: vscode.Rang
     };
 }
 
-/**
- * Gets the range of the given line without empty spaces at the borders.
- * @param line A document line.
- */
-export function trimRange(line: vscode.TextLine): vscode.Range {
-    return new vscode.Range(line.lineNumber, line.firstNonWhitespaceCharacterIndex,
-        line.lineNumber, line.text.replace(/\s+$/, '').length);
-}
-
-/**
- * Namespace for dealing with parsing messages.
- */
-export namespace messages {
-
-    /**
-     * Attempts to parse a message definition from the given text line.
-     * @param text A text line.
-     * @returns The id of the message if parse operation was successful, `undefined` otherwise.
-     */
-    export function parseMessage(text: string): number | undefined {
-        const results = text.match(/^\s*Message:\s+([0-9]+)/);
-        if (results) {
-            return Number(results[1]);
-        }
-    }
-
-    /**
-     * Attempts to parse a static message definition from the given text line.
-     * @param text A text line.
-     * @returns The id and name of the static message if parse operation was successful, `undefined` otherwise.
-     */
-    export function parseStaticMessage(text: string): { id: number, name: string } | undefined {
-        const results = text.match(/^\s*(.*):\s+\[\s*([0-9]+)\s*\]\s*$/);
-        if (results) {
-            return { id: Number(results[2]), name: results[1] };
-        }
-    }
-
-    /**
-     * Detects the range of a message block as lines are being provided. 
-     * Also allows to checks multiple lines at once.
-     */
-    export class MessageBlock {
-
-        private document: TextDocument;
-        private lineNumber: number;
-
-        public get currentLine() {
-            return this.lineNumber;
-        }
-
-        /**
-         * Makes a block range check for a message.
-         * @param document A quest document.
-         * @param lineNumber The QRC line where the message is defined.
-         */
-        public constructor(document: TextDocument, lineNumber: number) {
-            this.document = document;
-            this.lineNumber = lineNumber;
-        }
-
-        /**
-         * Checks that current line is inside a message block. If a line number is provided, 
-         * it checks that the block doesn't end before the requested line.
-         * @param lineNumber The target line number; must be higher than current.
-         */
-        public isInside(lineNumber?: number): boolean {
-
-            // End of document
-            if (this.isEndOfStream(++this.lineNumber)) {
-                return false;
-            }
-
-            // Check block ending
-            const text = this.document.lineAt(this.lineNumber).text;
-            if (text.length === 0 && this.nextLineIsBlockEnding()) {
-                return false;
-            }
-
-            // Fast forward to requested line
-            return lineNumber && lineNumber > this.lineNumber ? this.isInside(lineNumber) : true;
-        }
-
-        /**
-         * A message block ends with two empty lines or a line followed by another declaration.
-         */
-        private nextLineIsBlockEnding() {
-            if (this.isEndOfStream(this.lineNumber + 1)) {
-                return false;
-            }
-
-            const text = this.document.lineAt(this.lineNumber + 1).text;
-            return text.length === 0 || /^\s*(\s*-.*|.*\[\s*([0-9]+)\s*\]|Message:\s*([0-9]+)|QBN:)\s*$/.test(text);
-        }
-
-        private isEndOfStream(lineNumber: number) {
-            return lineNumber >= this.document.lineCount;
-        }
-    }
-}
-
-/**
- * Namespace for dealing with parsing symbols.
- */
 export namespace symbols {
-
-    /**
-     * Attempts to parse a symbol definition from the given text line.
-     * @param text A text line.
-     * @returns The name of the symbol if parse operation was successful, `undefined` otherwise.
-     */
-    export function parseSymbol(text: string): string | undefined {
-        const results = text.match(/^\s*(?:Person|Place|Item|Foe|Clock)\s*([a-zA-Z0-9._]+)/);
-        if (results) {
-            return results[1];
-        }
-    }
-
-    /**
-     * Finds all symbols with any accepted prefix.
-     * @param line A string to seek symbols within.
-     */
-    export function findAllSymbolsInALine(line: string): RegExpMatchArray | null {
-        return line.match(/(_{1,3}|={1,2})[a-zA-Z0-9_.-]+_/g);
-    }
 
     /**
      * Remove prefixes from a derived symbol. 
@@ -301,71 +143,337 @@ export namespace symbols {
     }
 }
 
+export enum TaskType {
+    /** Is started by a set or trigger: `_foo_ task:` */
+    Standard,
+
+    /** Is stopped when symbol flag is true: `until _foo_ performed:`*/
+    PersistUntil,
+
+    /** Boolean flag: `variable _foo_` */
+    Variable,
+
+    /** Boolean link to global variable: `Bar _foo_`*/
+    GlobalVarLink
+}
+
 /**
- * Namespace for dealing with parsing tasks.
+ * A syntax node parsed from a quest file.
  */
-export namespace tasks {
+export interface QuestNode {
 
-    export enum TaskType {
-        /** Is started by a set or trigger: `_foo_ task:` */
-        Standard,
+    /**
+     * The portion of a line where the node is declared.
+     */
+    readonly range: Range;
+}
 
-        /** Is stopped when symbol flag is true: `until _foo_ performed:`*/
-        PersistUntil,
+/**
+ * A terminal node of a quest script.
+ */
+export class QuestToken implements QuestNode {
 
-        /** Boolean flag: `variable _foo_` */
-        Variable,
+    /**
+     * The start position of the token.
+     */
+    public readonly position: Position;
 
-        /** Boolean link to global variable: `Bar _foo_`*/
-        GlobalVarLink
+    /**
+     * The text content of the token.
+     */
+    public readonly value: string;
+
+    /**
+     * The range of the token.
+     */
+    public get range(): Range {
+        return new Range(this.position, new Position(this.position.line, this.position.character + this.value.length));
+    }
+
+    public constructor(line: number, character: number, value: string) {
+        this.position = new Position(line, character);
+        this.value = value;
+    }
+}
+
+export interface DirectiveNode extends QuestNode {
+
+    /**
+     * The name of the directive (`Quest` in `Quest: QUESTNAME`).
+     */
+    readonly name: QuestToken;
+
+    /**
+     * The value assigned to the directive (`QUESTNAME` in `Quest: QUESTNAME`).
+     */
+    readonly content: QuestToken;
+}
+
+/**
+ * The definition of a QRC message.
+ */
+export interface MessageNode extends QuestNode {
+
+    /**
+     * The numeric id of the message.
+     */
+    readonly id: QuestToken;
+
+    /**
+     * The text alias if this is a static message, undefined otherwise.
+     */
+    readonly alias: QuestToken | undefined;
+
+    /**
+     * The range of the body of text.
+     */
+    bodyRange: Range;
+
+    /**
+     * Symbols found in the message text.
+     */
+    symbols?: QuestToken[];
+
+    /**
+     * Macros found in the message text.
+     */
+    macros?: QuestToken[];
+}
+
+/**
+ * The definition of a QBN resource symbol.
+ */
+export interface SymbolNode extends QuestNode {
+
+    /**
+     * The type of the symbol.
+     */
+    readonly type: QuestToken;
+
+    /**
+     * The name of the symbol.
+     */
+    readonly name: QuestToken;
+
+    /**
+     * The pattern with symbol args.
+     */
+    readonly pattern: QuestToken | undefined;
+}
+
+/**
+ * The definition of a task.
+ */
+export interface TaskNode extends QuestNode {
+
+    /**
+     * What kind of thask this is?
+     */
+    readonly type: TaskType;
+
+    /**
+     * The symbol that allow to reference this task.
+     */
+    readonly symbol: QuestToken;
+
+    /**
+     * The name of the global variable this task is linked to.
+     * `undefined` if the task is local to the quest that owns it.
+     */
+    readonly globalVarName?: QuestToken;
+}
+
+export class BuiltinTypes {
+    private readonly symbolTypes: readonly string[] = Object.values(SymbolType);
+
+    public constructor(private readonly globalVars: { has(value: string): boolean }) {
     }
 
     /**
-     * The definition of a task.
+     * Checks if a string is the name of a built-in symbol type, like `Place` in `Place _place_`.
+     * @param name The name of the type.
+     * @returns True if this is a QBN symbol type, false otherwise.
      */
-    export interface TaskDefinition {
-
-        /**
-         * The symbol that allow to reference this task.
-         */
-        readonly symbol: string;
-
-        /**
-         * What kind of thask this is?
-         */
-        readonly type: TaskType;
-
-        /**
-         * The name of the global variable this task is linked to.
-         * `undefined` if the task is local to the quest that owns it.
-         */
-        readonly globalVarName?: string;
+    public isSymbolType(name: string): boolean {
+        return this.symbolTypes.includes(name);
     }
 
     /**
-     * Attempts to parse a task definition from the given text line.
-     * @param text A text line.
-     * @param globalVars Known global variables.
-     * @returns The name and type of the task if parse operation was successful, `undefined` otherwise.
+     * Checks if a string is the name of a task "type" (i.e. the alias of a global variable), like `BrisiennaEnding` in `BrisiennaEnding _brisiennaEnding_`.
+     * @param name The name of the type.
+     * @returns True if this is a task type, false otherwise.
      */
-    export function parseTask(text: string, globalVars: Map<string, number>): TaskDefinition | undefined {
-        let results = text.match(/^\s*([a-zA-Z0-9\._-]+)\s*task:/);
-        if (results !== null) {
-            return { symbol: results[1], type: TaskType.Standard };
-        }
+    public isTaskType(name: string): boolean {
+        return this.globalVars.has(name);
+    }
+}
 
-        results = text.match(/^\s*until\s*([a-zA-Z0-9\._-]+)\s*performed/);
-        if (results !== null) {
-            return { symbol: results[1], type: TaskType.PersistUntil };
-        }
+/**
+ * Parses syntax nodes from a quest file.
+ */
+export class NodeParser {
 
-        results = text.match(/^\s*([a-zA-Z0-9\._-]+)\s*([a-zA-Z0-9\._-]+)/);
-        if (results !== null) {
-            if (results[1] === "variable") {
-                return { symbol: results[2], type: TaskType.Variable };
-            } else if (globalVars.has(results[1])) {
-                return { globalVarName: results[1], symbol: results[2], type: TaskType.GlobalVarLink };
+    public constructor(private readonly builtinTypes: BuiltinTypes) {
+    }
+
+    public parseDirective(line: TextLine): DirectiveNode | undefined {
+        const matchArray: RegExpMatchArray | null = line.text.match(/^(\s*)([a-zA-Z]+)(:\s*)(.+[^\s])(\s*)$/);
+        if (matchArray !== null) {
+            return {
+                range: this.getRange(line),
+                name: this.makeTokenFrom(matchArray, 2, line.lineNumber),
+                content: this.makeTokenFrom(matchArray, 4, line.lineNumber)
             }
         }
+    }
+
+    /**
+     * Attempts to parse a message definition from a text line.
+     * @param text A text line.
+     * @returns Message definition if parse operation was successful, `undefined` otherwise.
+     */
+    public parseMessage(line: TextLine): MessageNode | undefined {
+        const results: RegExpMatchArray | null = line.text.match(/^(\s*)(?:(Message:\s*)([0-9]+)|([a-zA-Z]+)(:\s+\[\s*)([0-9]+)\s*\])\s*$/);
+        if (results !== null) {
+            const alias: string | undefined = results[4];
+            return {
+                range: this.getRange(line),
+                bodyRange: new Range(line.lineNumber + 1, 0, line.lineNumber + 1, 0),
+                id: this.makeTokenFrom(results, alias !== undefined ? 6 : 3, line.lineNumber),
+                alias: alias !== undefined ? this.makeTokenFrom(results, 4, line.lineNumber) : undefined
+            }
+        }
+    }
+
+    /**
+     * Attempts to parse a symbol definition from a text line.
+     * @param text A text line.
+     * @returns Symbol definition if parse operation was successful, `undefined` otherwise.
+     */
+    public parseSymbol(line: TextLine): SymbolNode | undefined {
+        const matchArray: RegExpMatchArray | null = line.text.match(/^(\s*)([a-zA-Z]+)(\s*)([a-zA-Z0-9\._]+)(\s*)([^\s].*[^\s])?/);
+        if (matchArray !== null && this.builtinTypes.isSymbolType(matchArray[2]) === true) {
+            return {
+                range: this.getRange(line),
+                type: this.makeTokenFrom(matchArray, 2, line.lineNumber),
+                name: this.makeTokenFrom(matchArray, 4, line.lineNumber),
+                pattern: matchArray[6] !== undefined ? this.makeTokenFrom(matchArray, 6, line.lineNumber) : undefined
+            }
+        }
+    }
+
+    /**
+     * Attempts to parse a task definition from a text line.
+     * @param text A text line.
+     * @returns Task definition if parse operation was successful, `undefined` otherwise.
+     */
+    public parseTask(line: TextLine): TaskNode | undefined {
+        let results: RegExpMatchArray | null = line.text.match(/^(\s*)([a-zA-Z0-9\._-]+)\s*task:/);
+        if (results !== null) {
+            return { range: this.getRange(line), symbol: this.makeTokenFrom(results, 2, line.lineNumber), type: TaskType.Standard };
+        }
+
+        results = line.text.match(/^(\s*until\s*)([a-zA-Z0-9\._-]+)\s*performed/);
+        if (results !== null) {
+            return { range: this.getRange(line), symbol: this.makeTokenFrom(results, 2, line.lineNumber), type: TaskType.PersistUntil };
+        }
+
+        results = line.text.match(/^(\s*)([a-zA-Z0-9\._-]+)(\s*)([a-zA-Z0-9\._-]+)/);
+        if (results !== null) {
+            if (results[2] === "variable") {
+                return { range: this.getRange(line), symbol: this.makeTokenFrom(results, 4, line.lineNumber), type: TaskType.Variable };
+            } else if (this.builtinTypes.isTaskType(results[2])) {
+                return { range: this.getRange(line), globalVarName: this.makeTokenFrom(results, 2, line.lineNumber), symbol: this.makeTokenFrom(results, 4, line.lineNumber), type: TaskType.GlobalVarLink };
+            }
+        }
+    }
+
+    /**
+     * Parses a line as a leaf token. 
+     * @param line  A text line.
+     * @returns A quest token.
+     */
+    public parseToken(line: TextLine): QuestToken {
+        const character: number = line.text.search(/[^\s]/);
+        return new QuestToken(line.lineNumber, character !== -1 ? character : line.text.length, line.text.trim());
+    }
+
+    private getRange(line: TextLine): Range {
+        const character: number = line.text.search(/[^\s]/);
+        return character !== - 1 ?
+            new Range(line.lineNumber, character, line.lineNumber, character + line.text.trim().length) :
+            new Range(line.lineNumber, 0, line.lineNumber, 0);
+    }
+
+    private makeTokenFrom(results: RegExpMatchArray, resultIndex: number, line: number): QuestToken {
+        let character = 0;
+        for (let index = 1; index < resultIndex; index++) {
+            const result = results[index];
+            if (result !== undefined) {
+                character += result.length;
+            }
+        }
+
+        return new QuestToken(line, character, results[resultIndex]);
+    }
+}
+
+/**
+ * Parses a message block inside a quest file.
+ */
+export class MessageBlockParser {
+    public constructor(private readonly document: TextDocument, private readonly messageNode: MessageNode) {
+    }
+
+    /**
+     * Checks if this is the empty line at the end of the message block.
+     * A message block ends when next line matches one of the following:
+     * - End of file.
+     * - Another empty line.
+     * - A comment line.
+     * - A line with `:`, like a message definition or `QBN` block (see [github.com/Interkarma/daggerfall-unity](https://github.com/Interkarma/daggerfall-unity/blob/a42ca59f8ee386b753c1bbbb67d842a8c991447e/Assets/Scripts/Game/Questing/Parser.cs#L260))
+     * @param lineNumber The number of a line.
+     * @returns True if this is the empty line that ends the message block.
+     */
+    public isEndOfBlock(lineNumber: number): boolean {
+        if (lineNumber == this.document.lineCount - 1) {
+            return true;
+        }
+
+        const line = this.document.lineAt(lineNumber);
+        if (line.text.length === 0) {
+            if (line.lineNumber < this.document.lineCount - 1) {
+                const nextLine: TextLine = this.document.lineAt(lineNumber + 1);
+                if (nextLine.text.length == 0 || nextLine.text.startsWith('-', nextLine.firstNonWhitespaceCharacterIndex) || nextLine.text.indexOf(':') !== -1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Finds all symbols with any accepted prefix.
+     * @param line A string to seek symbols within.
+     */
+    public parseBodyLine(lineNumber: number): void {
+        const line: TextLine = this.document.lineAt(lineNumber);
+        this.messageNode.bodyRange = this.messageNode.bodyRange.with(undefined, new Position(line.lineNumber, line.text.trimRight().length));
+        this.messageNode.symbols = this.parseTokens(line, /(_{1,3}|={1,2})[a-zA-Z0-9_.-]+_/g, this.messageNode.symbols);
+        this.messageNode.macros = this.parseTokens(line, /%[a-z0-9]+\b/g, this.messageNode.macros);
+    }
+
+    private parseTokens(line: TextLine, regExp: RegExp, tokens: QuestToken[] | undefined): QuestToken[] | undefined {
+        let execArray: RegExpExecArray | null;
+        while ((execArray = regExp.exec(line.text)) !== null) {
+            if (tokens === undefined) {
+                tokens = [];
+            }
+
+            tokens.push(new QuestToken(line.lineNumber, execArray.index, execArray[0]));
+        }
+
+        return tokens;
     }
 }

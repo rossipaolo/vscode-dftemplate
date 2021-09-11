@@ -11,10 +11,12 @@ import { basename } from 'path';
 import { first } from '../extension';
 import { LanguageData } from './static/languageData';
 import { ParameterTypes } from './static/parameterTypes';
-import { QuestParseContext, QuestBlockKind, QuestResource, CategorizedQuestResource } from './common';
+import { QuestBlockKind, QuestResource } from './common';
 import { Preamble } from './preamble';
 import { Qbn } from './qbn';
 import { Qrc } from './qrc';
+import { BuiltinTypes, NodeParser } from '../parser';
+import { CategorizedQuestResource, QuestParseContext } from './resources';
 
 /**
  * A quest that corresponds to a text file.
@@ -57,6 +59,7 @@ export class Quest {
         const context: QuestParseContext = {
             data: data,
             document: document,
+            nodeParser: new NodeParser(new BuiltinTypes(data.tables.globalVarsTable.globalVars)),
             block: this.preamble,
             blockStart: 0
         };
@@ -64,18 +67,23 @@ export class Quest {
         for (let index = 0; index < this.document.lineCount; index++) {
             const line = this.document.lineAt(index);
 
-            // Skip empty lines
-            if (/^\s*$/.test(line.text)) {
+            if (context.currentMessageBlock !== undefined && context.currentMessageBlock.isEndOfBlock(index)) {
+                context.currentMessageBlock = undefined;
+            }
+
+            if (context.currentActionsBlock !== undefined && line.isEmptyOrWhitespace) {
+                context.currentActionsBlock = undefined;
+            }
+
+            if (line.isEmptyOrWhitespace) {
                 continue;
             }
 
-            // Store comments
-            if (/^\s*-/.test(line.text)) {
+            if (line.text.startsWith('-', line.firstNonWhitespaceCharacterIndex) === true) {
                 this.addComment(line);
                 continue;
             }
 
-            // Parse blocks separated by QRC and QBN directives
             if (context.block.kind === QuestBlockKind.Preamble && line.text.indexOf('QRC:') !== -1) {
                 context.block.setRange(document, 0, (context.blockStart = line.lineNumber) - 1);
                 context.block = this.qrc;
@@ -117,7 +125,7 @@ export class Quest {
      */
     public getNameLocation(): vscode.Location {
         const directive = this.preamble.questName;
-        const range = directive ? directive.valueRange : new vscode.Range(0, 0, 0, 0);
+        const range = directive ? directive.node.content.range : new vscode.Range(0, 0, 0, 0);
         return new vscode.Location(this.document.uri, this.document.validateRange(range));
     }
 
@@ -159,9 +167,9 @@ export class Quest {
                 if (message.range.contains(position) || (message.aliasRange !== undefined && message.aliasRange.contains(position))) {
                     return { kind: 'message', value: message };
                 } else if (word.startsWith('%')) {
-                    const macro = this.qrc.macros.find(x => x.range.contains(position));
+                    const macro = message.node.macros?.find(x => x.range.contains(position));
                     if (macro !== undefined) {
-                        return { kind: 'macro', value: macro.symbol };
+                        return { kind: 'macro', value: macro.value };
                     }
                 } else {
                     const symbol = this.qbn.getSymbol(word);
@@ -187,7 +195,7 @@ export class Quest {
             for (const task of this.qbn.iterateTasks()) {
                 if (task.name === word) {
                     return { kind: 'task', value: task };
-                } else if (task.definition.globalVarName === word) {
+                } else if (task.node.globalVarName?.value === word) {
                     return { kind: 'globalVar', value: word };
                 }
             }

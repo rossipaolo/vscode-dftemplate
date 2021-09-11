@@ -7,18 +7,20 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Range } from 'vscode';
-import { Action, Directive, Message, Parameter, Symbol, Task } from '../../../language/common';
+import { Parameter } from '../../../language/common';
+import { Action, Directive, Message, Symbol, Task } from '../../../language/resources';
 import { QuestResourceDetails, SymbolInfo, SymbolType } from '../../../language/static/common';
 import { Language, LanguageTable } from '../../../language/static/language';
 import { Module, Modules } from '../../../language/static/modules';
 import { Table, Tables } from '../../../language/static/tables';
-import { tasks } from '../../../parser';
+import { BuiltinTypes, MessageBlockParser, NodeParser, TaskNode, TaskType } from '../../../parser';
 
-suite('Language Test Suite', () => {
+suite('Resources Test Suite', () => {
     let textDocument: vscode.TextDocument;
     let tables: Tables;
     let language: Language;
     let modules: Modules;
+    let nodeParser: NodeParser;
 
     setup(async () => {
         textDocument = await vscode.workspace.openTextDocument({
@@ -92,10 +94,11 @@ suite('Language Test Suite', () => {
                 return Promise.resolve(modules);
             }
         });
+        nodeParser = new NodeParser(new BuiltinTypes(tables.globalVarsTable.globalVars));
     });
 
     test('Directive test', () => {
-        const directive: Directive | undefined = Directive.parse(textDocument.lineAt(0), language);
+        const directive: Directive | undefined = Directive.parse(textDocument.lineAt(0), nodeParser, language);
         if (directive === undefined) {
             assert.fail('directive is undefined.');
         } else {
@@ -103,12 +106,15 @@ suite('Language Test Suite', () => {
             assert.deepStrictEqual(directive.parameter, { type: '${pattern}', value: 'QUESTNAME' });
             assert.strictEqual(directive.range.isEqual(new Range(0, 2, 0, 7)), true, 'range is not equal.');
             assert.strictEqual(directive.blockRange.isEqual(new Range(0, 2, 0, 18)), true, 'block range is not equal.');
-            assert.strictEqual(directive.valueRange.isEqual(new Range(0, 9, 0, 18)), true, 'value range is not equal.');
+            const parameterRange = new Range(0, 9, 0, 18);
+            assert.strictEqual(directive.node.content.range.isEqual(parameterRange), true, 'value range is not equal.');
+            assert.strictEqual(directive.getRange(0).isEqual(parameterRange), true, 'parameter range is not equal.');
+            assert.strictEqual(directive.fromRange(parameterRange), directive.parameter);
         }
     });
 
     test('Symbol test', () => {
-        const symbol: Symbol | undefined = Symbol.parse(textDocument.lineAt(1), language);
+        const symbol: Symbol | undefined = Symbol.parse(textDocument.lineAt(1), nodeParser, language);
         if (symbol === undefined) {
             assert.fail('symbol is undefined.');
         } else {
@@ -119,8 +125,13 @@ suite('Language Test Suite', () => {
                 assert.fail('signature is undefined.');
             } else {
                 assert.strictEqual(signature.length, 1);
-                assert.strictEqual(signature[0].type, '${foe}');
-                assert.strictEqual(signature[0].value, 'Spider');
+                const parameter: Parameter = signature[0];
+                assert.strictEqual(parameter.type, '${foe}');
+                assert.strictEqual(parameter.value, 'Spider');
+                const parameterRange = new Range(1, 18, 1, 24);
+                assert.strictEqual(symbol.getRange(0)?.isEqual(parameterRange), true, 'index range is not equal');
+                assert.strictEqual(symbol.getRange(parameter)?.isEqual(parameterRange), true, 'parameter range is not equal');
+                assert.strictEqual(symbol.fromRange(parameterRange), parameter);
             }
             assert.strictEqual(symbol.range.isEqual(new Range(1, 6, 1, 14)), true, 'range is not equal.');
             assert.strictEqual(symbol.blockRange.isEqual(new Range(1, 2, 1, 24)), true, 'block range is not equal.');
@@ -128,23 +139,23 @@ suite('Language Test Suite', () => {
     });
 
     test('Task test', () => {
-        const task: Task | undefined = Task.parse(textDocument.lineAt(2), tables);
+        const task: Task | undefined = Task.parse(textDocument.lineAt(2), nodeParser);
         if (task === undefined) {
             assert.fail('task is undefined.');
         } else {
             assert.strictEqual(task.name, '_task_');
             assert.strictEqual(task.range.isEqual(new Range(2, 1, 2, 7)), true, 'range is not equal.');
             assert.strictEqual(task.blockRange.isEqual(new Range(2, 1, 2, 13)), true, 'block range is not equal.');
-            const definition: tasks.TaskDefinition = task.definition;
-            assert.strictEqual(definition.symbol, '_task_');
-            assert.strictEqual(definition.type, tasks.TaskType.Standard);
+            const definition: TaskNode = task.node;
+            assert.strictEqual(definition.symbol.value, '_task_');
+            assert.strictEqual(definition.type, TaskType.Standard);
             assert.strictEqual(definition.globalVarName, undefined);
             assert.strictEqual(task.isVariable, false);
         }
     });
 
     test('Action test', () => {
-        const action: Action | undefined = Action.parse(textDocument.lineAt(3), modules);
+        const action: Action | undefined = Action.parse(textDocument.lineAt(3), nodeParser, modules);
         if (action === undefined) {
             assert.fail('action is undefined.');
         } else {
@@ -159,6 +170,11 @@ suite('Language Test Suite', () => {
                 assert.strictEqual(signature[1].value, 'npc');
                 assert.strictEqual(signature[2].type, '${_person_}');
                 assert.strictEqual(signature[2].value, '_npc_');
+
+                const parameter: Parameter = signature[2];
+                const parameterRange = new Range(3, 16, 3, 21);
+                assert.strictEqual(action.getRange(2)?.isEqual(parameterRange), true, 'parameter range is not equal');
+                assert.strictEqual(action.fromRange(parameterRange), parameter);
             }
             assert.strictEqual(action.range.isEqual(new Range(3, 4, 3, 11)), true, 'range is not equal.');
             assert.strictEqual(action.blockRange.isEqual(new Range(3, 4, 3, 21)), true, 'block range is not equal.');
@@ -173,11 +189,11 @@ suite('Language Test Suite', () => {
     });
 
     test('Task block test', () => {
-        const task: Task | undefined = Task.parse(textDocument.lineAt(2), tables);
+        const task: Task | undefined = Task.parse(textDocument.lineAt(2), nodeParser);
         if (task === undefined) {
             assert.fail('task is undefined.');
         } else {
-            const action: Action | undefined = Action.parse(textDocument.lineAt(3), modules);
+            const action: Action | undefined = Action.parse(textDocument.lineAt(3), nodeParser, modules);
             if (action === undefined) {
                 assert.fail('action is undefined.');
             } else {
@@ -192,25 +208,26 @@ suite('Language Test Suite', () => {
     });
 
     test('Message test', () => {
-        const message: Message | undefined = Message.parse(textDocument.lineAt(4));
+        const message: Message | undefined = Message.parse(textDocument.lineAt(4), nodeParser, language);
         if (message === undefined) {
             assert.fail('message is undefined.');
         } else {
-            message.textBlock.push(textDocument.lineAt(5));
-            message.textBlock.push(textDocument.lineAt(6));
+            const messageBlockParser = new MessageBlockParser(textDocument, message.node);
+            messageBlockParser.parseBodyLine(5);
+            messageBlockParser.parseBodyLine(6);
             assert.strictEqual(message.id, 1021);
             assert.strictEqual(message.range.isEqual(new Range(4, 11, 4, 15)), true, 'range is not equal.');
             assert.strictEqual(message.blockRange.isEqual(new Range(4, 1, 6, 12)), true, 'block range is not equal.');
             assert.strictEqual(message.alias, undefined, 'alias is not undefined.');
             assert.strictEqual(message.aliasRange, undefined, 'alias range is not undefined.');
             assert.strictEqual(message.makeDocumentation(language, ''), '', 'static message documentation is not an empty string.');
-            assert.strictEqual(message.makePreview(true), 'Message: 1021 \n\nline 0 line 1');
-            assert.strictEqual(message.makePreview(false), 'Message: 1021 \nline 0 line 1');
+            assert.strictEqual(message.makePreview(textDocument.getText(message.node.bodyRange), true), 'Message: 1021 \n\nline 0 line 1');
+            assert.strictEqual(message.makePreview(textDocument.getText(message.node.bodyRange), false), 'Message: 1021 \nline 0 line 1');
         }
     });
 
     test('Static Message test', () => {
-        const message: Message | undefined = Message.parse(textDocument.lineAt(7));
+        const message: Message | undefined = Message.parse(textDocument.lineAt(7), nodeParser, language);
         if (message === undefined) {
             assert.fail('message is undefined.');
         } else {
@@ -224,7 +241,7 @@ suite('Language Test Suite', () => {
                 assert.strictEqual(message.aliasRange.isEqual(new Range(7, 3, 7, 15)), true, 'alias range is not equal.');
             }
             assert.strictEqual(message.makeDocumentation(language, ''), 'What the questor says when the PC makes contact for the quest.');
-            assert.strictEqual(message.makePreview(false), 'QuestorOffer: [1000]');
+            assert.strictEqual(message.makePreview(textDocument.getText(message.node.bodyRange), false), 'QuestorOffer: [1000]');
         }
     });
 });

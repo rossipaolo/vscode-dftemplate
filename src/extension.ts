@@ -230,7 +230,7 @@ function registerCommands(context: ExtensionContext, data: LanguageData, quests:
 
             const entries: vscode.QuickPickItem[] = [];
             for (const [alias, id] of data.tables.globalVarsTable.globalVars) {
-                if (!/^Unused\d+$/.test(alias) && first(qbn.iterateTasks(), x => x.definition.globalVarName === alias) === undefined) {
+                if (!/^Unused\d+$/.test(alias) && first(qbn.iterateTasks(), x => x.node.globalVarName?.value === alias) === undefined) {
                     entries.push({
                         label: alias,
                         detail: String(id),

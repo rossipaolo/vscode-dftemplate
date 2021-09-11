@@ -7,7 +7,9 @@
 import * as parser from '../parser';
 import { TextLine, Range } from 'vscode';
 import { first } from '../extension';
-import { QuestParseContext, QuestBlock, QuestBlockKind, Symbol, Task, Action, Parameter } from './common';
+import { QuestBlockKind, Parameter, QuestResourceWithParameters } from './common';
+import { TaskType } from '../parser';
+import { Action, QuestBlock, QuestParseContext, Symbol, Task } from './resources';
 
 /**
  * Quest resources and operation: the quest block that holds resources definition and tasks.
@@ -41,38 +43,42 @@ export class Qbn extends QuestBlock {
     * @param line A line in QBN block. 
     */
     public parse(line: TextLine, context: QuestParseContext): void {
-
-        // Symbol definition
-        const symbol = Symbol.parse(line, context.data.language);
-        if (symbol) {
-            Qbn.pushMapItem(this.symbols, symbol.name, symbol);
-            return;
-        }
-
-        // Task definition
-        const task = Task.parse(line, context.data.tables);
-        if (task) {
-            if (task.definition.type === parser.tasks.TaskType.PersistUntil) {
-                this.persistUntilTasks.push(task);
-            } else {
-                Qbn.pushMapItem(this.tasks, task.definition.symbol, task);
+        if (context.currentActionsBlock !== undefined) {
+            const action: Action | undefined = Action.parse(line, context.nodeParser, context.data.modules);
+            if (action !== undefined) {
+                context.currentActionsBlock.push(action);
+                return;
+            }
+        } else {
+            const symbol: Symbol | undefined = Symbol.parse(line, context.nodeParser, context.data.language);
+            if (symbol !== undefined) {
+                Qbn.pushMapItem(this.symbols, symbol.name, symbol);
+                return;
             }
 
-            context.currentActionsBlock = task.actions;
-            return;
-        }
+            const task: Task | undefined = Task.parse(line, context.nodeParser);
+            if (task !== undefined) {
+                if (task.node.type === TaskType.PersistUntil) {
+                    this.persistUntilTasks.push(task);
+                } else {
+                    Qbn.pushMapItem(this.tasks, task.node.symbol.value, task);
+                }
 
-        // Action invocation
-        const action = Action.parse(line, context.data.modules);
-        if (action) {
-            if (!context.currentActionsBlock) {
+                if (task.node.type === TaskType.Standard || task.node.type === TaskType.PersistUntil) {
+                    context.currentActionsBlock = task.actions;
+                }       
+                return;
+            }
+
+            const action: Action | undefined = Action.parse(line, context.nodeParser, context.data.modules);
+            if (action !== undefined) {
                 context.currentActionsBlock = this.entryPoint;
+                context.currentActionsBlock.push(action);
+                return;
             }
-            context.currentActionsBlock.push(action);
-            return;
         }
 
-        this.failedParse.push(line);
+        this.failedParse.push(context.nodeParser.parseToken(line));
     }
 
     /**
@@ -132,12 +138,9 @@ export class Qbn extends QuestBlock {
      * @param range The range of the parameter in the document.
      */
     public getParameter(range: Range): Parameter | undefined {
-        const invocation = first(this.iterateSymbols(), x => x.blockRange.contains(range)) ||
+        const resource: QuestResourceWithParameters | undefined = first(this.iterateSymbols(), x => x.blockRange.contains(range)) ??
             first(this.iterateActions(), x => x.getRange().contains(range));
-        if (invocation && invocation.signature) {
-            const value = invocation.line.text.substring(range.start.character, range.end.character);
-            return invocation.signature.find(x => x.value === value);
-        }
+        return resource?.fromRange(range);
     }
 
     private static pushMapItem<T>(items: Map<string, T | T[]>, key: string, item: T) {

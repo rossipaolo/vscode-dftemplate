@@ -25,7 +25,7 @@ export enum QuestResourceCategory {
 /**
  * Types of symbol resources.
  */
-export const enum SymbolType {
+export enum SymbolType {
     Item = 'Item',
     Person = 'Person',
     Place = 'Place',

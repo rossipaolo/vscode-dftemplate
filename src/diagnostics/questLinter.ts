@@ -8,17 +8,18 @@ import * as vscode from 'vscode';
 import * as parser from '../parser';
 import { Diagnostic } from "vscode";
 import { first, getOptions } from '../extension';
-import { wordRange } from '../parser';
+import { TaskType } from '../parser';
 import { SymbolType } from '../language/static/common';
 import { LanguageData } from '../language/static/languageData';
 import { Modules } from '../language/static/modules';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { Tables } from '../language/static/tables';
-import { QuestBlock, QuestBlockKind, Task } from '../language/common';
+import { QuestBlockKind } from '../language/common';
 import { Quest } from '../language/quest';
 import { Quests } from '../language/quests';
 import { Errors, findParameter, Hints, Warnings, Informations } from './common';
 import { SignatureLinter } from './signatureLinter';
+import { QuestBlock, Symbol, Task } from '../language/resources';
 
 export class QuestLinter {
     private readonly signatureLinter: SignatureLinter;
@@ -41,11 +42,11 @@ export class QuestLinter {
         const diagnostics: vscode.Diagnostic[] = [];
 
         for (const directive of quest.preamble.directives) {
-            diagnostics.push(...this.signatureLinter.analyseDirective(quest, directive));
+            diagnostics.push(...this.signatureLinter.analyseSignature(quest, directive));
 
-            if (!quest.document.isUntitled && !directive.valueRange.isEmpty &&
+            if (!quest.document.isUntitled && !directive.node.content.range.isEmpty &&
                 directive.name === 'Quest' && quest.name !== directive.parameter.value) {
-                diagnostics.push(Warnings.questNameMismatch(directive.valueRange));
+                diagnostics.push(Warnings.questNameMismatch(directive.node.content.range));
             }
         }
 
@@ -94,33 +95,30 @@ export class QuestLinter {
                     }
                 }
             }
-        }
 
-        // Symbols inside message blocks
-        for (const line of quest.qrc.iterateMessageLines()) {
-            const symbols = parser.symbols.findAllSymbolsInALine(line.text);
-            if (symbols) {
-                for (const symbol of symbols) {
-                    let symbolDefinition = quest.qbn.symbols.get(parser.symbols.getBaseSymbol(symbol));
-                    if (!symbolDefinition) {
-                        diagnostics.push(Errors.undefinedSymbol(wordRange(line, symbol), symbol));
+            if (message.node.symbols !== undefined) {
+                for (const symbol of message.node.symbols) {
+                    let symbolDefinition: Symbol | Symbol[] | undefined = quest.qbn.symbols.get(parser.symbols.getBaseSymbol(symbol.value));
+                    if (symbolDefinition === undefined) {
+                        diagnostics.push(Errors.undefinedSymbol(symbol.range, symbol.value));
                     } else {
                         if (Array.isArray(symbolDefinition)) {
                             symbolDefinition = symbolDefinition[0];
                         }
 
-                        diagnostics.push(!this.data.language.isSymbolVariationDefined(symbol, symbolDefinition.type) ?
-                            Warnings.incorrectSymbolVariation(wordRange(line, symbol), symbol, symbolDefinition.type) :
-                            Hints.changeSymbolVariation(wordRange(line, symbol)));
+                        diagnostics.push(!this.data.language.isSymbolVariationDefined(symbol.value, symbolDefinition.type) ?
+                            Warnings.incorrectSymbolVariation(symbol.range, symbol.value, symbolDefinition.type) :
+                            Hints.changeSymbolVariation(symbol.range));
                     }
                 }
             }
-        }
 
-        // Macros
-        for (const macro of quest.qrc.macros) {
-            if (!this.data.language.findSymbol(macro.symbol)) {
-                diagnostics.push(Errors.undefinedContextMacro(macro.range, macro.symbol));
+            if (message.node.macros !== undefined) {
+                for (const macro of message.node.macros) {
+                    if (!this.data.language.findSymbol(macro.value)) {
+                        diagnostics.push(Errors.undefinedContextMacro(macro.range, macro.value));
+                    }
+                }
             }
         }
 
@@ -143,8 +141,7 @@ export class QuestLinter {
 
             // Invalid signature or parameters
             if (!firstSymbol.signature) {
-                const lineRange = parser.trimRange(firstSymbol.line);
-                diagnostics.push(Errors.invalidDefinition(lineRange, name, firstSymbol.type));
+                diagnostics.push(Errors.invalidDefinition(firstSymbol.blockRange, name, firstSymbol.type));
             }
 
             // Duplicated definition
@@ -156,12 +153,12 @@ export class QuestLinter {
 
                 for (const symbol of symbols) {
                     if (symbol.signature) {
-                        diagnostics.push(...this.signatureLinter.analyseSymbol(quest, symbol));
+                        diagnostics.push(...this.signatureLinter.analyseSignature(quest, symbol));
                     }
                 }
             } else {
                 if (symbols.signature) {
-                    diagnostics.push(...this.signatureLinter.analyseSymbol(quest, symbols));
+                    diagnostics.push(...this.signatureLinter.analyseSignature(quest, symbols));
                 }
             }
 
@@ -172,7 +169,7 @@ export class QuestLinter {
 
             // Clock
             if (firstSymbol.type === SymbolType.Clock) {
-                if (!first(quest.qbn.iterateActions(), x => x.line.text.indexOf('start timer ' + name) !== -1)) {
+                if (!first(quest.qbn.iterateActions(), x => x.node.value.startsWith('start timer ' + name) === true)) {
                     diagnostics.push(Warnings.unstartedClock(firstSymbol.range, name));
                 }
                 if (!quest.qbn.tasks.get(name)) {
@@ -203,8 +200,8 @@ export class QuestLinter {
 
             // Unused      
             if (!this.taskIsUsed(quest, name, firstTask, this.data.modules)) {
-                const definition = firstTask.definition;
-                const name = definition.type === parser.tasks.TaskType.GlobalVarLink ? definition.symbol + ' from ' + definition.globalVarName : definition.symbol;
+                const definition = firstTask.node;
+                const name = definition.type === TaskType.GlobalVarLink ? definition.symbol.value + ' from ' + definition.globalVarName : definition.symbol.value;
                 diagnostics.push(Warnings.unusedDeclarationTask(firstTask.range, name));
             }
 
@@ -222,8 +219,8 @@ export class QuestLinter {
         for (const task of quest.qbn.persistUntilTasks) {
 
             // until performed is associated to undefined task
-            if (!quest.qbn.tasks.has(task.definition.symbol)) {
-                diagnostics.push(Errors.undefinedUntilPerformed(task.range, task.definition.symbol));
+            if (!quest.qbn.tasks.has(task.node.symbol.value)) {
+                diagnostics.push(Errors.undefinedUntilPerformed(task.range, task.node.symbol.value));
             }
         }
 
@@ -232,7 +229,7 @@ export class QuestLinter {
             if (action.info.isObsolete()) {
                 diagnostics.push(Informations.obsoleteAction(action.getRange(), action.getFullName()));
             }
-            
+
             if (hintTaskActivationForm) {
                 if (action.isInvocationOf('start', 'task')) {
                     const task = quest.qbn.getTask(action.signature[2].value);
@@ -255,7 +252,7 @@ export class QuestLinter {
                 }
             }
 
-            diagnostics.push(...this.signatureLinter.analyseAction(quest, action));
+            diagnostics.push(...this.signatureLinter.analyseSignature(quest, action));
         }
 
         this.failedParse(quest.qbn, diagnostics);
@@ -266,7 +263,7 @@ export class QuestLinter {
         if (!block.found) {
             const questName = quest.preamble.questName;
             if (questName) {
-                diagnostics.push(Errors.blockMissing(questName.valueRange, QuestBlockKind[block.kind]));
+                diagnostics.push(Errors.blockMissing(questName.node.content.range, QuestBlockKind[block.kind]));
             }
 
             return false;
@@ -276,8 +273,8 @@ export class QuestLinter {
     }
 
     private failedParse(block: QuestBlock, diagnostics: Diagnostic[]): void {
-        for (const line of block.failedParse) {
-            diagnostics.push(Errors.undefinedExpression(parser.trimRange(line), QuestBlockKind[block.kind]));
+        for (const unknownToken of block.failedParse) {
+            diagnostics.push(Errors.undefinedExpression(unknownToken.range, QuestBlockKind[block.kind]));
         }
     }
 
@@ -307,8 +304,8 @@ export class QuestLinter {
             }
         }
 
-        const regex = parser.symbols.makeSymbolRegex(symbol);
-        if (first(context.qrc.iterateMessageLines(), x => regex.test(x.text))) {
+        if (context.qrc.messages.find(x => x.node.symbols !== undefined &&
+            x.node.symbols.find(x => parser.symbols.getBaseSymbol(x.value) === baseSymbol)) !== undefined) {
             return true;
         }
 

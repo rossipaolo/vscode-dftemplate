@@ -5,13 +5,13 @@
 'use strict';
 
 import * as parser from '../parser';
-import { ReferenceProvider, TextDocument, Position, Location, CancellationToken, Range } from 'vscode';
+import { ReferenceProvider, TextDocument, Position, Location, CancellationToken } from 'vscode';
 import { Quest } from '../language/quest';
-import { Symbol, Message, Task } from '../language/common';
 import { SymbolType, ActionInfo } from '../language/static/common';
 import { ParameterTypes } from '../language/static/parameterTypes';
-import { wordRange } from '../parser';
+import { QuestToken } from '../parser';
 import { Quests } from '../language/quests';
+import { Message, Symbol, Task } from '../language/resources';
 
 export class TemplateReferenceProvider implements ReferenceProvider {
 
@@ -63,16 +63,17 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
         // Actions
         for (const action of quest.qbn.iterateActions()) {
-            for (const parameter of action.signature) {
+            for (let index = 0; index < action.signature.length; index++) {
+                const parameter = action.signature[index];
                 if (parameter.type === ParameterTypes.message || parameter.type === ParameterTypes.messageID) {
                     if (Number(parameter.value) === message.id) {
-                        locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
+                        locations.push(quest.getLocation(action.getRange(index)));
                     }
                 }
 
                 if (parameter.type === ParameterTypes.message || parameter.type === ParameterTypes.messageName) {
                     if (parameter.value === message.alias) {
-                        locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
+                        locations.push(quest.getLocation(action.getRange(index)));
                     }
                 }
             }
@@ -86,7 +87,7 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
         for (const symbol of quest.qbn.iterateSymbols()) {
             if (symbol.type === type) {
-                locations.push(quest.getLocation(wordRange(symbol.line, type)));
+                locations.push(quest.getLocation(symbol.node.type.range));
             }
         }
 
@@ -96,12 +97,13 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     public static symbolReferences(quest: Quest, symbol: Symbol, includeDeclaration: boolean = true): Location[] {
         const locations: Location[] = [];
 
-        // Messages
-        const regex = parser.symbols.makeSymbolRegex(symbol.name);
-        for (const line of quest.qrc.iterateMessageLines()) {
-            let match: RegExpExecArray | null;
-            while (match = regex.exec(line.text)) {
-                locations.push(quest.getLocation(new Range(line.lineNumber, match.index, line.lineNumber, match.index + match[0].length)));
+        for (const message of quest.qrc.messages) {
+            if (message.node.symbols !== undefined) {
+                for (const symbolOccurrence of message.node.symbols) {
+                    if (symbolOccurrence.value === symbol.name) {
+                        locations.push(quest.getLocation(symbolOccurrence.range));
+                    }
+                }
             }
         }
 
@@ -113,8 +115,9 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         // Actions
         const baseSymbol = parser.symbols.getBaseSymbol(symbol.name);
         for (const action of quest.qbn.iterateActions()) {
-            if (action.signature.find(x => x.value === baseSymbol)) {
-                locations.push(quest.getLocation(wordRange(action.line, baseSymbol)));
+            const index: number = action.signature.findIndex(x => x.value === baseSymbol);
+            if (index !== -1) {
+                locations.push(quest.getLocation(action.getRange(index)));
             }
         }
 
@@ -136,15 +139,16 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         }
 
         // UntilPerformed
-        for (const untilPerformed of quest.qbn.persistUntilTasks.filter(x => x.definition.symbol === task.definition.symbol)) {
+        for (const untilPerformed of quest.qbn.persistUntilTasks.filter(x => x.node.symbol === task.node.symbol)) {
             locations.push(quest.getLocation(untilPerformed.range));
         }
 
         // Actions
         for (const action of quest.qbn.iterateActions()) {
-            for (const parameter of action.signature) {
-                if (parameter.type === ParameterTypes.task && parameter.value === task.definition.symbol) {
-                    locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
+            for (let index = 0; index < action.signature.length; index++) {
+                const parameter = action.signature[index];
+                if (parameter.type === ParameterTypes.task && parameter.value === task.node.symbol.value) {
+                    locations.push(quest.getLocation(action.getRange(index)));
                 }
             }
         }
@@ -155,14 +159,9 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     public static actionReferences(quest: Quest, actionInfo: ActionInfo): Location[] {
         const locations: Location[] = [];
 
-        let name: string | undefined = undefined;
         for (const other of quest.qbn.iterateActions()) {
             if (actionInfo.isSameAction(other.info)) {
-                if (name === undefined) {
-                    name = other.getName();
-                }
-
-                locations.push(quest.getLocation(wordRange(other.line, name)));
+                locations.push(quest.getLocation(other.range));
             }
         }
 
@@ -180,15 +179,16 @@ export class TemplateReferenceProvider implements ReferenceProvider {
     }
 
     public static symbolMacroReferences(quest: Quest, symbol: string): Location[] {
-        const locations: Location[] = [];
-
-        for (const macro of quest.qrc.macros) {
-            if (macro.symbol === symbol) {
-                locations.push(quest.getLocation(macro.range));
+        return quest.qrc.messages.reduce((locations, message) => {
+            if (message.node.macros !== undefined) {
+                for (const macro of message.node.macros) {
+                    if (macro.value === symbol) {
+                        locations.push(quest.getLocation(macro.range));
+                    }
+                }
             }
-        }
-
-        return locations;
+            return locations;
+        }, [] as Location[]);
     }
 
     public static async workspaceSymbolMacroReferences(quests: Quests, symbol: string, token?: CancellationToken): Promise<Location[]> {
@@ -214,14 +214,15 @@ export class TemplateReferenceProvider implements ReferenceProvider {
         questNameOrId = Quest.indexToName(questNameOrId);
         for (const quest of await quests.getAll(token)) {
             for (const action of quest.qbn.iterateActions()) {
-                for (const parameter of action.signature) {
+                for (let index = 0; index < action.signature.length; index++) {
+                    const parameter = action.signature[index];
                     if (parameter.type === ParameterTypes.questName) {
                         if (parameter.value === questNameOrId) {
-                            locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
+                            locations.push(quest.getLocation(action.getRange(index)));
                         }
                     } else if (parameter.type === ParameterTypes.questID) {
                         if (Quest.indexToName(parameter.value) === questNameOrId) {
-                            locations.push(quest.getLocation(wordRange(action.line, parameter.value)));
+                            locations.push(quest.getLocation(action.getRange(index)));
                         }
                     }
                 }
@@ -236,9 +237,9 @@ export class TemplateReferenceProvider implements ReferenceProvider {
 
         for (const quest of await quests.getAll(token)) {
             for (const other of quest.qbn.iterateTasks()) {
-                const globalVarName = other.definition.globalVarName;
-                if (globalVarName && name === globalVarName) {
-                    locations.push(quest.getLocation(wordRange(quest.document.lineAt(other.range.start.line), globalVarName)));
+                const globalVarName: QuestToken | undefined = other.node.globalVarName;
+                if (globalVarName !== undefined && name === globalVarName.value) {
+                    locations.push(quest.getLocation(globalVarName.range));
                 }
             }
         }

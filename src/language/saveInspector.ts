@@ -9,7 +9,7 @@ import * as util from 'util';
 import { Quest } from './quest';
 import { first } from '../extension';
 import { readTextFile, SymbolType } from './static/common';
-import { CategorizedQuestResource } from './common';
+import { CategorizedQuestResource } from './resources';
 
 class SaveInspectorItem extends vscode.TreeItem {
     public readonly iconPath = new vscode.ThemeIcon('file');
@@ -233,7 +233,7 @@ export class SaveInspector {
 
                             if (taskData !== undefined) {
                                 const actionsData: any[] = taskData.actions;
-                                const actionData = actionsData.find(x => x.debugSource === resource.value.line.text.trim());
+                                const actionData = actionsData.find(x => x.debugSource === resource.value.node.value);
                                 if (actionData !== undefined) {
                                     data = Object.assign({}, actionData);
                                     delete data.type;

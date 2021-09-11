@@ -4,10 +4,11 @@
 
 'use strict';
 
-import * as parser from '../parser';
 import { TextLine, Range, Position } from 'vscode';
 import { Tables } from './static/tables';
-import { QuestParseContext, QuestBlock, QuestBlockKind, Message, ContextMacro } from './common';
+import { QuestBlockKind } from './common';
+import { MessageBlockParser } from '../parser';
+import { QuestBlock, Message, QuestParseContext } from './resources';
 
 /**
  * The quest block that holds text messages used by QBN resources.
@@ -22,38 +23,30 @@ export class Qrc extends QuestBlock {
     public readonly messages: Message[] = [];
 
     /**
-     * Context macros used by messages.
-     */
-    public readonly macros: ContextMacro[] = [];
-
-    /**
-    * Parses a line in a QRC block and builds its diagnostic context.
+    * Parses a line in a QRC block.
     * @param document A quest document.
     * @param line A line in QRC block.
     */
     public parse(line: TextLine, context: QuestParseContext): void {
-
-        // Inside a message block
-        if (this.messages.length > 0 && context.currentMessageBlock && context.currentMessageBlock.isInside(line.lineNumber)) {
-            this.parseMessageLine(line);
+        if (context.currentMessageBlock !== undefined) {
+            context.currentMessageBlock.parseBodyLine(line.lineNumber);
             return;
         }
 
-        // Message definition 
-        const message = Message.parse(line);
-        if (message) {
+        const message: Message | undefined = Message.parse(line, context.nodeParser, context.data.language);
+        if (message !== undefined) {
             this.messages.push(message);
-            context.currentMessageBlock = new parser.messages.MessageBlock(context.document, line.lineNumber);
+            context.currentMessageBlock = new MessageBlockParser(context.document, message.node);
             return;
-        }   
+        }
 
-        // Undefined expression in qrc block
         if (context.currentMessageBlock) {
             context.currentMessageBlock = undefined;
         }
-        this.failedParse.push(line);
+
+        this.failedParse.push(context.nodeParser.parseToken(line));
     }
-    
+
     /**
      * Gets a message this QRC block.
      * @param arg A numeric id, text alias or range.
@@ -74,15 +67,6 @@ export class Qrc extends QuestBlock {
         }
     }
 
-    /**
-     * Iterates all text lines inside all message blocks.
-     */
-    public *iterateMessageLines(): Iterable<TextLine> {
-        for (const message of this.messages) {
-            yield* message.textBlock;
-        }
-    }
-    
     /**
      * Finds an available message id which is bigger or equal than the given id
      * or the id of the message above the given position.
@@ -106,21 +90,5 @@ export class Qrc extends QuestBlock {
             id++;
         }
         return id;
-    }
-
-    private parseMessageLine(line: TextLine): void {
-
-        // Text
-        this.messages[this.messages.length - 1].textBlock.push(line);
-
-        // Macros
-        const regex = /%[a-z0-9]+\b/g;
-        let result: RegExpExecArray | null;
-        while (result = regex.exec(line.text)) {
-            this.macros.push({
-                symbol: result[0],
-                range: new Range(line.lineNumber, result.index, line.lineNumber, result.index + result[0].length)
-            });
-        }
     }
 }

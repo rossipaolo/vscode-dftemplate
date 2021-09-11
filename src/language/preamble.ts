@@ -5,7 +5,8 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { QuestBlock, QuestBlockKind, Directive, QuestParseContext } from './common';
+import { QuestBlockKind } from './common';
+import { Directive, QuestBlock, QuestParseContext } from './resources';
 
 /**
  * The first block of a quest.
@@ -31,13 +32,13 @@ export class Preamble extends QuestBlock {
     * @param line A line in the preamble.
     */
     public parse(line: vscode.TextLine, context: QuestParseContext): void {
-        const directive = Directive.parse(line, context.data.language);
+        const directive = Directive.parse(line, context.nodeParser, context.data.language);
         if (directive) {
             this.directives.push(directive);
             return;
         }
 
-        this.failedParse.push(line);
+        this.failedParse.push(context.nodeParser.parseToken(line));
     }
 
     /**

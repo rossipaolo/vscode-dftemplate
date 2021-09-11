@@ -51,7 +51,7 @@ export class TemplateCodeLensProvider implements vscode.CodeLensProvider {
 
             // Triggered by clock
             for (const symbol of quest.qbn.iterateSymbols()) {
-                if (symbol.type === 'Clock' && symbol.name === task.definition.symbol) {
+                if (symbol.type === 'Clock' && symbol.name === task.node.symbol.value) {
                     codelenses.push(new CodeLens(task.range,
                         {
                             title: 'clock timer',

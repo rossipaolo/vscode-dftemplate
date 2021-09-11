@@ -11,12 +11,13 @@ import { getOptions, first, where } from '../extension';
 import { StaticData } from '../language/static/staticData';
 import { ParameterTypes } from '../language/static/parameterTypes';
 import { LanguageData } from '../language/static/languageData';
-import { QuestResource, Task } from '../language/common';
+import { QuestResource } from '../language/common';
 import { Quests } from '../language/quests';
 import { DiagnosticCode } from '../diagnostics/common';
-import { symbols, wordRange } from '../parser';
+import { subRange, symbols, TaskType } from '../parser';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { TemplateRenameProvider } from './renameProvider';
+import { Message, Task } from '../language/resources';
 
 export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
@@ -103,14 +104,13 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     }
                     break;
                 case DiagnosticCode.UndefinedStaticMessage:
-                    const message = quest.qrc.getMessage(diagnostic.range, this.data.tables);
-                    if (message && message.alias) {
-                        const aliasRange = wordRange(document.lineAt(diagnostic.range.start.line), message.alias);
+                    const message: Message | undefined = quest.qrc.getMessage(diagnostic.range, this.data.tables);
+                    if (message !== undefined && message.node.alias !== undefined) {
                         for (const [name, id] of this.data.tables.staticMessagesTable.messages) {
                             if (id === message.id) {
                                 action = new CodeAction(`Change to '${name}'`, CodeActionKind.QuickFix);
                                 action.edit = new WorkspaceEdit();
-                                action.edit.replace(document.uri, aliasRange, name);
+                                action.edit.replace(document.uri, message.node.alias.range, name);
                                 actions.push(action);
                             }
                         }
@@ -158,7 +158,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     }
                     break;
                 case DiagnosticCode.UndefinedTask:
-                    const taskNames = Array.from(quest.qbn.iterateTasks()).map(x => x.definition.symbol);
+                    const taskNames = Array.from(quest.qbn.iterateTasks()).map(x => x.node.symbol.value);
                     action = TemplateCodeActionProvider.bestMatch(document, diagnostic.range, taskNames);
                     if (action) {
                         actions.push(action);
@@ -251,7 +251,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                         const newName = quest.name;
                         action = new CodeAction(`Change name to ${newName}`, CodeActionKind.QuickFix);
                         action.edit = new WorkspaceEdit();
-                        action.edit.replace(document.uri, questNameDirective.valueRange, newName);
+                        action.edit.replace(document.uri, questNameDirective.node.content.range, newName);
                         actions.push(action);
                     }
                 break;
@@ -268,7 +268,7 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
                     if (task) {
                         action = new CodeAction('Convert to variable', CodeActionKind.QuickFix);
                         action.edit = new WorkspaceEdit();
-                        action.edit.replace(document.uri, task.blockRange, `variable ${task.definition.symbol}`);
+                        action.edit.replace(document.uri, task.blockRange, `variable ${task.node.symbol}`);
                         if (getOptions()['diagnostics']['hintTaskActivationForm']) {
                             TemplateCodeActionProvider.changeTextEdits(document,
                                 TemplateReferenceProvider.taskReferences(quest, task, false), 'start task', 'setvar', action.edit);
@@ -318,10 +318,10 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
 
         if (range.isSingleLine) {
             for (const task of quest.qbn.iterateTasks()) {
-                if (task.range.intersection(range) !== undefined && task.definition.type === parser.tasks.TaskType.Variable) {
+                if (task.range.intersection(range) !== undefined && task.node.type === TaskType.Variable) {
                     const action = new CodeAction('Convert to task', CodeActionKind.RefactorRewrite);
                     action.edit = new WorkspaceEdit();
-                    action.edit.replace(document.uri, task.blockRange, `${task.definition.symbol} task:`);
+                    action.edit.replace(document.uri, task.blockRange, `${task.node.symbol} task:`);
                     if (getOptions()['diagnostics']['hintTaskActivationForm']) {
                         TemplateCodeActionProvider.changeTextEdits(document,
                             TemplateReferenceProvider.taskReferences(quest, task, false), 'setvar', 'start task', action.edit);
@@ -376,13 +376,15 @@ export class TemplateCodeActionProvider implements vscode.CodeActionProvider {
     private static changeText(document: vscode.TextDocument, range: vscode.Range, from: string, to: string) {
         const action = new CodeAction(`Change to ${to}`, CodeActionKind.QuickFix);
         action.edit = new WorkspaceEdit();
-        action.edit.replace(document.uri, wordRange(document.lineAt(range.start.line), from), to);
+        const line: vscode.TextLine = document.lineAt(range.start.line);
+        action.edit.replace(document.uri, subRange(line.range, line.text, from), to);
         return action;
     }
 
     private static changeTextEdits(document: vscode.TextDocument, locations: vscode.Location[], from: string, to: string, edit: WorkspaceEdit) {
         for (const location of locations) {
-            const range = wordRange(document.lineAt(location.range.start.line), from);
+            const line: vscode.TextLine = document.lineAt(location.range.start.line);
+            const range = subRange(line.range, line.text, from);
             if (!range.isEmpty) {
                 edit.replace(document.uri, range, to);
             }

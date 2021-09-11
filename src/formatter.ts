@@ -9,6 +9,7 @@ import * as parser from './parser';
 import { Range, TextEdit, TextLine, TextDocument, FormattingOptions, Position } from 'vscode';
 import { getOptions } from './extension';
 import { Tables } from './language/static/tables';
+import { BuiltinTypes, MessageNode, NodeParser, TaskType } from './parser';
 
 interface FormatterResults {
     textEdit?: TextEdit;
@@ -55,6 +56,7 @@ export class Formatter {
     private readonly document: TextDocument;
     private readonly indent: string;
     private readonly formatEmptyLines: boolean;
+    private readonly nodeParser: NodeParser;
 
     /**
     * A new instance of a formatter for a Template document.
@@ -63,10 +65,11 @@ export class Formatter {
     * @param formatEmptyLines Trim empty lines and keep a single one between blocks.
     * @param tables Language tables used for parsing.
     */
-    public constructor(document: TextDocument, options: FormattingOptions, formatEmptyLines: boolean, private readonly tables: Tables) {
+    public constructor(document: TextDocument, options: FormattingOptions, formatEmptyLines: boolean, tables: Tables) {
         this.document = document;
         this.indent = options.insertSpaces ? ' '.repeat(options.tabSize) : '\t';
         this.formatEmptyLines = formatEmptyLines;
+        this.nodeParser = new NodeParser(new BuiltinTypes(tables.globalVarsTable.globalVars));
     }
 
     /**
@@ -230,60 +233,56 @@ export class Formatter {
         const instance = this;
         let lastCenteredTokenLine: number = -1;
 
-        // Format message block following a declaration
-        function makeMessageResults(textEdit: TextEdit | undefined) {
-            const messageBlock = new parser.messages.MessageBlock(instance.document, line.lineNumber);
-            const formatterResults: FormatterResults = {
-                textEdit: textEdit,
-                formatNextLineRequest: {
-                    requestLine: line => messageBlock.isInside(line.lineNumber),
-                    formatLine: line => {
-
-                        // Handle center justification token
-                        const centeredFormatEdits = instance.formatMessageLineWithCenterToken(line);
-                        if (centeredFormatEdits !== null) {
-                            lastCenteredTokenLine = line.lineNumber;
+        const messageNode: MessageNode | undefined = this.nodeParser.parseMessage(line);
+        if (messageNode !== undefined) {
+            const makeMessageResults = (textEdit: TextEdit | undefined) => {
+                const messageBlock = new parser.MessageBlockParser(instance.document, messageNode);
+                const formatterResults: FormatterResults = {
+                    textEdit: textEdit,
+                    formatNextLineRequest: {
+                        requestLine: line => !messageBlock.isEndOfBlock(line.lineNumber),
+                        formatLine: line => {
+    
+                            // Handle center justification token
+                            const centeredFormatEdits = instance.formatMessageLineWithCenterToken(line);
+                            if (centeredFormatEdits !== null) {
+                                lastCenteredTokenLine = line.lineNumber;
+                                return {
+                                    textEdits: centeredFormatEdits,
+                                    formatNextLineRequest: formatterResults.formatNextLineRequest
+                                };
+                            }
+    
+                            // Handle split justification token
+                            const splitTokenEdit = instance.formatMessageLineWithSplitToken(line, lastCenteredTokenLine === line.lineNumber - 1);
+                            if (splitTokenEdit !== null) {
+                                return {
+                                    textEdit: splitTokenEdit,
+                                    formatNextLineRequest: formatterResults.formatNextLineRequest
+                                };
+                            }
+    
+                            // A message block is terminated when another message starts or with two empty lines.
+                            // A single empty line is allowed but is better to use a space char to indicate that
+                            // is only a break in the message text and not a block end.
                             return {
-                                textEdits: centeredFormatEdits,
+                                textEdit: /^\s*$/.test(line.text) && line.text !== ' ' ? new TextEdit(line.range, ' ') : undefined,
                                 formatNextLineRequest: formatterResults.formatNextLineRequest
                             };
                         }
-
-                        // Handle split justification token
-                        const splitTokenEdit = instance.formatMessageLineWithSplitToken(line, lastCenteredTokenLine === line.lineNumber - 1);
-                        if (splitTokenEdit !== null) {
-                            return {
-                                textEdit: splitTokenEdit,
-                                formatNextLineRequest: formatterResults.formatNextLineRequest
-                            };
-                        }
-
-                        // A message block is terminated when another message starts or with two empty lines.
-                        // A single empty line is allowed but is better to use a space char to indicate that
-                        // is only a break in the message text and not a block end.
-                        return {
-                            textEdit: /^\s*$/.test(line.text) && line.text !== ' ' ? new TextEdit(line.range, ' ') : undefined,
-                            formatNextLineRequest: formatterResults.formatNextLineRequest
-                        };
                     }
-                }
-            };
+                };
+    
+                return formatterResults;
+            }
 
-            return formatterResults;
-        }
-
-        // Static message declaration
-        const staticMessage = parser.messages.parseStaticMessage(line.text);
-        if (staticMessage) {
-            return makeMessageResults(!/^[a-zA-Z]+:  \[[0-9]+\]$/.test(line.text) ?
-                new TextEdit(line.range, staticMessage.name + ':  [' + staticMessage.id + ']') : undefined);
-        }
-
-        // Additional message declaration
-        const additionalMessageID = parser.messages.parseMessage(line.text);
-        if (additionalMessageID) {
-            return makeMessageResults(!/^Message:  [0-9]+$/.test(line.text) ?
-                new TextEdit(line.range, 'Message:  ' + additionalMessageID) : undefined);
+            if (messageNode.alias !== undefined) {
+                return makeMessageResults(!/^[a-zA-Z]+:  \[[0-9]+\]$/.test(line.text) ?
+                new TextEdit(line.range, messageNode.alias + ':  [' + messageNode.id + ']') : undefined);
+            } else {
+                return makeMessageResults(!/^Message:  [0-9]+$/.test(line.text) ?
+                new TextEdit(line.range, 'Message:  ' + String(messageNode.id)) : undefined);
+            }
         }
     }
 
@@ -360,8 +359,8 @@ export class Formatter {
      */
     private formatHeadlessEntryPoint(line: TextLine): FormatterResults | undefined {
         if (!parser.isEmptyOrComment(line.text) &&
-            !parser.symbols.parseSymbol(line.text) &&
-            !parser.tasks.parseTask(line.text, this.tables.globalVarsTable.globalVars)) {
+            !this.nodeParser.parseSymbol(line) &&
+            !this.nodeParser.parseTask(line)) {
             return this.formatTaskScope(line);
         }
     }
@@ -370,7 +369,7 @@ export class Formatter {
      * Formats the definition of a task and request the following lines until the end of the task block.
      */
     private formatTask(line: TextLine): FormatterResults | undefined {
-        const task = parser.tasks.parseTask(line.text, this.tables.globalVarsTable.globalVars);
+        const task = this.nodeParser.parseTask(line);
         if (task) {
             return {
                 textEdits: Formatter.filterTextEdits(
@@ -378,7 +377,7 @@ export class Formatter {
                     Formatter.trimLeft(line),
                     ...Formatter.setInnerSpaces(line)
                 ),
-                formatNextLineRequest: task.type !== parser.tasks.TaskType.Variable ? this.getTaskBlockFormatRequest() : undefined
+                formatNextLineRequest: task.type !== TaskType.Variable ? this.getTaskBlockFormatRequest() : undefined
             };
         }
     }
@@ -414,7 +413,7 @@ export class Formatter {
     private getTaskBlockFormatRequest(): FormatLineRequest {
         return {
             requestLine: (line) => {
-                return !/^\s*$/g.test(line.text) && !parser.tasks.parseTask(line.text, this.tables.globalVarsTable.globalVars);
+                return !/^\s*$/g.test(line.text) && !this.nodeParser.parseTask(line);
             },
             formatLine: (line) => {
                 return this.formatEmptyOrComment(line) || this.formatTaskScope(line);

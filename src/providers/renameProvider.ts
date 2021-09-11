@@ -6,11 +6,11 @@
 
 import * as parser from '../parser';
 import { RenameProvider, TextDocument, Position, WorkspaceEdit, Range, CancellationToken } from 'vscode';
-import { Symbol, Task, Message } from '../language/common';
 import { Quest } from '../language/quest';
 import { TemplateReferenceProvider } from './referenceProvider';
 import { symbols } from '../parser';
 import { Quests } from '../language/quests';
+import { Message, Symbol, Task } from '../language/resources';
 
 export class TemplateRenameProvider implements RenameProvider {
 
