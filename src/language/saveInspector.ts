@@ -255,7 +255,9 @@ export class SaveInspector {
                 }
 
             } catch (e) {
-                vscode.window.showErrorMessage(e);
+                if (e instanceof Error) {
+                    vscode.window.showErrorMessage(e.message);
+                }
                 return;
             }
         }
