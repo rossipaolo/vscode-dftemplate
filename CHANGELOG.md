@@ -5,6 +5,7 @@
 ### Improved
 
 - Updated list of macros.
+- Recognise npc location scope inside symbol definition.
 
 ## 0.18.0
 

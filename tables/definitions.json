@@ -219,7 +219,7 @@
     "Person": [
         {
             "snippet": "Person ${1:_person_} named ${2:faction}",
-            "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? named [a-zA-Z0-9'_.-]+( atHome)?( anyInfo \\d+)?( rumors \\d+)?",
+            "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? named [a-zA-Z0-9'_.-]+( atHome)?( (local|remote))?( anyInfo \\d+)?( rumors \\d+)?",
             "matches": [
                 {
                     "regex": "named ([a-zA-Z0-9'_.-]+)",
@@ -261,7 +261,7 @@
         },
         {
             "snippet": "Person ${1:_person_} ${2|factionType,faction,group|} ${3:name}",
-            "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? (factionType|factiontype|faction|group) [a-zA-Z0-9'_.-]+( (female|male))?( anyInfo \\d+)?( rumors \\d+)?",
+            "match": "(Person|person) [a-zA-Z0-9'_.-]+( face \\d+)? (factionType|factiontype|faction|group) [a-zA-Z0-9'_.-]+( (female|male))?( (local|remote))?( anyInfo \\d+)?( rumors \\d+)?",
             "matches": [
                 {
                     "regex": "factionType ([a-zA-Z0-9'_\\.-]+)",
