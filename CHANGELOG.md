@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Fixed
+
+- Fixed issue with message formatting.
+
 ## 0.19.0
 
 ### Improved

@@ -278,10 +278,10 @@ export class Formatter {
 
             if (messageNode.alias !== undefined) {
                 return makeMessageResults(!/^[a-zA-Z]+:  \[[0-9]+\]$/.test(line.text) ?
-                new TextEdit(line.range, messageNode.alias + ':  [' + messageNode.id + ']') : undefined);
+                new TextEdit(line.range, messageNode.alias.value + ':  [' + messageNode.id.value + ']') : undefined);
             } else {
                 return makeMessageResults(!/^Message:  [0-9]+$/.test(line.text) ?
-                new TextEdit(line.range, 'Message:  ' + String(messageNode.id)) : undefined);
+                new TextEdit(line.range, 'Message:  ' + messageNode.id.value) : undefined);
             }
         }
     }
