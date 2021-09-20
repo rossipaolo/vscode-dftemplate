@@ -300,7 +300,7 @@
         "test": "node ./out/test/runTest.js"
     },
     "dependencies": {
-        "string-similarity": "^3.0.0"
+        "string-similarity": "^4.0.4"
     },
     "devDependencies": {
         "@types/glob": "^7.1.4",
