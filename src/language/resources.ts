@@ -337,7 +337,6 @@ export class Action implements QuestResourceWithNode<QuestToken>, QuestResourceW
 
     public constructor(
         public readonly node: QuestToken,
-        public readonly line: TextLine,
         info: ActionInfo) {
 
         function doParams(signatureItems: string[], lineItems: string[]): string[] {
@@ -429,7 +428,7 @@ export class Action implements QuestResourceWithNode<QuestToken>, QuestResourceW
     public static parse(line: TextLine, nodeParser: NodeParser, modules: Modules): Action | undefined {
         const actionInfo: ActionInfo | undefined = modules.findAction(line.text);
         if (actionInfo !== undefined) {
-            return new Action(nodeParser.parseToken(line), line, actionInfo);
+            return new Action(nodeParser.parseToken(line), actionInfo);
         }
     }
 
